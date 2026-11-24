@@ -1,0 +1,70 @@
+# Lab 3.3 workloads. kubectl apply -f lab33-workloads.yaml
+# nimbus = the legitimate app team; kraken = a "compromised" namespace (think: a vulnerable
+# third-party chart that got popped). Both are boring on purpose: sleep loops + nginx.
+apiVersion: v1
+kind: Namespace
+metadata: { name: nimbus, labels: { team: nimbus } }
+---
+apiVersion: v1
+kind: Namespace
+metadata: { name: kraken, labels: { team: kraken } }
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata: { name: vault-reader, namespace: nimbus }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: vault-app, namespace: nimbus }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: vault-app } }
+  template:
+    metadata: { labels: { app: vault-app } }
+    spec:
+      serviceAccountName: vault-reader
+      containers:
+        - name: cli
+          image: public.ecr.aws/aws-cli/aws-cli:latest
+          command: ["sleep", "infinity"]
+          resources: { requests: { cpu: 50m, memory: 64Mi } }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: vault-web, namespace: nimbus }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: vault-web } }
+  template:
+    metadata: { labels: { app: vault-web } }
+    spec:
+      containers:
+        - name: web
+          image: public.ecr.aws/nginx/nginx:stable
+          ports: [{ containerPort: 80 }]
+          resources: { requests: { cpu: 50m, memory: 32Mi } }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: vault-web, namespace: nimbus }
+spec:
+  selector: { app: vault-web }
+  ports: [{ port: 80, targetPort: 80 }]
+---
+apiVersion: v1
+kind: Pod
+metadata: { name: kraken-shell, namespace: kraken, labels: { app: kraken-shell } }
+spec:
+  containers:
+    - name: cli
+      image: public.ecr.aws/aws-cli/aws-cli:latest
+      command: ["sleep", "infinity"]
+---
+apiVersion: v1
+kind: Pod
+metadata: { name: kraken-probe, namespace: kraken, labels: { app: kraken-probe } }
+spec:
+  containers:
+    - name: probe
+      image: public.ecr.aws/amazonlinux/amazonlinux:2023
+      command: ["sleep", "infinity"]

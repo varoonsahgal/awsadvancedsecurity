@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <title>SKYWATCHER badge</title>
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#22d3ee"/><stop offset="1" stop-color="#60a5fa"/></linearGradient>
+    <radialGradient id="i" cx=".5" cy=".35" r=".7"><stop offset="0" stop-color="#2a2f6b"/><stop offset="1" stop-color="#0b1028"/></radialGradient>
+    <filter id="f" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+  <g filter="url(#f)"><path d="M100 8 L180 54 V146 L100 192 L20 146 V54 Z" fill="url(#g)"/></g>
+  <path d="M100 22 L168 61 V139 L100 178 L32 139 V61 Z" fill="url(#i)"/>
+  <path d="M100 22 L168 61 V139 L100 178 L32 139 V61 Z" fill="none" stroke="url(#g)" stroke-width="2" opacity=".7"/>
+  <g transform="translate(0 -6)"><path d="M48 100 Q100 50 152 100 Q100 150 48 100 Z" fill="none" stroke="#fff" stroke-width="8"/><circle cx="100" cy="100" r="20" fill="#fff"/><circle cx="100" cy="100" r="9" fill="#0b1028"/><path d="M100 46 v-10 M66 56 l-6 -8 M134 56 l6 -8" stroke="#fff" stroke-width="6" stroke-linecap="round"/></g>
+  <path d="M18 146 H182 L170 164 L182 182 H18 L30 164 Z" fill="url(#g)"/>
+  <text x="100" y="170" text-anchor="middle" font-family="Space Grotesk, Inter, sans-serif" font-weight="700" font-size="15" letter-spacing="2" fill="#0b1028">SKYWATCHER</text>
+  <g fill="#fff"><circle cx="40" cy="40" r="2"/><circle cx="168" cy="30" r="1.6"/><circle cx="178" cy="100" r="1.4"/></g>
+</svg>

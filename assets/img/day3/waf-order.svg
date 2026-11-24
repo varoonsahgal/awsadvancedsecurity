@@ -1,0 +1,98 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 660" font-family="Space Grotesk, Inter, sans-serif">
+  <title>AWS WAF rule evaluation order in the SkyShield web ACL, with labels, terminating actions and WCU budget</title>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#94a3b8"/></marker>
+    <linearGradient id="wcu" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#34d399"/><stop offset=".75" stop-color="#22d3ee"/><stop offset="1" stop-color="#ff9900"/></linearGradient>
+    <filter id="g"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+  <rect width="1200" height="660" fill="#060b18"/>
+  <text x="40" y="46" fill="#34d399" font-size="15" letter-spacing="3">FIG 3.2 · WEB ACL "SKYSHIELD" — LOWEST PRIORITY NUMBER RUNS FIRST</text>
+
+  <!-- request -->
+  <rect x="40" y="80" width="150" height="70" rx="12" fill="#1f2937" stroke="#94a3b8"/>
+  <text x="115" y="110" fill="#fff" font-size="17" text-anchor="middle">Request</text>
+  <text x="115" y="132" fill="#94a3b8" font-size="13" text-anchor="middle">API GW stage</text>
+
+  <!-- rule chain -->
+  <g font-size="14">
+    <!-- row helper: x positions -->
+    <g transform="translate(230 70)">
+      <rect width="210" height="90" rx="12" fill="#0b2530" stroke="#22d3ee"/>
+      <text x="12" y="24" fill="#67e8f9">P0 BLOCK · P1–2 COUNT</text>
+      <text x="12" y="48" fill="#fff" font-size="16">partner-key / trusted-ip</text>
+      <text x="12" y="72" fill="#fde68a" font-size="13">+label partner:keyed, :trusted-ip</text>
+    </g>
+    <g transform="translate(470 70)">
+      <rect width="210" height="90" rx="12" fill="#06281f" stroke="#34d399"/>
+      <text x="12" y="24" fill="#86efac">P3 · ALLOW (terminating)</text>
+      <text x="12" y="48" fill="#fff" font-size="16">both labels AND /partner/</text>
+      <text x="12" y="72" fill="#fde68a" font-size="13">insert x-amzn-waf-partner</text>
+    </g>
+    <g transform="translate(710 70)">
+      <rect width="210" height="90" rx="12" fill="#2a1a06" stroke="#ff9900"/>
+      <text x="12" y="24" fill="#ffb347">P5–6 · RATE-BASED</text>
+      <text x="12" y="48" fill="#fff" font-size="16">/login 10/min · all 100/min</text>
+      <text x="12" y="72" fill="#fde68a" font-size="13">BLOCK 403 · custom 429 body</text>
+    </g>
+    <g transform="translate(950 70)">
+      <rect width="210" height="90" rx="12" fill="#1a1033" stroke="#a78bfa"/>
+      <text x="12" y="24" fill="#c4b5fd">P10 · MANAGED</text>
+      <text x="12" y="48" fill="#fff" font-size="16">Amazon IP reputation</text>
+      <text x="12" y="72" fill="#94a3b8" font-size="13">25 WCU</text>
+    </g>
+    <path d="M190 115 H228" stroke="#94a3b8" stroke-width="2" marker-end="url(#a)"/>
+    <path d="M440 115 H468" stroke="#94a3b8" stroke-width="2" marker-end="url(#a)"/>
+    <path d="M680 115 H708" stroke="#94a3b8" stroke-width="2" marker-end="url(#a)"/>
+    <path d="M920 115 H948" stroke="#94a3b8" stroke-width="2" marker-end="url(#a)"/>
+    <path d="M1055 160 V196 H240 V228" stroke="#94a3b8" stroke-width="2" fill="none" marker-end="url(#a)"/>
+
+    <g transform="translate(150 230)">
+      <rect width="200" height="90" rx="12" fill="#1a1033" stroke="#a78bfa"/>
+      <text x="12" y="24" fill="#c4b5fd">P20 · MANAGED</text>
+      <text x="12" y="48" fill="#fff" font-size="16">Core rule set (CRS)</text>
+      <text x="12" y="72" fill="#94a3b8" font-size="13">700 WCU · XSS, LFI, size</text>
+    </g>
+    <g transform="translate(380 230)">
+      <rect width="200" height="90" rx="12" fill="#1a1033" stroke="#a78bfa"/>
+      <text x="12" y="24" fill="#c4b5fd">P30 · MANAGED</text>
+      <text x="12" y="48" fill="#fff" font-size="16">SQL database</text>
+      <text x="12" y="72" fill="#94a3b8" font-size="13">200 WCU</text>
+    </g>
+    <g transform="translate(610 230)">
+      <rect width="200" height="90" rx="12" fill="#1a1033" stroke="#a78bfa"/>
+      <text x="12" y="24" fill="#c4b5fd">P40–45 · MANAGED</text>
+      <text x="12" y="48" fill="#fff" font-size="16">Known bad + Linux</text>
+      <text x="12" y="72" fill="#94a3b8" font-size="13">200 + 200 WCU</text>
+    </g>
+    <g transform="translate(840 230)">
+      <rect width="220" height="90" rx="12" fill="#2a0f1f" stroke="#f472b6"/>
+      <text x="12" y="24" fill="#f9a8d4">P50 · MANAGED (paid/req)</text>
+      <text x="12" y="48" fill="#fff" font-size="16">Bot Control · COMMON</text>
+      <text x="12" y="72" fill="#94a3b8" font-size="13">50 WCU · labels bot:category:*</text>
+    </g>
+    <path d="M350 275 H378" stroke="#94a3b8" stroke-width="2" marker-end="url(#a)"/>
+    <path d="M580 275 H608" stroke="#94a3b8" stroke-width="2" marker-end="url(#a)"/>
+    <path d="M810 275 H838" stroke="#94a3b8" stroke-width="2" marker-end="url(#a)"/>
+    <path d="M1060 275 H1100 V370" stroke="#94a3b8" stroke-width="2" fill="none" marker-end="url(#a)"/>
+    <rect x="1010" y="372" width="160" height="56" rx="12" fill="#0f172a" stroke="#34d399"/>
+    <text x="1090" y="406" fill="#86efac" font-size="16" text-anchor="middle">Default: ALLOW</text>
+  </g>
+
+  <!-- side notes -->
+  <g font-size="15">
+    <text x="40" y="380" fill="#fff" font-weight="600">Why this order?</text>
+    <text x="40" y="408" fill="#cbd5e1">① Labels are only visible to rules that run AFTER the rule that adds them.</text>
+    <text x="40" y="434" fill="#cbd5e1">② An early ALLOW terminates — partners skip every managed rule below it. Scope it tight.</text>
+    <text x="40" y="460" fill="#cbd5e1">③ Rate rules before Bot Control: blocked floods never reach the per-request-priced group.</text>
+    <text x="40" y="486" fill="#cbd5e1">④ Rate rules must be evaluated to count — anything blocked earlier is invisible to them.</text>
+  </g>
+
+  <!-- WCU meter -->
+  <text x="40" y="548" fill="#fff" font-size="16" font-weight="600">Web ACL capacity (WCU)</text>
+  <rect x="40" y="562" width="1120" height="28" rx="14" fill="#111827" stroke="#334155"/>
+  <rect x="40" y="562" width="1050" height="28" rx="14" fill="url(#wcu)" opacity=".9"/>
+  <line x1="1160" y1="556" x2="1160" y2="598" stroke="#fb7185" stroke-width="2"/>
+  <text x="1158" y="620" fill="#fb7185" font-size="14" text-anchor="end">1,500 WCU included in base price — above this you pay more</text>
+  <text x="60" y="582" fill="#022c22" font-size="14" font-weight="700">≈ 1,400 used</text>
+  <text x="40" y="640" fill="#94a3b8" font-size="13">Approximate published WCU values — always confirm with: aws wafv2 check-capacity --scope REGIONAL --rules file://rules.json</text>
+</svg>

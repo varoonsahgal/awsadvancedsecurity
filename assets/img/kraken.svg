@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 260">
+  <title>The Kraken Collective</title>
+  <defs>
+    <radialGradient id="kh" cx=".5" cy=".35" r=".7">
+      <stop offset="0" stop-color="#ff6b9a"/><stop offset=".55" stop-color="#c0265e"/><stop offset="1" stop-color="#5a0b33"/>
+    </radialGradient>
+    <linearGradient id="kt" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c0265e"/><stop offset="1" stop-color="#6d1145"/></linearGradient>
+    <radialGradient id="keye" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#fff7a8"/><stop offset=".5" stop-color="#fbbf24"/><stop offset="1" stop-color="#f97316"/></radialGradient>
+    <filter id="kg" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+  <!-- tentacles -->
+  <g fill="none" stroke="url(#kt)" stroke-linecap="round">
+    <path d="M90 150 C50 170 30 210 60 236 C80 252 98 232 84 220" stroke-width="20"/>
+    <path d="M170 150 C210 170 230 210 200 236 C180 252 162 232 176 220" stroke-width="20"/>
+    <path d="M110 160 C96 200 100 236 126 246" stroke-width="16"/>
+    <path d="M150 160 C164 200 160 236 134 246" stroke-width="16"/>
+    <path d="M80 136 C36 132 10 160 18 192 C24 210 44 204 40 192" stroke-width="16"/>
+    <path d="M180 136 C224 132 250 160 242 192 C236 210 216 204 220 192" stroke-width="16"/>
+  </g>
+  <g fill="#ffb3cb" opacity=".7">
+    <circle cx="56" cy="200" r="3.5"/><circle cx="52" cy="214" r="3"/><circle cx="204" cy="200" r="3.5"/><circle cx="208" cy="214" r="3"/>
+    <circle cx="104" cy="200" r="3"/><circle cx="156" cy="200" r="3"/><circle cx="26" cy="172" r="3"/><circle cx="234" cy="172" r="3"/>
+  </g>
+  <!-- head -->
+  <path d="M130 18 C192 18 214 70 210 112 C206 150 176 168 130 168 C84 168 54 150 50 112 C46 70 68 18 130 18 Z" fill="url(#kh)"/>
+  <g fill="#ff8fb4" opacity=".35"><circle cx="100" cy="50" r="9"/><circle cx="164" cy="44" r="6"/><circle cx="180" cy="74" r="8"/><circle cx="82" cy="80" r="5"/></g>
+  <!-- hood / visor -->
+  <path d="M62 96 Q130 70 198 96 L192 124 Q130 104 68 124 Z" fill="#1a0614" opacity=".85"/>
+  <!-- eyes -->
+  <path d="M84 104 L118 110 L112 122 L88 118 Z" fill="url(#keye)" filter="url(#kg)"/>
+  <path d="M176 104 L142 110 L148 122 L172 118 Z" fill="url(#keye)" filter="url(#kg)"/>
+  <!-- grin -->
+  <path d="M100 140 Q130 158 160 140" stroke="#1a0614" stroke-width="5" fill="none" stroke-linecap="round"/>
+  <path d="M110 145 l4 7 l4 -5 l4 7 l4 -6 l4 7 l4 -6 l4 7 l4 -5 l4 4" stroke="#fff" stroke-width="2" fill="none" stroke-linejoin="round"/>
+  <!-- binary drip -->
+  <g font-family="monospace" font-size="9" fill="#fbbf24" opacity=".8">
+    <text x="118" y="40">01101011</text>
+  </g>
+</svg>

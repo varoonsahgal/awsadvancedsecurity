@@ -1,0 +1,6 @@
+# Nimbus manifest-api dependencies.
+# PyYAML is pinned to an old release ON PURPOSE - Inspector should light it up.
+flask==3.0.3
+PyYAML==5.3.1
+# nimbus-telemetry==1.4.0   # <- internal package. Discuss: what happens if this line is enabled
+#                                and someone publishes "nimbus-telemetry" 99.0.0 to public PyPI?

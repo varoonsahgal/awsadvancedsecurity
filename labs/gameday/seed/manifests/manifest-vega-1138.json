@@ -1,0 +1,13 @@
+{
+  "manifest_id": "VEGA-1138",
+  "vessel": "NIS Lantern of Ganymede",
+  "origin": "Luna Gateway",
+  "destination": "Mars Orbital Yard 3",
+  "status": "IN_TRANSIT",
+  "eta_utc": "2026-12-11T17:00:00Z",
+  "cargo": [
+    { "sku": "O2-CAN-50", "description": "Oxygen canisters (50L)", "units": 900 },
+    { "sku": "SEED-VAULT-B", "description": "Hydroponic seed vault, batch B", "units": 12 }
+  ],
+  "handling": "Pressurised hold. Crew of 4 aboard."
+}

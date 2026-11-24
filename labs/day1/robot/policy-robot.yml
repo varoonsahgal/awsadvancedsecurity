@@ -1,0 +1,45 @@
+# Copy to .github/workflows/policy-robot.yml in your lab repository.
+# Blocks any pull request whose IAM / bucket policies grant new access, critical actions,
+# or public access - using IAM Access Analyzer custom policy checks.
+name: least-privilege-robot
+
+on:
+  pull_request:
+    paths:
+      - "policies/**.json"
+
+permissions:
+  id-token: write   # needed to request the GitHub OIDC token
+  contents: read
+
+jobs:
+  policy-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Assume the robot role via OIDC (no long-lived keys!)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.ROBOT_ROLE_ARN }}
+          aws-region: us-east-1
+          role-session-name: policy-robot-${{ github.run_id }}
+
+      - name: Find changed policy files
+        id: diff
+        run: |
+          FILES=$(git diff --name-only --diff-filter=AM origin/${{ github.base_ref }}...HEAD -- 'policies/*.json' | tr '\n' ' ')
+          echo "files=$FILES" >> "$GITHUB_OUTPUT"
+          echo "Changed: $FILES"
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run the robot
+        if: steps.diff.outputs.files != ''
+        run: |
+          pip install --quiet boto3
+          python3 check_policies.py ${{ steps.diff.outputs.files }}

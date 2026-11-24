@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 760" role="img" aria-labelledby="t d">
+<title id="t">EC2 forensic isolation and evidence workflow</title><desc id="d">Victim instance isolated with a two-step security group swap, memory captured via SSM through VPC endpoints, snapshots attached read-only to a forensic workstation in an isolated subnet, evidence stored in an Object Lock bucket.</desc>
+<defs>
+ <radialGradient id="bg" cx=".2" cy="0" r="1.2"><stop offset="0" stop-color="#2a0f2e"/><stop offset=".55" stop-color="#0b0d24"/><stop offset="1" stop-color="#070914"/></radialGradient>
+ <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M40 0H0V40" fill="none" stroke="#ffffff" stroke-opacity=".035"/></pattern>
+ <filter id="glow" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+ <marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#b7c0e6"/></marker>
+ <marker id="arR" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#fb7185"/></marker>
+ <marker id="arG" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#34d399"/></marker>
+ <marker id="arO" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#ff9900"/></marker>
+</defs>
+<rect width="1200" height="760" rx="22" fill="url(#bg)"/><rect width="1200" height="760" rx="22" fill="url(#grid)"/>
+<rect x="1" y="1" width="1198" height="758" rx="21" fill="none" stroke="#fb7185" stroke-opacity=".25"/>
+<text x="40" y="52" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="600" fill="#fb7185" text-anchor="start" letter-spacing="4">LAB 5.2 · DIGITAL AUTOPSY</text>
+<text x="40" y="84" font-family="Space Grotesk, Inter, sans-serif" font-size="22" font-weight="600" fill="#e8ecff" text-anchor="start" >Isolate quietly → capture memory → snapshot → analyze read-only → lock the evidence</text>
+<rect x="40" y="120" width="820" height="600" rx="20" fill="#ffffff" fill-opacity=".02" stroke="#a78bfa" stroke-opacity=".6" stroke-width="2"/><text x="60" y="148" font-family="JetBrains Mono, ui-monospace, monospace" font-size="15" font-weight="600" fill="#a78bfa" text-anchor="start" >VPC 10.50.0.0/16</text>
+<rect x="64" y="166" width="380" height="530" rx="16" fill="#fb7185" fill-opacity=".05" stroke="#fb7185" stroke-opacity=".5" stroke-dasharray="6 6"/><text x="80" y="192" font-family="JetBrains Mono, ui-monospace, monospace" font-size="14" font-weight="600" fill="#fb7185" text-anchor="start" >workload subnet (public)</text>
+<rect x="110" y="220" width="290" height="130" rx="14" fill="#fb7185" fill-opacity="0.12" stroke="#fb7185" stroke-opacity=".75" stroke-width="1.6" filter="url(#glow)"/>
+<text x="126" y="248" font-family="Space Grotesk, Inter, sans-serif" font-size="17" font-weight="600" fill="#fff" text-anchor="start" >nimbus-web-07 (victim)</text>
+<text x="126" y="272" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="400" fill="#b7c0e6" text-anchor="start" >cron backdoor · rogue SSH key</text>
+<text x="126" y="293" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="400" fill="#b7c0e6" text-anchor="start" >in-RAM implant [kworker/u4:2]</text>
+<text x="126" y="314" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="400" fill="#b7c0e6" text-anchor="start" >termination protection ON</text>
+<text x="110" y="390" font-family="JetBrains Mono, ui-monospace, monospace" font-size="13" font-weight="600" fill="#8a95c2" text-anchor="start" letter-spacing="2">SECURITY GROUP SWAP</text>
+<rect x="110" y="402" width="118.72" height="26" rx="13" fill="#8a95c2" fill-opacity=".18" stroke="#8a95c2" stroke-opacity=".7"/><text x="169.36" y="420" font-family="JetBrains Mono, ui-monospace, monospace" font-size="13" font-weight="600" fill="#8a95c2" text-anchor="middle" >workload-web</text>
+<path d="M250 415 L272 415" fill="none" stroke="#b7c0e6" stroke-width="2"  marker-end="url(#ar)"/>
+<rect x="276" y="402" width="86.48" height="26" rx="13" fill="#fbbf24" fill-opacity=".18" stroke="#fbbf24" stroke-opacity=".7"/><text x="319.24" y="420" font-family="JetBrains Mono, ui-monospace, monospace" font-size="13" font-weight="600" fill="#fbbf24" text-anchor="middle" >ir-flush</text>
+<path d="M340 430 L340 452" fill="none" stroke="#b7c0e6" stroke-width="2"  marker-end="url(#ar)"/>
+<rect x="250" y="456" width="126.78" height="26" rx="13" fill="#fb7185" fill-opacity=".18" stroke="#fb7185" stroke-opacity=".7"/><text x="313.39" y="474" font-family="JetBrains Mono, ui-monospace, monospace" font-size="13" font-weight="600" fill="#fb7185" text-anchor="middle" >ir-quarantine</text>
+<text x="110" y="512" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="400" fill="#b7c0e6" text-anchor="start" >flush = allow-all → flows go untracked;</text>
+<text x="110" y="533" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="400" fill="#b7c0e6" text-anchor="start" >quarantine = no ingress, 443 → endpoints only</text>
+<rect x="110" y="560" width="290" height="110" rx="14" fill="#fbbf24" fill-opacity="0.12" stroke="#fbbf24" stroke-opacity=".75" stroke-width="1.6"/>
+<text x="126" y="588" font-family="Space Grotesk, Inter, sans-serif" font-size="16" font-weight="600" fill="#fff" text-anchor="start" >Evidence volume (EBS)</text>
+<text x="126" y="612" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="400" fill="#b7c0e6" text-anchor="start" >attached empty, AVML writes</text>
+<text x="126" y="633" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="400" fill="#b7c0e6" text-anchor="start" >memory.lime + sha256 here</text>
+<path d="M255 350 L255 378" fill="none" stroke="#fbbf24" stroke-width="2"  marker-end="url(#ar)"/>
+<rect x="470" y="166" width="370" height="530" rx="16" fill="#22d3ee" fill-opacity=".05" stroke="#22d3ee" stroke-opacity=".5" stroke-dasharray="6 6"/><text x="486" y="192" font-family="JetBrains Mono, ui-monospace, monospace" font-size="14" font-weight="600" fill="#22d3ee" text-anchor="start" >forensics subnet (no route to internet)</text>
+<rect x="500" y="220" width="310" height="110" rx="14" fill="#22d3ee" fill-opacity="0.12" stroke="#22d3ee" stroke-opacity=".75" stroke-width="1.6"/>
+<text x="516" y="248" font-family="Space Grotesk, Inter, sans-serif" font-size="17" font-weight="600" fill="#fff" text-anchor="start" >Interface endpoints</text>
+<text x="516" y="272" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="400" fill="#b7c0e6" text-anchor="start" >ssm · ssmmessages · ec2messages</text>
+<text x="516" y="293" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="400" fill="#b7c0e6" text-anchor="start" >private DNS on → SSM works offline</text>
+<rect x="500" y="360" width="310" height="150" rx="14" fill="#34d399" fill-opacity="0.12" stroke="#34d399" stroke-opacity=".75" stroke-width="1.6"/>
+<text x="516" y="388" font-family="Space Grotesk, Inter, sans-serif" font-size="17" font-weight="600" fill="#fff" text-anchor="start" >Forensic workstation</text>
+<text x="516" y="412" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="400" fill="#b7c0e6" text-anchor="start" >volumes from snapshots, mounted</text>
+<text x="516" y="433" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="400" fill="#b7c0e6" text-anchor="start" >ro,norecovery,nouuid (XFS)</text>
+<text x="516" y="454" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="400" fill="#b7c0e6" text-anchor="start" >grep -a / strings / Volatility 3</text>
+<text x="516" y="475" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="400" fill="#b7c0e6" text-anchor="start" >write-only access to evidence</text>
+<rect x="500" y="540" width="310" height="130" rx="14" fill="#60a5fa" fill-opacity="0.12" stroke="#60a5fa" stroke-opacity=".75" stroke-width="1.6"/>
+<text x="516" y="568" font-family="Space Grotesk, Inter, sans-serif" font-size="17" font-weight="600" fill="#fff" text-anchor="start" >S3 gateway endpoint</text>
+<text x="516" y="592" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="400" fill="#b7c0e6" text-anchor="start" >free · route-table based</text>
+<text x="516" y="613" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="400" fill="#b7c0e6" text-anchor="start" >isolation SG egress → S3 prefix list</text>
+<path d="M400 290 L498 280" fill="none" stroke="#22d3ee" stroke-width="2" stroke-dasharray="5 5" marker-end="url(#ar)"/>
+<rect x="900" y="140" width="270" height="130" rx="14" fill="#ff9900" fill-opacity="0.12" stroke="#ff9900" stroke-opacity=".75" stroke-width="1.6"/>
+<text x="916" y="168" font-family="Space Grotesk, Inter, sans-serif" font-size="17" font-weight="600" fill="#fff" text-anchor="start" >Responder (CloudShell)</text>
+<text x="916" y="192" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="400" fill="#b7c0e6" text-anchor="start" >ssm send-command</text>
+<text x="916" y="213" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="400" fill="#b7c0e6" text-anchor="start" >ec2 create-snapshots</text>
+<text x="916" y="234" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="400" fill="#b7c0e6" text-anchor="start" >IR role, MFA, logged</text>
+<rect x="900" y="310" width="270" height="150" rx="14" fill="#a78bfa" fill-opacity="0.12" stroke="#a78bfa" stroke-opacity=".75" stroke-width="1.6"/>
+<text x="916" y="338" font-family="Space Grotesk, Inter, sans-serif" font-size="17" font-weight="600" fill="#fff" text-anchor="start" >EBS snapshots</text>
+<text x="916" y="362" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="400" fill="#b7c0e6" text-anchor="start" >root + evidence volumes</text>
+<text x="916" y="383" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="400" fill="#b7c0e6" text-anchor="start" >tagged ir-case=IR-…-007</text>
+<text x="916" y="404" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="400" fill="#b7c0e6" text-anchor="start" >create-volume in the</text>
+<text x="916" y="425" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="400" fill="#b7c0e6" text-anchor="start" >workstation's AZ</text>
+<rect x="900" y="500" width="270" height="170" rx="14" fill="#fbbf24" fill-opacity="0.12" stroke="#fbbf24" stroke-opacity=".75" stroke-width="1.6"/>
+<text x="916" y="528" font-family="Space Grotesk, Inter, sans-serif" font-size="17" font-weight="600" fill="#fff" text-anchor="start" >Evidence bucket</text>
+<text x="916" y="552" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="400" fill="#b7c0e6" text-anchor="start" >S3 Object Lock (GOVERNANCE)</text>
+<text x="916" y="573" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="400" fill="#b7c0e6" text-anchor="start" >versioned · SSE-KMS</text>
+<text x="916" y="594" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="400" fill="#b7c0e6" text-anchor="start" >chain-of-custody.json</text>
+<text x="916" y="615" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="400" fill="#b7c0e6" text-anchor="start" >hashes recorded at capture</text>
+<path d="M900 220 L812 260" fill="none" stroke="#ff9900" stroke-width="2"  marker-end="url(#arO)"/>
+<path d="M400 650 H420 V708 H880 V462" fill="none" stroke="#a78bfa" stroke-width="2" stroke-dasharray="5 5" marker-end="url(#ar)"/><path d="M898 400 L812 440" fill="none" stroke="#a78bfa" stroke-width="2"  marker-end="url(#ar)"/>
+<path d="M810 470 L898 580" fill="none" stroke="#fbbf24" stroke-width="2" stroke-dasharray="5 5" marker-end="url(#ar)"/>
+<circle cx="96" cy="236" r="15" fill="#ff9900"/><text x="96" y="241" font-family="Space Grotesk, Inter, sans-serif" font-size="15" font-weight="700" fill="#0a0d1f" text-anchor="middle" >1</text>
+<circle cx="96" cy="418" r="15" fill="#ff9900"/><text x="96" y="423" font-family="Space Grotesk, Inter, sans-serif" font-size="15" font-weight="700" fill="#0a0d1f" text-anchor="middle" >2</text>
+<circle cx="96" cy="576" r="15" fill="#ff9900"/><text x="96" y="581" font-family="Space Grotesk, Inter, sans-serif" font-size="15" font-weight="700" fill="#0a0d1f" text-anchor="middle" >3</text>
+<circle cx="886" cy="326" r="15" fill="#ff9900"/><text x="886" y="331" font-family="Space Grotesk, Inter, sans-serif" font-size="15" font-weight="700" fill="#0a0d1f" text-anchor="middle" >4</text>
+<circle cx="486" cy="376" r="15" fill="#ff9900"/><text x="486" y="381" font-family="Space Grotesk, Inter, sans-serif" font-size="15" font-weight="700" fill="#0a0d1f" text-anchor="middle" >5</text>
+<circle cx="886" cy="516" r="15" fill="#ff9900"/><text x="886" y="521" font-family="Space Grotesk, Inter, sans-serif" font-size="15" font-weight="700" fill="#0a0d1f" text-anchor="middle" >6</text>
+</svg>

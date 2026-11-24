@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 760" font-family="Space Grotesk, Inter, sans-serif">
+  <title>Workforce, machine and agent identities all converge on short-lived STS role sessions</title>
+  <defs>
+    <linearGradient id="ibg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0c0d2e"/><stop offset="1" stop-color="#070b1c"/></linearGradient>
+    <radialGradient id="core" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#ff9900" stop-opacity=".7"/><stop offset=".5" stop-color="#f472b6" stop-opacity=".25"/><stop offset="1" stop-color="#a78bfa" stop-opacity="0"/></radialGradient>
+    <filter id="ig" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="7" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <marker id="iv" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#c4b5fd"/></marker>
+  </defs>
+  <rect width="1400" height="760" fill="url(#ibg)"/>
+  <text x="50" y="58" font-size="28" font-weight="700" fill="#fff">Every road leads to a short-lived role session</text>
+  <text x="50" y="88" font-size="16" fill="#8a95c2">Humans, pipelines, workloads and AI agents should all end up holding temporary STS credentials — never long-term keys.</text>
+
+  <!-- core -->
+  <circle cx="700" cy="420" r="190" fill="url(#core)"/>
+  <circle cx="700" cy="420" r="96" fill="#1c1240" stroke="#ff9900" stroke-width="4" filter="url(#ig)"/>
+  <text x="700" y="410" font-size="26" font-weight="700" fill="#fff" text-anchor="middle">AWS STS</text>
+  <text x="700" y="438" font-size="14" fill="#ffd59a" text-anchor="middle" font-family="JetBrains Mono, monospace">role session</text>
+  <text x="700" y="458" font-size="13" fill="#ffd59a" text-anchor="middle" font-family="JetBrains Mono, monospace">≤ 12h · tagged</text>
+
+  <!-- four quadrants -->
+  <g>
+    <rect x="60" y="140" width="400" height="200" rx="20" fill="#17123d" stroke="#a78bfa" stroke-width="2"/>
+    <text x="84" y="174" font-size="13" fill="#a78bfa" font-family="JetBrains Mono, monospace">WORKFORCE</text>
+    <text x="84" y="206" font-size="21" font-weight="700" fill="#fff">👩‍🚀 IAM Identity Center</text>
+    <text x="84" y="234" font-size="15" fill="#b7c0e6">IdP (Entra / Okta / built-in) + passkeys</text>
+    <text x="84" y="258" font-size="15" fill="#b7c0e6">Permission sets → AWSReservedSSO_* roles</text>
+    <text x="84" y="282" font-size="15" fill="#ffc46b">2026: multi-Region, account access</text>
+    <text x="84" y="304" font-size="15" fill="#ffc46b">optional, IAM account access manager</text>
+
+    <rect x="940" y="140" width="400" height="200" rx="20" fill="#17123d" stroke="#f472b6" stroke-width="2"/>
+    <text x="964" y="174" font-size="13" fill="#f472b6" font-family="JetBrains Mono, monospace">PIPELINES</text>
+    <text x="964" y="206" font-size="21" font-weight="700" fill="#fff">🔁 OIDC federation</text>
+    <text x="964" y="234" font-size="15" fill="#b7c0e6">GitHub / GitLab / Terraform Cloud tokens</text>
+    <text x="964" y="258" font-size="15" fill="#b7c0e6">AssumeRoleWithWebIdentity</text>
+    <text x="964" y="282" font-size="15" fill="#fda4af">Pin aud AND sub — or any repo on</text>
+    <text x="964" y="304" font-size="15" fill="#fda4af">the platform can become you.</text>
+
+    <rect x="60" y="520" width="400" height="200" rx="20" fill="#17123d" stroke="#22d3ee" stroke-width="2"/>
+    <text x="84" y="554" font-size="13" fill="#22d3ee" font-family="JetBrains Mono, monospace">WORKLOADS</text>
+    <text x="84" y="586" font-size="21" font-weight="700" fill="#fff">⚙️ Roles for compute</text>
+    <text x="84" y="614" font-size="15" fill="#b7c0e6">EC2 instance profiles (IMDSv2), Lambda,</text>
+    <text x="84" y="638" font-size="15" fill="#b7c0e6">ECS task roles, EKS Pod Identity</text>
+    <text x="84" y="662" font-size="15" fill="#b7c0e6">On-prem / other clouds: IAM Roles</text>
+    <text x="84" y="686" font-size="15" fill="#b7c0e6">Anywhere (X.509 trust anchor)</text>
+
+    <rect x="940" y="520" width="400" height="200" rx="20" fill="#17123d" stroke="#ff9900" stroke-width="2"/>
+    <text x="964" y="554" font-size="13" fill="#ff9900" font-family="JetBrains Mono, monospace">AI AGENTS · 2026</text>
+    <text x="964" y="586" font-size="21" font-weight="700" fill="#fff">🤖 Agents &amp; MCP</text>
+    <text x="964" y="614" font-size="15" fill="#b7c0e6">AWS MCP Server: OAuth 2.1 via AWS</text>
+    <text x="964" y="638" font-size="15" fill="#b7c0e6">Sign-In — agent acts with YOUR creds</text>
+    <text x="964" y="662" font-size="15" fill="#b7c0e6">AgentCore Identity for agent-to-tool</text>
+    <text x="964" y="686" font-size="15" fill="#b7c0e6">auth (deep dive on Day 4)</text>
+  </g>
+  <g stroke="#c4b5fd" stroke-width="2.5" fill="none" marker-end="url(#iv)" opacity=".85">
+    <path d="M460 260 C 560 290, 600 330, 630 352"/><path d="M940 260 C 840 290, 800 330, 770 352"/>
+    <path d="M460 600 C 560 560, 600 520, 630 488"/><path d="M940 600 C 840 560, 800 520, 770 488"/>
+  </g>
+  <!-- anti-pattern -->
+  <g transform="translate(560 650)">
+    <rect width="280" height="70" rx="14" fill="#2a0d1d" stroke="#fb7185" stroke-dasharray="6 5"/>
+    <text x="140" y="30" font-size="15" fill="#fda4af" text-anchor="middle" font-weight="700">✗ IAM user access keys</text>
+    <text x="140" y="52" font-size="13" fill="#fecdd3" text-anchor="middle">the Kraken's favourite snack</text>
+  </g>
+</svg>

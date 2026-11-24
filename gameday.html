@@ -1,0 +1,1028 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>GameDay · Kraken Rising — Operation Skyfortress</title>
+  <meta name="description" content="The Friday capstone: a live, pre-compromised AWS environment, four acts, thirteen flags, one Kraken. Detect, contain, eradicate, recover and harden as a team.">
+  <link rel="icon" href="assets/img/logo.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/site.css">
+  <style>
+    /* ---------- GameDay-only visuals ---------- */
+    .gd-hero { position: relative; min-height: clamp(560px, 82vh, 860px); display: grid; align-items: end; overflow: hidden; border-bottom: 1px solid var(--border); }
+    .gd-hero .bg { position: absolute; inset: 0; background: url("assets/img/gameday/banner.svg") center 40% / cover no-repeat; transform: scale(1.04); animation: gd-pan 30s ease-in-out infinite alternate; }
+    .gd-hero::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(6, 9, 21, .82) 0%, rgba(6, 9, 21, .55) 38%, rgba(6, 9, 21, 0) 70%), linear-gradient(180deg, rgba(6, 9, 21, .15) 0%, rgba(6, 9, 21, .25) 45%, rgba(6, 9, 21, .92) 85%, var(--bg) 100%); }
+    @keyframes gd-pan { to { transform: scale(1.1) translateY(-1.5%); } }
+    .gd-hero .container { position: relative; z-index: 2; padding: 0 0 70px; }
+    .gd-hero h1 { font-size: clamp(3rem, 9vw, 7.4rem); line-height: .9; margin: 10px 0 18px; text-shadow: 0 10px 50px rgba(0, 0, 0, .6); }
+    .gd-hero .lead { max-width: 680px; color: #ffe9d6; text-shadow: 0 2px 20px rgba(0, 0, 0, .8); }
+    .gd-hero .chips { margin: 22px 0 26px; }
+    .typer { font-family: var(--mono); font-size: .95rem; color: #ffd7a8; min-height: 1.6em; background: rgba(10, 6, 20, .6); display: inline-block; padding: 6px 14px; border-radius: 10px; border: 1px solid rgba(255, 153, 0, .35); }
+    .typer::after { content: "▌"; animation: blink 1s steps(1) infinite; margin-left: 2px; color: var(--orange); }
+    @keyframes blink { 50% { opacity: 0; } }
+    .alert-strip { display: inline-flex; align-items: center; gap: 10px; font-family: var(--mono); font-size: .78rem; letter-spacing: .2em; color: #fff; background: rgba(225, 29, 72, .85); padding: 6px 14px; border-radius: 999px; animation: pulse-red 1.6s ease-in-out infinite; }
+    @keyframes pulse-red { 50% { box-shadow: 0 0 0 10px rgba(225, 29, 72, 0); } 0% { box-shadow: 0 0 0 0 rgba(225, 29, 72, .6); } }
+
+    .clock { display: grid; grid-template-columns: 220px 1fr; gap: 34px; align-items: center; }
+    .ring { position: relative; width: 220px; height: 220px; }
+    .ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+    .ring .digits { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; }
+    .ring .digits b { font-family: var(--mono); font-size: 2.1rem; color: #fff; letter-spacing: .02em; display: block; line-height: 1; }
+    .ring .digits span { font-family: var(--mono); font-size: .7rem; letter-spacing: .2em; color: var(--muted); }
+    .clock.running .ring .digits b { text-shadow: 0 0 18px rgba(255, 153, 0, .6); }
+    .clock.over .ring .digits b { color: var(--red); }
+    .next-inject { font-family: var(--mono); font-size: .9rem; padding: 14px 16px; border-radius: 12px; background: rgba(255, 153, 0, .07); border: 1px solid rgba(255, 153, 0, .35); margin: 16px 0; }
+    .next-inject b { color: var(--orange); }
+    @media (max-width: 640px) { .clock { grid-template-columns: 1fr; justify-items: center; } }
+
+    .act-head { display: flex; align-items: center; gap: 18px; margin: 10px 0 24px; }
+    .act-head .roman { font-family: var(--display); font-weight: 700; font-size: 3.2rem; line-height: 1; color: transparent; -webkit-text-stroke: 2px var(--act); }
+    .act-head .eyebrow { color: var(--act); margin: 0; }
+    .act-head h2 { margin: 0; }
+    .act { --act: var(--cyan); }
+    .act.a2 { --act: var(--green); } .act.a3 { --act: var(--orange); } .act.a4 { --act: var(--red); }
+
+    .challenge { margin: 22px 0; border-left: 4px solid var(--act); }
+    .ch-head { display: grid; grid-template-columns: auto 1fr auto; gap: 18px; align-items: start; margin-bottom: 8px; }
+    .ch-num { font-family: var(--mono); font-size: 1.6rem; font-weight: 600; color: var(--act); line-height: 1; padding-top: 4px; }
+    .ch-head h3 { margin: 0 0 8px; }
+    .pts { font-family: var(--display); font-weight: 700; font-size: 1.5rem; color: var(--orange); white-space: nowrap; }
+    .pts small { font-family: var(--mono); font-size: .7rem; color: var(--muted); display: block; text-align: right; letter-spacing: .14em; }
+    .clue { font-size: 1.02rem; color: var(--text-dim); }
+    .clue::before { content: "CLUE  "; font-family: var(--mono); font-size: .72rem; letter-spacing: .2em; color: var(--act); }
+    a.chip:hover { text-decoration: none; border-color: var(--accent); color: #fff; }
+    @media (max-width: 640px) { .ch-head { grid-template-columns: 1fr; } .pts small { text-align: left; } }
+
+    .scoreboard { padding: 0; overflow: hidden; }
+    .scoreboard .sb-top { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; padding: 22px 24px; border-bottom: 1px solid var(--border); background: linear-gradient(90deg, rgba(255, 153, 0, .12), transparent); }
+    .scoreboard .sb-total { font-family: var(--display); font-size: 2.4rem; font-weight: 700; color: #fff; line-height: 1; }
+    .scoreboard .sb-total small { font-size: .9rem; color: var(--muted); font-weight: 500; }
+    .scoreboard table td:last-child, .scoreboard table th:last-child { text-align: right; }
+    .scoreboard tr.got td { color: #fff; }
+    .scoreboard tr.got td:first-child::before { content: "🚩 "; }
+    .scoreboard tr:not(.got) td { color: var(--muted); }
+    .sb-acts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; padding: 18px 24px; border-bottom: 1px solid var(--border); }
+    .sb-acts div { font-family: var(--mono); font-size: .72rem; letter-spacing: .12em; color: var(--muted); }
+    .sb-acts .bar { margin-top: 6px; }
+    @media (max-width: 640px) { .sb-acts { grid-template-columns: 1fr 1fr; } }
+
+    .roe { list-style: none; padding: 0; display: grid; gap: 10px; counter-reset: roe; }
+    .roe li { counter-increment: roe; padding: 14px 16px 14px 60px; position: relative; border-radius: 12px; background: var(--panel); border: 1px solid var(--border); margin: 0; }
+    .roe li::before { content: counter(roe, upper-roman); position: absolute; left: 16px; top: 13px; font-family: var(--display); font-weight: 700; color: var(--orange); width: 30px; text-align: center; }
+    .role-card h3 { display: flex; align-items: center; gap: 10px; }
+    .role-card .dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+
+    /* ---------- pass 2 ---------- */
+    .act-cover { width: 100%; aspect-ratio: 4 / 1; object-fit: cover; border-radius: 18px; border: 1px solid color-mix(in srgb, var(--act) 40%, transparent); box-shadow: 0 24px 60px -30px color-mix(in srgb, var(--act) 60%, transparent); margin: 6px 0 18px; }
+    @media (max-width: 640px) { .act-cover { aspect-ratio: 5 / 2; object-position: 0 50%; } }
+    .challenge .term, .challenge figure.shot { margin: 16px 0; }
+    .gm-guide { border-color: rgba(255,153,0,.45); background: linear-gradient(135deg, rgba(255,153,0,.08), rgba(255,255,255,.02)); }
+    .gm-guide summary { color: var(--orange) !important; font-size: .9rem !important; }
+    .gm-guide summary::before, .gm-guide[open] summary::before { content: "🎲 " !important; }
+    .gm-guide h4 { font-family: var(--mono); font-size: .76rem; letter-spacing: .16em; text-transform: uppercase; color: var(--orange); margin: 18px 0 8px; }
+    .gm-guide ol, .gm-guide ul { margin-top: 0; }
+    /* mobile: 1fr = minmax(auto,1fr) lets long <pre> lines widen the column; clamp it (site.css should do this globally) */
+    @media (max-width: 1080px) { .day-layout { grid-template-columns: minmax(0, 1fr); } }
+    .spoiler { color: transparent !important; background: repeating-linear-gradient(45deg, #2a2f55 0 6px, #1b1f40 6px 12px); border-radius: 4px; }
+  </style>
+</head>
+<body class="gameday">
+<header id="site-nav"></header>
+
+<!-- ============ CINEMATIC HERO ============ -->
+<section class="gd-hero">
+  <div class="bg" role="img" aria-label="The Kraken's tentacles wrap the Skyfortress at sunset as searchlights sweep a storm"></div>
+  <div class="container">
+    <span class="alert-strip">● SEV-1 · ACTIVE INCIDENT · CASE KRAKEN-001</span>
+    <div class="eyebrow" style="margin-top:22px">Friday · 13:30–17:00 · Capstone</div>
+    <h1>Kraken <span class="grad">Rising</span></h1>
+    <p class="lead">It's GameDay. The Kraken Collective is already inside Nimbus Interstellar's production account. Four acts, thirteen flags and one very angry cephalopod stand between you and the <b>Kraken Slayer</b> title. Every skill from the week gets used.</p>
+    <div class="chips">
+      <span class="chip accent">13 flags · 3,600 pts</span><span class="chip">⏱ 3 h 30 m</span><span class="chip">👥 teams of 4–5</span>
+      <span class="chip">💸 &lt; $0.50 total</span><span class="chip hard">Hard</span><span class="chip new">2026 EDITION</span>
+    </div>
+    <div class="typer" id="typer" aria-live="polite"></div>
+  </div>
+</section>
+
+<div class="container day-layout" style="margin-top:40px">
+  <nav class="toc" data-auto></nav>
+  <main class="day-content">
+
+    <!-- ============ BRIEFING ============ -->
+    <section id="briefing">
+      <div class="eyebrow">Mission briefing</div>
+      <h2>04:12 UTC. The pager screams.</h2>
+      <div class="story reveal">
+        <img class="avatar" src="assets/img/owlsley.svg" alt="Owlsley">
+        <div>
+          <div class="who">OWLSLEY · CISO-in-residence, Nimbus Interstellar</div>
+          <p>Crew, this is the real one. Overnight, our build user started making API calls it has <em>never</em> made. Ops says the cargo manifests for three in-flight vessels won't open. Customer support says our chatbot is telling people their shipments have been "rerouted". And something on the dispatch node keeps looking up a domain none of us recognise.</p>
+          <p>You've spent four days building the walls. Today you defend them. Work as a team: one commander, hunters who find the evidence, responders who act on it, and a scribe who writes everything down. <strong>Capture evidence before you cut anything.</strong> And no heroics in prod without the IC's go-ahead.</p>
+        </div>
+      </div>
+      <div class="story villain reveal">
+        <img class="avatar" src="assets/img/kraken.svg" alt="The Kraken">
+        <div>
+          <div class="who">INTERCEPTED · The Kraken Collective · #ops channel</div>
+          <p>lol. one leaked key, one lazy CI role, and the whole fortress opens up like a clam. we left you some presents: a door you can't see, a heartbeat you can't hear, and a lock you can't pick. you have until 17:00. 🐙</p>
+        </div>
+      </div>
+      <figure class="figure reveal"><img src="assets/img/gameday/acts.svg" alt="Four shields for the four acts: Detect, Contain, Eradicate and Recover, Harden"><figcaption><b>THE FOUR ACTS</b> The game follows the NIST incident lifecycle (SP 800-61r3, 2025). You can work ahead, but the injects arrive on schedule.</figcaption></figure>
+    </section>
+
+    <!-- ============ CLOCK ============ -->
+    <section id="mission-clock">
+      <div class="eyebrow">Mission clock</div>
+      <h2>T-minus <span class="grad">3:30:00</span></h2>
+      <div class="card glow reveal">
+        <div class="clock" id="clock">
+          <div class="ring">
+            <svg viewBox="0 0 120 120" aria-hidden="true">
+              <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="9"/>
+              <circle id="ring-arc" cx="60" cy="60" r="52" fill="none" stroke="url(#ringGrad)" stroke-width="9" stroke-linecap="round" stroke-dasharray="326.73" stroke-dashoffset="0"/>
+              <defs><linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff9900"/><stop offset="1" stop-color="#fb7185"/></linearGradient></defs>
+            </svg>
+            <div class="digits"><div><b id="clock-digits">3:30:00</b><span id="clock-state">STANDING BY</span></div></div>
+          </div>
+          <div>
+            <p>The IC presses start when the game master says <b>"Kraken Rising"</b>. The clock lives in this browser (it survives a reload), so start it on the IC's laptop and project it.</p>
+            <div class="next-inject" id="next-inject">Next inject: <b>Kickoff &amp; briefing</b> at T+0:00</div>
+            <div class="pill-row">
+              <button class="btn" id="clock-start" type="button">▶ Start mission</button>
+              <button class="btn ghost sm" id="clock-reset" type="button">↺ Reset clock</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ OBJECTIVES + SCHEDULE ============ -->
+    <section id="objectives">
+      <div class="eyebrow">Outcomes</div>
+      <h2>By 17:00 your team will have…</h2>
+      <ul class="objectives">
+        <li>Rebuilt a multi-stage AWS intrusion from <b>CloudTrail, DNS query logs and S3 versions</b>, with no hints from a dashboard</li>
+        <li>Contained a credential compromise properly: <b>deactivated keys <em>and</em> revoked live sessions</b></li>
+        <li>Captured volatile evidence <b>before</b> network-isolating a host, and kept chain of custody</li>
+        <li>Recovered "ransomed" SSE-C data <b>without the key</b>, and knew why that was possible</li>
+        <li>Found and explained a <b>prompt-injection</b> attack planted in an AI assistant's knowledge base</li>
+        <li>Shipped the guardrails and detections so <b>this exact attack can't happen twice</b></li>
+        <li>Written a blameless root-cause analysis and a holding statement for the press</li>
+        <li>Survived a Red Cell re-entry attempt. Ideally without anyone screaming.</li>
+      </ul>
+      <h3 style="margin-top:40px">Afternoon run-of-show</h3>
+      <div class="timeline">
+        <div class="slot"><div class="time">13:30</div><div class="what"><b>Kickoff</b>: briefing, team roles, rules of engagement, start the clock</div></div>
+        <div class="slot lab-slot"><div class="time">13:45</div><div class="what"><b>Inject 0</b>: "Anomalous API activity from the build user". <b>Act I · Detect</b> begins <span class="chip accent">GO</span></div></div>
+        <div class="slot lab-slot"><div class="time">14:15</div><div class="what"><b>Inject 1</b>: Ops: "cargo manifests for three vessels won't open". <b>Act II · Contain</b></div></div>
+        <div class="slot lab-slot"><div class="time">14:45</div><div class="what"><b>Inject 2</b>: Support: "NimbusHelp told a customer their cargo is going to Kraken Station"</div></div>
+        <div class="slot lab-slot"><div class="time">15:15</div><div class="what"><b>Inject 3</b>: A journalist emails. Comms must send a holding statement within 20 minutes. <b>Act III</b></div></div>
+        <div class="slot lab-slot"><div class="time">15:45</div><div class="what"><b>Inject 4</b>: Red Cell re-entry attempt with the stolen session and keys. <b>Act IV · Harden</b></div></div>
+        <div class="slot"><div class="time">16:15</div><div class="what"><b>Pencils down</b>: final flag plus root-cause write-up submitted</div></div>
+        <div class="slot"><div class="time">16:20</div><div class="what"><b>Team debriefs</b>: 5 minutes per team: what happened, what you did, what you'd change</div></div>
+        <div class="slot"><div class="time">16:50</div><div class="what"><b>Awards</b>: Kraken Slayer, Best Write-up, Fastest Containment, "Most Creative Detection"</div></div>
+        <div class="slot break-slot"><div class="time">17:00</div><div class="what">Teardown (seriously, run it), then drinks</div></div>
+      </div>
+      <figure class="figure reveal"><img src="assets/img/gameday/inject-timeline.svg" alt="Timeline of injects from 13:30 kickoff through 16:50 awards"><figcaption><b>FIG GD.1</b> The inject schedule. The game master can slide injects ±10 minutes depending on the room's pace.</figcaption></figure>
+    </section>
+
+    <!-- ============ MAP ============ -->
+    <section id="map">
+      <div class="eyebrow">Intel</div>
+      <h2>The battlefield</h2>
+      <p>Everything lives in the <code>skyfortress-prod</code> sandbox member account in <code>us-east-1</code>, deployed by one CloudFormation stack, <code>kraken-gameday</code>. Below is Owlsley's <em>suspected</em> kill chain. Treat it as a hypothesis: your job is to prove or disprove every hop with evidence.</p>
+      <figure class="figure reveal"><img src="assets/img/gameday/mission-map.svg" alt="Map of the environment: a CI build log leads to the ci-deployer user, then the over-privileged CI role, which branches to persistence on svc-telemetry, a backdoored role, an EC2 instance beaconing to a C2 domain, the cargo bucket and the chatbot knowledge base"><figcaption><b>FIG GD.2</b> Intel map. Dashed rose lines are suspected attacker hops; the orange line is beacon traffic. The watchtowers are where your evidence lives.</figcaption></figure>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Asset</th><th>What it is</th><th>Week skill you'll need</th></tr></thead>
+          <tbody>
+            <tr><td><code>ci-deployer</code></td><td>IAM user for the legacy CI system. Has a long-term access key (yes, in 2026).</td><td><a href="day1.html#labs">Day 1 · Identity</a></td></tr>
+            <tr><td><code>nimbus-ci-deploy-role</code></td><td>Over-privileged deploy role: <code>iam:*</code>, <code>s3:*</code>, some EC2</td><td><a href="day1.html#labs">Day 1 · least privilege</a></td></tr>
+            <tr><td><code>nimbus-telemetry-reader</code>, <code>svc-telemetry</code></td><td>Observability team identities that have been "dormant" for months</td><td><a href="day1.html#labs">Day 1 · Access Analyzer</a></td></tr>
+            <tr><td><code>nimbus-dispatch-01</code></td><td>t4g.nano dispatch node in <code>nimbus-dispatch-vpc</code>, managed by SSM</td><td><a href="day3.html#labs">Day 3 · network &amp; workload</a></td></tr>
+            <tr><td>Resolver query logs</td><td>Every DNS query from the VPC, sent to CloudWatch Logs</td><td><a href="day3.html#labs">Day 3 · DNS visibility</a></td></tr>
+            <tr><td>Cargo bucket</td><td>Crown-jewel manifests. Versioned. Was that on purpose?</td><td><a href="day4.html#labs">Day 4 · data protection</a></td></tr>
+            <tr><td>Artifacts bucket</td><td>CI build logs plus the NimbusHelp chatbot's knowledge base</td><td><a href="day4.html#labs">Day 4 · AI security</a></td></tr>
+            <tr><td>Evidence bucket + <code>CaptureVolatile</code> SSM doc</td><td>Your forensic toolkit</td><td><a href="day5.html#labs">Day 5 · incident response</a></td></tr>
+            <tr><td>CloudTrail</td><td>Event history at minimum; your Day 2 org trail, Lake or Athena tables if you built them</td><td><a href="day2.html#labs">Day 2 · detection</a></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ============ SETUP ============ -->
+    <section id="setup">
+      <div class="eyebrow">Before the game</div>
+      <h2>Deploy the Kraken</h2>
+      <div class="callout warn"><strong class="ct">Sandbox only. Seriously.</strong><p>This stack deliberately creates an over-privileged role, a long-term access key, a trust policy with <code>Principal: "*"</code> (restricted to a non-existent organization, so nobody can actually use it), and a world-open SSH rule on an instance with no key pair. It's harmless by design, but it trips every security alarm you have. Deploy it <b>only</b> in your <code>skyfortress-prod</code> sandbox member account from <a href="setup.html">Lab 0</a>, never in a real workload account.</p></div>
+      <details class="hint gm-guide">
+        <summary>Game master quick-start (instructors). Open for the run-sheet, no answers inside</summary>
+        <h4>T-60 min · prepare</h4>
+        <ol>
+          <li>One <code>skyfortress-prod</code> sandbox account per team, each with a budget alarm from <a href="setup.html">Lab 0</a>. Check that GuardDuty from Day 2 is still on (optional, but the findings make Act I more fun).</li>
+          <li>Deploy <code>kraken-gameday</code> in every team account (Lab GD.0 below). Using one CloudShell per account keeps the stolen material in <code>~/.kraken/</code> separate.</li>
+          <li>Run <code>./kraken-replay.sh</code> <b>at least 15 minutes before kickoff</b> so CloudTrail and the DNS logs have caught up. Then run <code>./gameday-check.sh all</code> and expect a wall of ✘.</li>
+          <li>Print or share the answer key and the scoring sheet from <code>instructor/gameday.md</code>. It's gitignored, so it isn't on this site.</li>
+        </ol>
+        <h4>T-0 · run the room</h4>
+        <ul>
+          <li>Project the <a href="#mission-clock">mission clock</a> and press start on "Kraken Rising". The clock toasts each inject. Read every inject aloud in character.</li>
+          <li>Walk the floor every 15 minutes. If a team is stuck for more than 10 minutes, point them at the free tier-1 hint, never the answer.</li>
+          <li>At Inject 4 (Red Cell), run <code>./kraken-replay.sh reentry</code> from the shell that holds <code>~/.kraken/</code> and read the results to the team: a ✔ means their containment held, a 😈 means a tentacle still works.</li>
+          <li>Keep the official cross-team leaderboard yourself. The on-page scoreboard only knows about one browser.</li>
+        </ul>
+        <h4>16:15 → 17:00 · land it</h4>
+        <ul>
+          <li>Run the final question live: the IC gets 60 seconds to name patient zero and the initial access vector, with evidence.</li>
+          <li>Give each team 5 minutes of debrief, then awards. Make sure every account runs <code>./teardown.sh</code> before anyone leaves.</li>
+          <li>Running the next cohort? Teardown, redeploy, replay. The flags are static, so rotate the team accounts to keep answers from travelling between cohorts.</li>
+        </ul>
+      </details>
+      <article class="lab" id="lab-gd-setup">
+        <div class="lab-head">
+          <div class="lab-num">Lab GD.0 · Game master</div>
+          <h3>Stand up the pre-compromised environment</h3>
+          <div class="chips"><span class="chip easy">Facilitator</span><span class="chip">⏱ 20 min (do it at lunch)</span><span class="chip">💸 ~$0.01/hr</span><span class="chip">CloudFormation · CloudShell</span></div>
+        </div>
+        <div class="lab-body">
+          <p><b>Goal:</b> deploy <code>kraken-gameday</code> and replay the intrusion at least <b>15 minutes before kickoff</b>, so CloudTrail and DNS logs have caught up. In an instructor-led class the game master does this for every team account. For self-study, do it yourself and then try not to look at your terminal history.</p>
+          <h4>Steps</h4>
+          <ol class="steps" data-lab="gd-setup">
+            <li><strong>Open CloudShell in the right place</strong><p>Sign in to <code>skyfortress-prod</code> through IAM Identity Center with your admin permission set, switch to <b>us-east-1</b>, and open CloudShell. Check where you are:</p>
+<pre data-title="CloudShell"><code class="language-bash">aws sts get-caller-identity --query '[Account,Arn]' --output text
+aws configure get region || echo $AWS_REGION   # must be us-east-1</code></pre></li>
+            <li><strong>Grab the GameDay kit</strong>
+<pre data-title="CloudShell"><code class="language-bash">git clone https://github.com/varoonsahgal/awsadvancedsecurity.git ~/skyfortress
+cd ~/skyfortress/labs/gameday &amp;&amp; chmod +x *.sh &amp;&amp; ls</code></pre>
+            <p>You should see <code>kraken-gameday.yaml</code>, <code>kraken-replay.sh</code>, <code>gameday-check.sh</code>, <code>teardown.sh</code> and <code>seed/</code>.</p></li>
+            <li><strong>Deploy the stack</strong>
+<pre data-title="CloudShell"><code class="language-bash">aws cloudformation deploy \
+  --stack-name kraken-gameday \
+  --template-file kraken-gameday.yaml \
+  --capabilities CAPABILITY_NAMED_IAM \
+  --region us-east-1
+aws cloudformation describe-stacks --stack-name kraken-gameday \
+  --query 'Stacks[0].Outputs' --output table</code></pre>
+            <p>It takes about 3–4 minutes: a VPC, a t4g.nano instance, three buckets, four IAM identities, Resolver query logging and an SSM document.</p>
+<div class="term" data-title="CloudShell · us-east-1 · skyfortress-prod"><pre><span class="p">$</span> <span class="c">aws cloudformation deploy --stack-name kraken-gameday --template-file kraken-gameday.yaml --capabilities CAPABILITY_NAMED_IAM --region us-east-1</span>
+<span class="o">Waiting for changeset to be created..
+Waiting for stack create/update to complete</span>
+<span class="ok">Successfully created/updated stack - kraken-gameday</span>
+<span class="p">$</span> <span class="c">aws cloudformation describe-stacks --stack-name kraken-gameday --query 'Stacks[0].Outputs' --output table</span>
+<span class="o">+-------------------------+-----------------------------------------------+
+|        OutputKey        |                  OutputValue                  |
++-------------------------+-----------------------------------------------+</span>
+<span class="o">|</span>  <span class="k">CargoBucket</span>            <span class="o">|</span>  <span class="s">kraken-gameday-cargobucket-1a2b3c4d5e6f</span>      <span class="o">|</span>
+<span class="o">|</span>  <span class="k">ArtifactsBucket</span>        <span class="o">|</span>  <span class="s">kraken-gameday-artifactsbucket-7g8h9i0j</span>      <span class="o">|</span>
+<span class="o">|</span>  <span class="k">EvidenceBucket</span>         <span class="o">|</span>  <span class="s">kraken-gameday-evidencebucket-3m4n5o6p</span>       <span class="o">|</span>
+<span class="o">|</span>  <span class="k">InstanceId</span>             <span class="o">|</span>  <span class="s">i-0a1b2c3d4e5f60718</span>                          <span class="o">|</span>
+<span class="o">|</span>  <span class="k">CaptureDocumentName</span>    <span class="o">|</span>  <span class="s">kraken-gameday-CaptureVolatile</span>               <span class="o">|</span>
+<span class="o">|</span>  <span class="k">ResolverQueryLogGroup</span>  <span class="o">|</span>  <span class="s">/skyfortress/kraken-gameday/resolver-queries</span> <span class="o">|</span>
+<span class="o">|</span>  <span class="k">CaseId</span>                 <span class="o">|</span>  <span class="s">KRAKEN-001</span>                                   <span class="o">|</span>
+<span class="o">|  … VpcId, DispatchSecurityGroupId, CiDeployRoleArn, TelemetryRoleArn  |
++-------------------------+-----------------------------------------------+</span></pre></div>
+<p class="term-caption">Expected output. Bucket suffixes and IDs are random per deployment.</p></li>
+            <li><strong>Unleash the Kraken (replay the intrusion)</strong>
+<pre data-title="CloudShell · facilitator"><code class="language-bash">./kraken-replay.sh          # type KRAKEN to confirm
+# keep ~/.kraken/ — Inject 4 (Red Cell) re-uses the stolen material from this shell</code></pre>
+            <p>The script seeds the data, "leaks" a key into a CI build log, and then <em>acts as the attacker</em> with that key: recon, persistence, exfiltration reads, SSE-C "ransomware" and knowledge-base poisoning. Every attacker call carries a custom user agent, so the evidence is real.</p>
+<div class="term" data-title="CloudShell · facilitator only · don't project this"><pre><span class="p">$</span> <span class="c">./kraken-replay.sh</span>
+<span class="err">            ___
+         .-'   `'.        THE KRAKEN COLLECTIVE
+        /         \       adversary emulation · training use only
+        |  (o) (o)|
+        \    ^    /       ~ every tentacle is logged ~
+     _.-'`-.___.-'`-._</span>
+<span class="o">Target account : 111122223333  (us-east-1)   stack: kraken-gameday
+This will plant TRAINING artifacts (IAM keys, a backdoored trust policy, an open SSH rule,
+overwritten S3 objects, a ransom note). Only run this in your skyfortress-prod SANDBOX.</span>
+Type KRAKEN to unleash: <span class="c">KRAKEN</span>
+<span class="k">   Phase 0 · seeding Nimbus Interstellar's data (as you)</span>
+<span class="ok">✔  Phase 0 complete (leaked key minted for ci-deployer: AKIA████████████████)</span>
+<span class="k">   Waiting for the new access key to propagate...</span>
+<span class="err">🐙 Phase 1 · the Kraken wakes (user agent: kraken-tentacle-<span class="spoiler">████████████████████████</span>)</span>
+<span class="err">🐙 <span class="spoiler">██████████████████████████████████████████</span></span>
+<span class="o">   … 8 more attacker phases, redacted here so this page doesn't spoil Act I …</span>
+<span class="ok">✔  Replay complete. CloudTrail management events appear in 5–15 minutes; DNS beacons every 2 minutes.</span>
+<span class="ok">✔  Stolen material kept in /home/cloudshell-user/.kraken for Inject 4 (./kraken-replay.sh reentry).</span>
+<span class="warn">Facilitator: do NOT show this terminal to the teams. Good hunting.</span></pre></div>
+<p class="term-caption">Expected output, with the spoilers redacted on purpose. Your real terminal shows every phase, so keep it off the projector.</p></li>
+            <li><strong>Confirm the starting state</strong>
+<pre data-title="CloudShell"><code class="language-bash">./gameday-check.sh all      # expect a wall of ✘ — that's the patient on the table</code></pre>
+<div class="term" data-title="CloudShell · starting state"><pre><span class="p">$</span> <span class="c">./gameday-check.sh all</span>
+Act II · Cut the Tentacle
+  <span class="err">✘</span> ci-deployer still has an ACTIVE access key
+  <span class="err">✘</span> stolen CI-role session tokens are still valid — revoke active sessions
+Act II · Capture, then Quarantine
+  <span class="err">✘</span> no evidence captured (run the CaptureVolatile SSM document BEFORE isolating)
+  <span class="err">✘</span> instance still has ingress or egress rules on: sg-0d1e2f3a4b5c6d7e8
+  <span class="err">✘</span> no EBS snapshot of vol-0f9e8d7c6b5a49382 tagged Case=KRAKEN-001
+Act II · Slam the Backdoors
+  <span class="err">✘</span> svc-telemetry still has an attacker-minted ACTIVE key
+  <span class="err">✘</span> nimbus-telemetry-reader still trusts Principal "*"
+  <span class="err">✘</span> nimbus-dispatch-sg still allows 0.0.0.0/0 inbound
+Act III · Restore the Manifests
+  <span class="err">✘</span> manifests/manifest-lyra-2077.json is still locked/corrupt (current version ≠ original)
+  <span class="err">✘</span> manifests/manifest-orion-0451.json is still locked/corrupt (current version ≠ original)
+  <span class="err">✘</span> manifests/manifest-vega-1138.json is still locked/corrupt (current version ≠ original)
+Act IV · Never Again: SSE-C
+  <span class="err">✘</span> an SSE-C write to the cargo bucket SUCCEEDED — the Kraken could do it again
+Act IV · Detect It Next Time
+  <span class="err">✘</span> no ENABLED EventBridge rule with a target matches UpdateAssumeRolePolicy or CreateAccessKey
+<span class="err">Work remains.</span></pre></div>
+<p class="term-caption">Expected output: fourteen red lines, the patient on the table. If any line is already ✔, the replay didn't finish. Re-run it.</p></li>
+          </ol>
+          <div class="checkpoint"><p>The stack is <code>CREATE_COMPLETE</code>, the replay ended with "Replay complete", and <code>gameday-check.sh all</code> shows red across the board. Wait 15 minutes for CloudTrail, then hand the account to the teams.</p></div>
+          <div class="callout cost"><strong class="ct">What it costs</strong><p>t4g.nano (~$0.0042/hr) + one public IPv4 (~$0.005/hr) + S3/CloudWatch Logs pennies + an 8 GiB forensic snapshot (~$0.01/day). <b>Well under $0.50 for the afternoon.</b> The one real cost is forgetting to run <code>teardown.sh</code> for a month (~$7).</p></div>
+          <details class="hint"><summary>Why is SSE-C sometimes "simulated"?</summary><p>AWS has been steering customers away from SSE-C after real-world ransomware campaigns abused it, and your own Day 4 guardrails may already block it. If S3 refuses the SSE-C write, the replay falls back to overwriting the manifests with junk plus a <code>kraken-lock=sse-c-simulated</code> metadata marker. The recovery path (versioning) and the lesson are the same either way.</p></details>
+        </div>
+      </article>
+
+      <h3 style="margin-top:34px">If the Kraken won't rise: troubleshooting</h3>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr></thead>
+        <tbody>
+          <tr><td><code>deploy</code> fails with <code>Requires capabilities : [CAPABILITY_NAMED_IAM]</code></td><td>The template names its IAM users and roles</td><td>Add <code>--capabilities CAPABILITY_NAMED_IAM</code> exactly as shown</td></tr>
+          <tr><td><code>EntityAlreadyExists</code> for <code>ci-deployer</code> or the roles</td><td>A previous GameDay wasn't torn down, or another stack owns the names</td><td>Run <code>./teardown.sh</code> (it removes out-of-band keys and policies first), then deploy again</td></tr>
+          <tr><td>Stack rolls back on <code>DispatchInstance</code> (<code>InsufficientInstanceCapacity</code>)</td><td>No t4g capacity in the first AZ right now</td><td>Delete the stack and redeploy with <code>--parameter-overrides InstanceType=t4g.micro</code>, or retry in 10 minutes</td></tr>
+          <tr><td><code>VpcLimitExceeded</code></td><td>The default limit is 5 VPCs per Region, and the Day 3 labs leave VPCs behind</td><td>Run <code>labs/setup/nuke-check.sh</code> and delete leftover lab VPCs</td></tr>
+          <tr><td>Replay: <code>Stack 'kraken-gameday' not found</code></td><td>Wrong Region or wrong account</td><td><code>export AWS_REGION=us-east-1</code>, then check <code>aws sts get-caller-identity</code></td></tr>
+          <tr><td>Replay: <code>jq is required</code> / <code>openssl is required</code></td><td>Running outside CloudShell</td><td>Use CloudShell, or install <code>jq</code> and <code>openssl</code> locally</td></tr>
+          <tr><td>Replay hangs at "Waiting for the new access key to propagate…"</td><td>IAM eventual consistency, or an SCP denying <code>sts:*</code> to IAM users</td><td>Give it 2 minutes. If it still fails, check the Day 1 SCPs on the Workloads OU</td></tr>
+          <tr><td>Replay prints <code>SSE-C was refused … used simulated lock markers</code></td><td>Newer S3 defaults, or <em>your own</em> Day 4 RCP blocking SSE-C (well done!)</td><td>Expected. Challenge 04 then reads the <code>kraken-lock</code> metadata, and 10 and 11 work as normal</td></tr>
+          <tr><td>Replay: <code>AccessDenied</code> on <code>CreateAccessKey</code> or <code>UpdateAssumeRolePolicy</code></td><td>A Day 1 or Day 5 guardrail SCP on the account</td><td>Detach it for the game (and use it in the debrief) or move the account to a guardrail-free OU</td></tr>
+          <tr><td>Event history is empty for <code>ci-deployer</code></td><td>CloudTrail lag (5–15 min)</td><td>Wait, widen the time window, and check you're in us-east-1</td></tr>
+          <tr><td>Logs Insights shows no DNS queries</td><td>Query logging takes a few minutes to start; the beacon fires every 2 minutes</td><td>Wait 5 minutes, then confirm with <code>aws route53resolver list-resolver-query-log-config-associations</code></td></tr>
+          <tr><td><code>CaptureVolatile</code> fails with <code>InvalidInstanceId</code></td><td>The instance isn't registered with SSM yet, or it's already isolated</td><td>Run <code>aws ssm describe-instance-information</code>, and capture <b>before</b> you isolate (that's the lesson of challenge 07)</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <!-- ============ ROLES ============ -->
+    <section id="roles">
+      <div class="eyebrow">The crew</div>
+      <h2>Pick your roles</h2>
+      <figure class="figure reveal"><img src="assets/img/gameday/roles.svg" alt="Illustrated cards for Incident Commander, Hunter, Responder, Comms and Scribe, and Red Cell"></figure>
+      <div class="grid g2">
+        <div class="card role-card"><h3><span class="dot" style="background:#ff9900"></span>Incident Commander</h3><p>Runs the room. Sets priorities, approves every change in prod ("Responder, you're go to isolate"), tracks the clock and calls the 15-minute status checks. <b>Doesn't touch a keyboard.</b> Their whole job is keeping the big picture.</p></div>
+        <div class="card role-card"><h3><span class="dot" style="background:#22d3ee"></span>Hunter (×1–2)</h3><p>Turns questions into queries: CloudTrail event history and Lake, Athena, Logs Insights on DNS logs, Access Analyzer findings. Reports facts with timestamps, not vibes.</p></div>
+        <div class="card role-card"><h3><span class="dot" style="background:#34d399"></span>Responder</h3><p>Makes the changes, but only after the IC says go: revoke, isolate, snapshot, restore, add guardrails. Reads every command aloud before pressing enter. Backs out cleanly when wrong.</p></div>
+        <div class="card role-card"><h3><span class="dot" style="background:#a78bfa"></span>Comms &amp; Scribe</h3><p>Keeps the incident timeline in UTC, writes the status updates and the press holding statement, and owns the final root-cause write-up. Their notes are what the team gets graded on.</p></div>
+      </div>
+      <div class="callout info"><strong class="ct">Optional: Red Cell</strong><p>In a larger class, the instructor or one volunteer per room plays the Kraken. At Inject 4 they run <code>./kraken-replay.sh reentry</code> from the facilitator shell that holds the stolen material, and read the results aloud. If any tentacle still works, the team loses the "Fastest Containment" award and has to explain why.</p></div>
+      <div class="callout tip"><strong class="ct">Rotate at Inject 2</strong><p>Swap Hunter and Responder at the halfway point. Real incidents don't let you choose your specialty, and the debrief is better when everyone has done both.</p></div>
+    </section>
+
+    <!-- ============ ROE ============ -->
+    <section id="rules">
+      <div class="eyebrow">Rules of engagement</div>
+      <h2>Fight fair, fight smart</h2>
+      <ol class="roe">
+        <li><b>Stay in your blast radius.</b> Only touch your team's <code>skyfortress-prod</code> account and the <code>kraken-gameday</code> stack's resources. Never other teams, and never anything outside AWS.</li>
+        <li><b>Capture before you cut.</b> Destroying evidence (terminating the instance, deleting the role or keys) before capturing it costs <b>−300</b>. Deactivate first, delete later.</li>
+        <li><b>Don't sink the ship.</b> Deleting the cargo bucket, deleting the stack, or "fixing" things by removing the business function costs <b>−300 to −1000</b>. The dispatch app must still exist at 16:15.</li>
+        <li><b>No peeking.</b> Reading or decoding the flag strings inside <code>labs/gameday/*</code> or the game master's notes, instead of solving the challenge, costs <b>−500</b> and the eternal shame of the Kraken.</li>
+        <li><b>The IC approves every prod change.</b> Say it out loud: "IC, requesting approval to…". The scribe logs it with a UTC timestamp.</li>
+        <li><b>Hints are free, until they aren't.</b> Tier-1 hints are free. Opening a tier-2 hint costs 25% of that challenge's points (honor system; tell your scribe).</li>
+        <li><b>Have fun.</b> Bad puns about cephalopods are encouraged and tracked.</li>
+      </ol>
+    </section>
+
+    <!-- ============ SCORING ============ -->
+    <section id="scoring">
+      <div class="eyebrow">Scoring</div>
+      <h2>How the Kraken Slayer is crowned</h2>
+      <div class="grid g2">
+        <div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Source</th><th>Points</th></tr></thead>
+              <tbody>
+                <tr><td>13 flags (100 → 500 each)</td><td>3,600</td></tr>
+                <tr><td>Root-cause write-up (rubric below)</td><td>up to +500</td></tr>
+                <tr><td>Holding statement sent within 20 min of Inject 3</td><td>+150</td></tr>
+                <tr><td>Accurate UTC incident timeline (±5 min)</td><td>+150</td></tr>
+                <tr><td>Found <em>both</em> host persistence mechanisms</td><td>+100</td></tr>
+                <tr><td>Red Cell re-entry fully repelled</td><td>+200</td></tr>
+                <tr><td>Evidence destroyed before capture</td><td>−300</td></tr>
+                <tr><td>Business function broken / bucket deleted</td><td>−300 … −1000</td></tr>
+                <tr><td>Peeking at flag sources</td><td>−500</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Write-up rubric</th><th>Max</th></tr></thead>
+              <tbody>
+                <tr><td>Initial access correctly identified, with evidence</td><td>100</td></tr>
+                <tr><td>Full attacker timeline (every persistence and impact step)</td><td>100</td></tr>
+                <tr><td>Containment rationale (why sessions, not just keys)</td><td>75</td></tr>
+                <tr><td>Recovery verified with data, not assumed</td><td>75</td></tr>
+                <tr><td>Contributing factors (5 whys, blameless)</td><td>75</td></tr>
+                <tr><td>Action items with owners and dates</td><td>75</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <h3 style="margin-top:30px">Team scoreboard <span class="chip">this browser only</span></h3>
+      <p class="muted">This panel reads the flags captured <b>in this browser</b> (stored locally by the site). Use one laptop per team as the "flag console". The game master keeps the official cross-team leaderboard.</p>
+      <div class="card scoreboard reveal" id="scoreboard">
+        <div class="sb-top">
+          <div><div class="eyebrow" style="margin-bottom:6px">GameDay score · local</div><div class="sb-total"><span id="sb-total">0</span> <small>/ 3,600 pts</small></div></div>
+          <div class="chips"><span class="chip accent" id="sb-count">0 / 13 flags</span><span class="chip" id="sb-rank">Rank: Plankton</span></div>
+        </div>
+        <div class="sb-acts" id="sb-acts"></div>
+        <div class="table-wrap" style="margin:0;border:0;border-radius:0">
+          <table><thead><tr><th>Challenge</th><th>Act</th><th>Points</th></tr></thead><tbody id="sb-rows"></tbody></table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ RECON KIT ============ -->
+    <section id="recon-kit">
+      <div class="eyebrow">Loadout</div>
+      <h2>Your recon kit</h2>
+      <p>Paste this into every team member's CloudShell first. All the hints below use these variables.</p>
+<pre data-title="CloudShell · every operator"><code class="language-bash">cd ~/skyfortress/labs/gameday
+export STACK=kraken-gameday AWS_REGION=us-east-1
+o() { aws cloudformation describe-stacks --stack-name $STACK \
+        --query "Stacks[0].Outputs[?OutputKey=='$1'].OutputValue" --output text; }
+export CARGO=$(o CargoBucket) ARTIFACTS=$(o ArtifactsBucket) EVID=$(o EvidenceBucket) \
+       IID=$(o InstanceId) SG=$(o DispatchSecurityGroupId) VPC=$(o VpcId) \
+       DOC=$(o CaptureDocumentName) DNSLOG=$(o ResolverQueryLogGroup)
+env | grep -E '^(CARGO|ARTIFACTS|EVID|IID|SG|VPC|DOC|DNSLOG)='</code></pre>
+      <div class="callout gotcha"><strong class="ct">CloudTrail lag</strong><p>Management events usually show up in event history within 5 minutes, and sometimes take up to 15. If a hunt comes back empty, widen the time window before you decide the event didn't happen.</p></div>
+    </section>
+
+    <!-- ============ ACT I ============ -->
+    <section id="act-1" class="act a1">
+      <img class="act-cover" src="assets/img/gameday/act1-cover.svg" alt="Act I, Detect: a watchtower's beam sweeps the clouds and lights up the Kraken's trail of API calls">
+      <div class="act-head"><div class="roman">I</div><div><div class="eyebrow">Act I · 13:45 · Detect</div><h2>Find every tentacle</h2></div></div>
+      <p>Inject 0 is in: <em>"GuardDuty and our homegrown alerts flagged unusual API activity from the build user overnight."</em> Before anyone touches anything, build the picture. <b>Detection flags are about evidence:</b> each answer sits in a log, a policy or an object the Kraken left behind.</p>
+      <figure class="shot" data-url="console.aws.amazon.com/guardduty/home?region=us-east-1#/findings">
+        <img src="assets/img/gameday/shot-guardduty.svg" alt="Illustrative GuardDuty findings list: a critical AttackSequence:IAM/CompromisedCredentials finding with MITRE tactics Discovery, Persistence, Collection and Impact and indicators MISCONFIGURATION and SENSITIVE_DATA, plus anomalous-behavior findings for svc-telemetry, the CI role and the cargo bucket">
+        <figcaption><b>SCREEN GD.1</b> Illustrative mock-up; the live console layout may differ. If GuardDuty from Day 2 is running in this account, the replay <em>may</em> produce findings like these. Anomaly models need baseline history, so a fresh sandbox can stay quiet. Either way, GuardDuty is where you <em>start</em>, not where you stop: every flag below needs raw evidence.</figcaption>
+      </figure>
+
+      <div class="card challenge reveal" id="c1">
+        <div class="ch-head"><div class="ch-num">01</div><div><h3>Patient Zero's Fingerprint</h3><div class="chips"><a class="chip accent" href="day2.html#labs">Day 2 · CloudTrail hunting</a><span class="chip">user agents</span></div></div><div class="pts">100<small>POINTS</small></div></div>
+        <p class="clue">Every tool leaves a signature. The Kraken's API calls carry a distinctive <b>user agent</b>. Find it in CloudTrail. The flag is the words that come after <code>kraken-tentacle-</code>, wrapped like <code>SKY{those_words}</code>.</p>
+        <div class="paths">
+          <div class="path guided"><p><b>Event history</b> (works everywhere): CloudTrail console or <code>lookup-events</code>, filtered on the build user. Hints 1–2 below walk this road.</p></div>
+          <div class="path challenge"><p><b>Athena</b> (if your <a href="day2.html#labs">Day 2</a> org-trail table exists): find the rarest user agents in the last 24 hours and pivot on the principals that used them. No hints.</p></div>
+        </div>
+<div class="term" data-title="Athena · skyfortress.org_trail · what a hit looks like"><pre><span class="p">athena&gt;</span> <span class="c">SELECT useragent, count(*) AS calls, array_agg(DISTINCT useridentity.arn) AS who
+        FROM skyfortress.org_trail
+        WHERE eventtime &gt; to_iso8601(current_timestamp - interval '1' day)
+        GROUP BY useragent HAVING count(*) &lt; 60 ORDER BY calls;</span>
+<span class="o"> useragent                                                 | calls | who
+-----------------------------------------------------------+-------+------------------------------------------</span>
+ aws-cli/2.x … <span class="hl">exec-env/kraken-tentacle-<span class="spoiler">████████████</span></span> … |     3 | [arn:aws:iam::…:user/ci-deployer]
+ aws-cli/2.x … <span class="hl">exec-env/kraken-tentacle-<span class="spoiler">████████████</span></span> … |    17 | [arn:aws:sts::…:assumed-role/nimbus-ci-deploy-role/build-4471]
+ signin.amazonaws.com                                      |    22 | [arn:aws:sts::…:assumed-role/AWSReservedSSO_…]
+<span class="o">(3 rows · 1.9 s · 41 MB scanned)</span></pre></div>
+<p class="term-caption">Illustrative result with the flag words masked. Two principals share one tool signature. That's your first pivot: why would the build user and the deploy role use the same odd client?</p>
+        <details class="hint"><summary>Hint 1 · free</summary><p>CloudTrail → Event history → filter by <b>User name</b> <code>ci-deployer</code>, open an event, and read the <code>userAgent</code> field. Then try the assumed-role session's events too.</p></details>
+        <details class="hint solution"><summary>Hint 2 · −25%</summary>
+<pre><code class="language-bash">aws cloudtrail lookup-events --max-results 50 \
+  --lookup-attributes AttributeKey=Username,AttributeValue=ci-deployer \
+  --query 'Events[].CloudTrailEvent' --output json \
+  | jq -r '.[] | fromjson | .userAgent' | sort | uniq -c
+# look for exec-env/kraken-tentacle-…</code></pre></details>
+        <form class="flag" data-id="gd-flag1" data-hash="4d6c2dd89f3d39d0358119398cccc82bf710f5a73cd15e83259172b7f234fcb5" data-xp="100" data-label="Flag 01"></form>
+      </div>
+
+      <div class="card challenge reveal" id="c2">
+        <div class="ch-head"><div class="ch-num">02</div><div><h3>The Door You Can't See</h3><div class="chips"><a class="chip accent" href="day1.html#labs">Day 1 · trust policies &amp; Access Analyzer</a></div></div><div class="pts">150<small>POINTS</small></div></div>
+        <p class="clue">Someone made a role <em>far</em> too friendly. Find the role whose trust policy now lets <code>Principal: "*"</code> in. Whoever did it also left a <b>maintainer</b> tag on it. The tag value is the flag: <code>SKY{tag_value}</code>.</p>
+        <details class="hint"><summary>Hint 1 · free</summary><p>Two roads: IAM Access Analyzer external-access findings (if you built the analyzer on Day 1), or CloudTrail event name <code>UpdateAssumeRolePolicy</code>. Then read the condition carefully. Who could <em>actually</em> use this door, and does that organization exist?</p></details>
+        <details class="hint solution"><summary>Hint 2 · −25%</summary>
+<pre><code class="language-bash">aws cloudtrail lookup-events --lookup-attributes AttributeKey=EventName,AttributeValue=UpdateAssumeRolePolicy \
+  --query 'Events[].{t:EventTime,who:Username,res:Resources[0].ResourceName}' --output table
+aws iam get-role --role-name nimbus-telemetry-reader --query Role.AssumeRolePolicyDocument
+aws iam list-role-tags --role-name nimbus-telemetry-reader</code></pre>
+<figure class="shot" data-url="console.aws.amazon.com/iam/home#/roles/details/nimbus-telemetry-reader?section=trust_relationships">
+  <img src="assets/img/gameday/shot-trust-policy.svg" alt="Illustrative IAM console view of the nimbus-telemetry-reader trust policy, with a PartnerTelemetry statement allowing Principal AWS star conditioned on aws:PrincipalOrgID o-kr4k3nc0ll3c highlighted in red">
+  <figcaption><b>SCREEN GD.2</b> Illustrative mock-up; the live console layout may differ. The red statement is the door. The flag is on the <b>Tags</b> tab.</figcaption>
+</figure></details>
+        <form class="flag" data-id="gd-flag2" data-hash="ef890005f08bc04012af5713bb5d5551b5b85026144b21994725354b314c78d6" data-xp="150" data-label="Flag 02"></form>
+      </div>
+
+      <div class="card challenge reveal" id="c3">
+        <div class="ch-head"><div class="ch-num">03</div><div><h3>A Heartbeat You Can't Hear</h3><div class="chips"><a class="chip accent" href="day3.html#labs">Day 3 · DNS visibility</a><span class="chip">Logs Insights</span></div></div><div class="pts">150<small>POINTS</small></div></div>
+        <p class="clue"><code>nimbus-dispatch-01</code> is phoning home. Route 53 Resolver query logs for the VPC go to CloudWatch Logs (<code>$DNSLOG</code>). Find the C2 hostname. The flag is its <b>leftmost label</b>, with hyphens turned into underscores: <code>SKY{left_most_label}</code>.</p>
+        <details class="hint"><summary>Hint 1 · free</summary><p>Open CloudWatch → Logs Insights, select the resolver query log group, and filter <code>query_name</code> for anything that looks… cephalopod-ish.</p></details>
+        <details class="hint solution"><summary>Hint 2 · −25%</summary>
+<pre><code class="language-bash">Q=$(aws logs start-query --log-group-name "$DNSLOG" \
+  --start-time $(date -d '-6 hours' +%s) --end-time $(date +%s) \
+  --query-string 'fields query_name, srcaddr, rcode | filter query_name like /kraken/ | stats count() as hits by query_name, rcode' \
+  --query queryId --output text)
+sleep 6; aws logs get-query-results --query-id $Q --output table</code></pre></details>
+        <form class="flag" data-id="gd-flag3" data-hash="5f91c930d0c6cd5b0fcb153de3758ead3b5e6bdd8da368419911ece6ee5974e0" data-xp="150" data-label="Flag 03"></form>
+        <div class="callout tip"><strong class="ct">Notice the rcode</strong><p>Every beacon gets <code>NXDOMAIN</code>, because <code>example.com</code> sub-domains are reserved and never resolve. Real C2 resolves, of course. In the debrief, explain how a Day 3 <b>Route 53 Resolver DNS Firewall</b> rule (block <code>*.kraken.example.com</code>, or an allow-list for the whole VPC) would have stopped this beacon at the first lookup.</p></div>
+      </div>
+
+      <div class="card challenge reveal" id="c4">
+        <div class="ch-head"><div class="ch-num">04</div><div><h3>A Lock You Can't Pick</h3><div class="chips"><a class="chip accent" href="day4.html#labs">Day 4 · S3 &amp; SSE-C ransomware</a></div></div><div class="pts">200<small>POINTS</small></div></div>
+        <p class="clue">Ops says the cargo manifests are gibberish. Work out <b>how</b> they were locked, and find the note the Kraken left in the cargo bucket. The proof-of-presence code in the note is the flag.</p>
+        <details class="hint"><summary>Hint 1 · free</summary><p>Try a <code>head-object</code> on a manifest. If S3 answers <b>400 Bad Request</b>, the object is SSE-C encrypted: S3 can't even show you its metadata without the customer's key. Then list the bucket root.</p></details>
+        <details class="hint solution"><summary>Hint 2 · −25%</summary>
+<pre><code class="language-bash">aws s3api head-object --bucket $CARGO --key manifests/manifest-orion-0451.json   # 400 = SSE-C (or look for kraken-lock metadata)
+aws s3 ls s3://$CARGO/
+aws s3 cp s3://$CARGO/README_KRAKEN.txt -</code></pre></details>
+        <form class="flag" data-id="gd-flag4" data-hash="eaf9601defa378299218ea63300100deb97c06000c57c6c87a7668f5d299c006" data-xp="200" data-label="Flag 04"></form>
+      </div>
+
+      <div class="card challenge reveal" id="c5">
+        <div class="ch-head"><div class="ch-num">05</div><div><h3>The Poisoned Well</h3><div class="chips"><a class="chip accent" href="day4.html#labs">Day 4 · prompt injection &amp; Guardrails</a><span class="chip">OWASP LLM01</span></div></div><div class="pts">200<small>POINTS</small></div></div>
+        <p class="clue">Inject 2 (early access): NimbusHelp, the customer chatbot, is telling people their cargo has gone to "Kraken Station". Its retrieval knowledge base lives in the artifacts bucket. One document was tampered with to carry an <b>indirect prompt injection</b>. The planter's confirmation code is the flag.</p>
+        <details class="hint"><summary>Hint 1 · free</summary><p>List <code>knowledge-base/</code> and compare <code>LastModified</code> times. Then read the suspicious file <em>raw</em>: the injection hides where a human reading the rendered page would never look.</p></details>
+        <details class="hint solution"><summary>Hint 2 · −25%</summary>
+<pre><code class="language-bash">aws s3api list-objects-v2 --bucket $ARTIFACTS --prefix knowledge-base/ \
+  --query 'Contents[].[LastModified,Key]' --output table
+aws s3 cp s3://$ARTIFACTS/knowledge-base/shipping-policy.md - | grep -n -A8 '&lt;!--'</code></pre></details>
+        <form class="flag" data-id="gd-flag5" data-hash="70ef3c44651604dd709c01bc5422e28b6857c77aa3d1e48d75bd0a4e4799ef6e" data-xp="200" data-label="Flag 05"></form>
+        <div class="callout new"><strong class="ct">Debrief question: blast radius in 2026</strong><p>The artifacts bucket isn't versioned, so how will you prove what the document said before the attack? And what limits the damage when a poisoned document reaches an agent anyway? Talk through <b>Bedrock Guardrails</b> prompt-attack filters on retrieved content, <b>AgentCore Policy</b> (Cedar, GA March 2026, now able to invoke Guardrails inside policy) to stop a "reroute cargo" tool call that isn't backed by a signed change order, and the Security Hub <b>AI inventory</b> for finding every agent that reads this bucket.</p></div>
+      </div>
+    </section>
+
+    <!-- ============ ACT II ============ -->
+    <section id="act-2" class="act a2">
+      <img class="act-cover" src="assets/img/gameday/act2-cover.svg" alt="Act II, Contain: a glowing shield dome protects a server while a blade of light severs a tentacle">
+      <div class="act-head"><div class="roman">II</div><div><div class="eyebrow">Act II · 14:15 · Contain</div><h2>Capture, then cut</h2></div></div>
+      <p>Inject 1: <em>"Ops confirms three vessels are flying without readable manifests."</em> The IC needs the bleeding stopped <b>without</b> destroying the evidence you'll need for the write-up. Containment flags are awarded by <code>gameday-check.sh</code>, which checks the real state of your account.</p>
+
+      <div class="card challenge reveal" id="c6">
+        <div class="ch-head"><div class="ch-num">06</div><div><h3>Cut the Tentacle</h3><div class="chips"><a class="chip accent" href="day5.html#labs">Day 5 · credential compromise</a><a class="chip" href="day1.html#labs">Day 1 · session policies</a></div></div><div class="pts">250<small>POINTS</small></div></div>
+        <div class="predict"><p>The Responder deactivates <code>ci-deployer</code>'s key at 14:20 and stops there. Which of the Kraken's footholds does that actually close, and which does it leave open?</p>
+          <details><summary>Reveal</summary><p>It kills new API calls signed with that one key, and that's all. Every STS session already minted from it (the <code>build-4471</code> role session, and any the attacker refreshed or chained) stays valid until it expires, and the <code>svc-telemetry</code> key and trust-policy backdoor don't care about <code>ci-deployer</code> at all. That's why the checker wants the key deactivated <b>and</b> an <code>aws:TokenIssueTime</code> deny on the role, and why challenge 08 exists. Revoking costs nothing and covers the sessions you can't see.</p></details></div>
+        <p class="clue">Here's the classic trap: deleting a leaked key does <b>not</b> kill the role sessions already minted from it, and those can live for up to an hour. Deactivate <code>ci-deployer</code>'s key <em>and</em> revoke every active session of <code>nimbus-ci-deploy-role</code>. Then run <code>./gameday-check.sh contain</code>.</p>
+        <details class="hint"><summary>Hint 1 · free</summary><p>IAM console → Roles → <code>nimbus-ci-deploy-role</code> → <b>Revoke active sessions</b>. Find out what that button actually does, because you'll have to explain it in the debrief.</p></details>
+        <details class="hint solution"><summary>Hint 2 · −25%</summary>
+<pre><code class="language-bash">KEY=$(aws iam list-access-keys --user-name ci-deployer --query 'AccessKeyMetadata[0].AccessKeyId' --output text)
+aws iam update-access-key --user-name ci-deployer --access-key-id $KEY --status Inactive   # deactivate, don't delete (evidence)
+NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+aws iam put-role-policy --role-name nimbus-ci-deploy-role --policy-name AWSRevokeOlderSessions \
+  --policy-document "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Deny\",\"Action\":\"*\",\"Resource\":\"*\",
+  \"Condition\":{\"DateLessThan\":{\"aws:TokenIssueTime\":\"$NOW\"}}}]}"
+./gameday-check.sh contain</code></pre></details>
+<div class="term" data-title="CloudShell · half-contained"><pre><span class="p">$</span> <span class="c">./gameday-check.sh contain</span>
+Act II · Cut the Tentacle
+  <span class="ok">✔</span> ci-deployer has no active access keys
+  <span class="err">✘</span> stolen CI-role session tokens are still valid — revoke active sessions
+
+  <span class="err">Not yet. Fix the ✘ items and run again.</span></pre></div>
+<div class="term" data-title="CloudShell · contained"><pre><span class="p">$</span> <span class="c">./gameday-check.sh contain</span>
+Act II · Cut the Tentacle
+  <span class="ok">✔</span> ci-deployer has no active access keys
+  <span class="ok">✔</span> nimbus-ci-deploy-role sessions revoked (aws:TokenIssueTime deny present)
+
+  <span class="warn">🚩 SKY{<span class="spoiler">••••••••••••••••••••••</span>}</span></pre></div>
+<p class="term-caption">Expected output, before and after, with the flag masked. Every containment, recovery and hardening challenge prints its flag this way once the account's real state is fixed.</p>
+        <form class="flag" data-id="gd-flag6" data-hash="c050f0b28922ded6651cdaeb3ba54b03790b7700ca2a9fb14505e9e02e592ba1" data-xp="250" data-label="Flag 06"></form>
+      </div>
+
+      <div class="card challenge reveal" id="c7">
+        <div class="ch-head"><div class="ch-num">07</div><div><h3>Capture, then Quarantine</h3><div class="chips"><a class="chip accent" href="day5.html#labs">Day 5 · EC2 forensics</a><a class="chip" href="day3.html#labs">Day 3 · security groups</a></div></div><div class="pts">250<small>POINTS</small></div></div>
+        <p class="clue">Order matters. (1) Run the <code>CaptureVolatile</code> SSM document to grab processes, sockets, cron and timers into the evidence bucket. (2) Snapshot the root volume with the tag <code>Case=KRAKEN-001</code>. (3) <em>Then</em> move the instance onto an isolation security group with <b>no inbound and no outbound rules</b>. Verify with <code>./gameday-check.sh quarantine</code>.</p>
+        <div class="predict"><p>You attach the empty isolation SG <em>first</em>, then run <code>CaptureVolatile</code>. What does <code>get-command-invocation</code> report, and how long until you find out?</p>
+          <details><summary>Reveal</summary><p>The command sits in <code>Pending</code> or <code>InProgress</code> and eventually fails with a delivery timeout, because the agent can't reach the SSM endpoints with no egress. You lose minutes, and maybe the volatile evidence too (the beacon's process list and sockets). Capture first, then cut. In production, VPC interface endpoints for <code>ssm</code>, <code>ssmmessages</code> and <code>ec2messages</code>, with an SG rule that allows only those endpoints, let you have both.</p></details></div>
+        <details class="hint"><summary>Hint 1 · free</summary><p>Why this order? SSM Run Command needs outbound HTTPS to reach the SSM endpoints. Once you isolate, your live-response channel goes too. (In a real environment you'd keep VPC interface endpoints for SSM so you can still reach a quarantined host.) Also remember that a new security group comes with an allow-all <em>egress</em> rule by default.</p></details>
+        <details class="hint solution"><summary>Hint 2 · −25%</summary>
+<pre><code class="language-bash"># 1) live response FIRST
+CMD=$(aws ssm send-command --instance-ids $IID --document-name $DOC \
+  --parameters "{\"EvidenceBucket\":[\"$EVID\"],\"CaseId\":[\"KRAKEN-001\"]}" --query Command.CommandId --output text)
+sleep 20; aws ssm get-command-invocation --command-id $CMD --instance-id $IID --query '[Status,StandardOutputContent]'
+# 2) forensic snapshot
+VOL=$(aws ec2 describe-instances --instance-ids $IID --query 'Reservations[0].Instances[0].BlockDeviceMappings[0].Ebs.VolumeId' --output text)
+aws ec2 create-snapshot --volume-id $VOL --description "KRAKEN-001 forensic copy" \
+  --tag-specifications 'ResourceType=snapshot,Tags=[{Key=Case,Value=KRAKEN-001}]'
+# 3) isolate: empty SG, and strip its default egress
+ISO=$(aws ec2 create-security-group --group-name kraken-isolation --description "IR isolation - no traffic" --vpc-id $VPC --query GroupId --output text)
+aws ec2 revoke-security-group-egress --group-id $ISO --ip-permissions '[{"IpProtocol":"-1","IpRanges":[{"CidrIp":"0.0.0.0/0"}]}]'
+aws ec2 modify-instance-attribute --instance-id $IID --groups $ISO
+./gameday-check.sh quarantine</code></pre></details>
+        <form class="flag" data-id="gd-flag7" data-hash="31481133d596be172a2246cf267383e4a24055ba8278796e7f808bdcf06495bc" data-xp="250" data-label="Flag 07"></form>
+        <div class="callout gotcha"><strong class="ct">Connection tracking</strong><p>Changing security groups doesn't necessarily kill connections that are <em>already established</em> and tracked. Security groups are stateful. For a truly hostile host, pair the empty SG with a deny-all network ACL on an isolation subnet, or stop the instance after capture. Bring this up in the debrief for bonus respect.</p></div>
+      </div>
+
+      <div class="card challenge reveal" id="c8">
+        <div class="ch-head"><div class="ch-num">08</div><div><h3>Slam the Backdoors</h3><div class="chips"><a class="chip accent" href="day1.html#labs">Day 1 · IAM hygiene</a><a class="chip" href="day3.html#labs">Day 3 · exposure</a></div></div><div class="pts">300<small>POINTS</small></div></div>
+        <p class="clue">The Kraken planted three ways back in, in identity and network. One: a fresh access key on a "dormant" user. Two: the trust policy from challenge 02. Three: a world-open SSH rule. Close all three without deleting the identities, then run <code>./gameday-check.sh doors</code>.</p>
+        <details class="hint"><summary>Hint 1 · free</summary><p>The IAM credential report (<code>aws iam generate-credential-report</code>) shows which users have keys created <em>today</em>. CloudTrail <code>CreateAccessKey</code> and <code>AuthorizeSecurityGroupIngress</code> show who did it.</p></details>
+        <details class="hint solution"><summary>Hint 2 · −25%</summary>
+<pre><code class="language-bash">for k in $(aws iam list-access-keys --user-name svc-telemetry --query 'AccessKeyMetadata[].AccessKeyId' --output text); do
+  aws iam update-access-key --user-name svc-telemetry --access-key-id $k --status Inactive; done
+aws iam update-assume-role-policy --role-name nimbus-telemetry-reader --policy-document \
+  '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":{"Service":"ec2.amazonaws.com"},"Action":"sts:AssumeRole"}]}'
+aws ec2 revoke-security-group-ingress --group-id $SG --protocol tcp --port 22 --cidr 0.0.0.0/0
+./gameday-check.sh doors</code></pre></details>
+        <form class="flag" data-id="gd-flag8" data-hash="8c013bc1d4328b37dda0f0a9f810222178fb8f453fc6b6dbb803d6474233ea2a" data-xp="300" data-label="Flag 08"></form>
+      </div>
+    </section>
+
+    <!-- ============ ACT III ============ -->
+    <section id="act-3" class="act a3">
+      <img class="act-cover" src="assets/img/gameday/act3-cover.svg" alt="Act III, Eradicate and Recover: a stack of object versions with a green restore arrow back to v1, beside a sealed evidence bag">
+      <div class="act-head"><div class="roman">III</div><div><div class="eyebrow">Act III · 15:15 · Eradicate &amp; Recover</div><h2>Read the evidence. Get the cargo back.</h2></div></div>
+      <p>Inject 3: <em>"A journalist from </em>Orbital Ledger<em> is asking whether Nimbus has 'lost control of its fleet'. Comms, you have 20 minutes."</em> While Comms writes, the rest of the crew works out what's on the box and gets the crown jewels back. No ransom paid.</p>
+
+      <div class="card challenge reveal" id="c9">
+        <div class="ch-head"><div class="ch-num">09</div><div><h3>Where Persistence Lives</h3><div class="chips"><a class="chip accent" href="day5.html#labs">Day 5 · forensics</a></div></div><div class="pts">300<small>POINTS</small></div></div>
+        <p class="clue">Open the evidence bundle you captured in challenge 07. The Kraken signs its scheduled work: the flag is in a comment. <b>Bonus +100:</b> the beacon has a <em>second</em> persistence mechanism. Find it and name it in your write-up.</p>
+        <details class="hint"><summary>Hint 1 · free</summary><p>Download the <code>.tgz</code> from <code>s3://$EVID/evidence/KRAKEN-001/</code>, check it against its <code>.sha256</code> (chain of custody!), extract it, and read <code>cron-contents.txt</code>. For the bonus, read <code>systemd-timers.txt</code> and compare it with what a stock Amazon Linux 2023 box runs.</p></details>
+        <details class="hint solution"><summary>Hint 2 · −25%</summary>
+<pre><code class="language-bash">mkdir -p ~/case &amp;&amp; cd ~/case
+aws s3 cp s3://$EVID/evidence/KRAKEN-001/ . --recursive
+sha256sum -c *.sha256 2>/dev/null || shasum -a 256 *.tgz
+tar xzf *.tgz &amp;&amp; cat evidence-*/cron-contents.txt
+grep -i -E 'nimbus|kraken' evidence-*/systemd-timers.txt</code></pre></details>
+        <form class="flag" data-id="gd-flag9" data-hash="9d57bc1117cdef467481782c1f3a5ee4b71fb11abd9cf9e527dad5eda6628487" data-xp="300" data-label="Flag 09"></form>
+        <div class="callout war"><strong class="ct">Eradication: rebuild, don't scrub</strong><p>Could you SSH in and delete the cron file? Sure. Would you <em>trust</em> that box afterwards? The grown-up answer is to keep the snapshot as evidence and redeploy the workload from a known-good, Inspector-scanned image. Your write-up should say which you'd do in production, and why.</p></div>
+      </div>
+
+      <div class="card challenge reveal" id="c10">
+        <div class="ch-head"><div class="ch-num">10</div><div><h3>Restore the Manifests</h3><div class="chips"><a class="chip accent" href="day4.html#labs">Day 4 · resilience</a><span class="chip">S3 versioning</span></div></div><div class="pts">350<small>POINTS</small></div></div>
+        <p class="clue">The Kraken holds the only copy of the SSE-C key. Lucky for us, someone turned on versioning on the cargo bucket. Put every manifest back to its <b>pre-incident</b> content, without paying anyone, then run <code>./gameday-check.sh restore</code>.</p>
+        <figure class="shot" data-url="s3.console.aws.amazon.com/s3/buckets/kraken-gameday-cargobucket-1a2b3c?prefix=manifests/&amp;showversions=true">
+          <img src="assets/img/gameday/shot-s3-versions.svg" alt="Illustrative S3 console with Show versions enabled: each manifest's current version is 1.0 KB and SSE-C encrypted at 04:15, and each has an older SSE-S3 version from 03:58 of the original size; README_KRAKEN.txt was added at 04:15">
+          <figcaption><b>SCREEN GD.3</b> Illustrative mock-up; the live console layout may differ. Turn on <b>Show versions</b>: every SSE-C overwrite sits on top of an intact, SSE-S3 original. (If the replay fell back to simulated locks, the current versions show SSE-S3 with <code>kraken-lock</code> metadata instead.)</figcaption>
+        </figure>
+        <details class="hint"><summary>Hint 1 · free</summary><p><code>list-object-versions</code> shows the history of each key. Two ways back: copy the good version over the top (keeps a full audit trail), or delete the attacker's version (the older one becomes current again). Which would your auditors prefer?</p></details>
+        <details class="hint solution"><summary>Hint 2 · −25%</summary>
+<pre><code class="language-bash">for k in $(aws s3api list-objects-v2 --bucket $CARGO --prefix manifests/ --query 'Contents[].Key' --output text); do
+  aws s3api list-object-versions --bucket $CARGO --prefix "$k" \
+    --query 'Versions[].[LastModified,VersionId,Size]' --output text   # newest first: find the pre-incident one
+done
+# then, per key, with the GOOD version id:
+aws s3api copy-object --bucket $CARGO --key manifests/manifest-orion-0451.json \
+  --copy-source "$CARGO/manifests/manifest-orion-0451.json?versionId=GOOD_VERSION_ID"
+./gameday-check.sh restore</code></pre></details>
+        <form class="flag" data-id="gd-flag10" data-hash="37fd627fb45bbdb3094e6e4a3df1562105c942d24bda19315992b543f168bc00" data-xp="350" data-label="Flag 10"></form>
+        <div class="callout tip"><strong class="ct">What would have made this bulletproof?</strong><p>Versioning protects against overwrites, but an attacker with <code>s3:*</code> can delete versions too. In the debrief, cover the stronger answers: <b>S3 Object Lock</b> (compliance mode) on crown-jewel buckets, MFA delete, and copies in an <b>AWS Backup logically air-gapped vault</b> with multi-party approval for recovery.</p></div>
+      </div>
+    </section>
+
+    <!-- ============ ACT IV ============ -->
+    <section id="act-4" class="act a4">
+      <img class="act-cover" src="assets/img/gameday/act4-cover.svg" alt="Act IV, Harden: reinforced fortress walls, an alarm beacon and a DENY policy plaque under a lightning sky">
+      <div class="act-head"><div class="roman">IV</div><div><div class="eyebrow">Act IV · 15:45 · Harden</div><h2>Never again</h2></div></div>
+      <p>Inject 4: the Red Cell is trying to get back in with everything it stole. If your containment held, they'll bounce off. Now make sure the <em>next</em> Kraken can't run the same playbook, and that if it tries, you hear about it in seconds instead of from a journalist.</p>
+
+      <div class="card challenge reveal" id="c11">
+        <div class="ch-head"><div class="ch-num">11</div><div><h3>Never Again: SSE-C</h3><div class="chips"><a class="chip accent" href="day4.html#labs">Day 4 · data guardrails</a><a class="chip" href="day1.html#labs">Day 1 · RCPs</a></div></div><div class="pts">400<small>POINTS</small></div></div>
+        <p class="clue">Nimbus never uses customer-provided keys. Add an <b>explicit Deny</b> on SSE-C writes to the cargo bucket, so the ransomware trick fails even for a principal with <code>s3:*</code>. Prove it with <code>./gameday-check.sh guardrail</code>, which attempts an SSE-C write and expects to be refused.</p>
+        <details class="hint"><summary>Hint 1 · free</summary><p>The condition key is <code>s3:x-amz-server-side-encryption-customer-algorithm</code>. A <code>Null</code> condition set to <code>"false"</code> means "this header is present".</p></details>
+        <details class="hint solution"><summary>Hint 2 · −25%</summary>
+<pre><code class="language-bash">cat > /tmp/deny-ssec.json &lt;&lt;EOF
+{ "Version": "2012-10-17",
+  "Statement": [{ "Sid": "DenySSEC", "Effect": "Deny", "Principal": "*",
+    "Action": "s3:PutObject", "Resource": "arn:aws:s3:::$CARGO/*",
+    "Condition": { "Null": { "s3:x-amz-server-side-encryption-customer-algorithm": "false" } } }] }
+EOF
+aws s3api put-bucket-policy --bucket $CARGO --policy file:///tmp/deny-ssec.json
+./gameday-check.sh guardrail</code></pre></details>
+        <form class="flag" data-id="gd-flag11" data-hash="dbe7e9e0b44cc6dbeecf78724f39e71b251e20b162f07f70d80e4bb470470773" data-xp="400" data-label="Flag 11"></form>
+        <div class="stretch"><p>Make it organization-wide. From the management account, write a <b>resource control policy</b> (RCP) that denies SSE-C <code>PutObject</code> on every bucket in the org, attach it to the Workloads OU, and explain why an RCP beats 400 bucket policies. Bonus: an SCP that denies <code>iam:CreateAccessKey</code> for everyone except a break-glass role.</p></div>
+      </div>
+
+      <div class="card challenge reveal" id="c12">
+        <div class="ch-head"><div class="ch-num">12</div><div><h3>Detect It Next Time</h3><div class="chips"><a class="chip accent" href="day2.html#labs">Day 2 · detection-as-code</a><span class="chip">EventBridge</span></div></div><div class="pts">450<small>POINTS</small></div></div>
+        <p class="clue">Two of the Kraken's persistence moves were IAM API calls: <code>CreateAccessKey</code> and <code>UpdateAssumeRolePolicy</code>. Ship an <b>enabled EventBridge rule with a target</b> that fires on either one, then run <code>./gameday-check.sh detect</code>. Trigger it on purpose and show the IC the alert arriving.</p>
+        <details class="hint"><summary>Hint 1 · free</summary><p>IAM is a global service, and its CloudTrail events reach EventBridge in <b>us-east-1</b>, which is lucky for you. Match <code>source: aws.iam</code> and <code>detail-type: AWS API Call via CloudTrail</code>. An SNS topic is the quickest target, but don't forget the topic policy has to let <code>events.amazonaws.com</code> publish.</p></details>
+        <details class="hint solution"><summary>Hint 2 · −25%</summary>
+<pre><code class="language-bash">TOPIC=$(aws sns create-topic --name kraken-alarms --query TopicArn --output text)
+aws sns set-topic-attributes --topic-arn $TOPIC --attribute-name Policy --attribute-value \
+  "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Principal\":{\"Service\":\"events.amazonaws.com\"},\"Action\":\"sns:Publish\",\"Resource\":\"$TOPIC\"}]}"
+aws sns subscribe --topic-arn $TOPIC --protocol email --notification-endpoint you@example.com
+aws events put-rule --name kraken-iam-persistence --event-pattern \
+  '{"source":["aws.iam"],"detail-type":["AWS API Call via CloudTrail"],"detail":{"eventName":["CreateAccessKey","UpdateAssumeRolePolicy"]}}'
+aws events put-targets --rule kraken-iam-persistence --targets "Id=sns,Arn=$TOPIC"
+./gameday-check.sh detect</code></pre></details>
+        <form class="flag" data-id="gd-flag12" data-hash="217b6f0e1dd1e917958cd991a8b1ceed5f4690687c51a1562b15cf21eb34adde" data-xp="450" data-label="Flag 12"></form>
+        <div class="callout new"><strong class="ct">The 2026 way</strong><p>A single rule is a start. At org scale you'd let <b>GuardDuty Extended Threat Detection</b> correlate these signals into one attack-sequence finding (and as of May 2026 it attaches indicators such as MISCONFIGURATION and SENSITIVE_DATA), surface it in the unified <b>Security Hub</b> with exposure context, and enforce GuardDuty and Security Hub enablement through <b>Organizations declarative policies</b> so nobody can quietly switch them off.</p></div>
+      </div>
+    </section>
+
+    <!-- ============ FINAL BOSS ============ -->
+    <section id="final">
+      <div class="eyebrow">Final boss · 16:15 deadline</div>
+      <h2>The Root Cause</h2>
+      <div class="boss" data-flag="gd-final">
+        <div class="boss-grid">
+          <img src="assets/img/kraken.svg" alt="The Kraken">
+          <div>
+            <div class="eyebrow">Boss fight · 500 pts · unlocks the GameDay badge</div>
+            <h3>The Kraken's Last Stand</h3>
+            <div class="hp"><i></i></div>
+            <p>The Kraken has one move left: making you fix the symptoms and forget the cause. To land the final blow, every check must be green, <b>and</b> you must name patient zero and the initial access vector, backed by evidence. Run:</p>
+<pre data-title="CloudShell"><code class="language-bash">./gameday-check.sh all     # everything must be ✔
+./gameday-check.sh final   # answer the two root-cause questions</code></pre>
+<div class="term" data-title="CloudShell · the moment of truth"><pre><span class="p">$</span> <span class="c">./gameday-check.sh all</span>
+Act II · Cut the Tentacle
+  <span class="ok">✔</span> ci-deployer has no active access keys
+  <span class="ok">✔</span> nimbus-ci-deploy-role sessions revoked (aws:TokenIssueTime deny present)
+<span class="o">  … 11 more ✔ across Quarantine, Backdoors, Restore, SSE-C …</span>
+Act IV · Detect It Next Time
+  <span class="ok">✔</span> rule 'kraken-iam-persistence' detects IAM persistence and has 1 target(s)
+<span class="ok">All systems green. Run: ./gameday-check.sh final</span>
+<span class="p">$</span> <span class="c">./gameday-check.sh final</span>
+<span class="o">  … the same checks again, then two questions …</span>
+  Patient zero — which IAM principal's credentials gave the Kraken its first foothold? <span class="spoiler">████████████</span>
+  Initial access vector — (a) … (b) … (c) … (d) …? <span class="spoiler">█</span>
+
+  <span class="warn">🚩 SKY{<span class="spoiler">••••••••••••••••••••</span>}</span></pre></div>
+            <details class="hint"><summary>Hint · free</summary><p>Follow the very first <code>AssumeRole</code> into <code>nimbus-ci-deploy-role</code> back to its source. Whose long-term credentials made that call, and where else in the account does that access key ID appear in plain text?</p></details>
+            <form class="flag" data-id="gd-final" data-hash="329c952d818fd3703a32f6461b8422cbed7a0797b0432280db65364c0de64b50" data-xp="500" data-badge="gameday" data-label="Final flag"></form>
+          </div>
+        </div>
+      </div>
+      <div class="callout info"><strong class="ct">Instructor-led classes</strong><p>Your game master may run the final question live instead: the IC presents the root cause in 60 seconds, and the GM hands over the flag if it holds up.</p></div>
+    </section>
+
+    <!-- ============ DEBRIEF ============ -->
+    <section id="debrief">
+      <div class="eyebrow">16:20 · After action</div>
+      <h2>Debrief like a pro</h2>
+      <div class="split">
+        <div>
+          <p>The flags are the fun part. The debrief is where the learning sticks. Every team gets five minutes: <b>what happened, what you did, what you'd change</b>. Keep it blameless. "The CI role had <code>iam:*</code>" is a finding. "Dave gave it <code>iam:*</code>" is not.</p>
+          <p>Use the template on the right for your write-up (it's what the rubric grades), and the holding statement below for Inject 3.</p>
+          <div class="callout tip"><strong class="ct">Measure yourself</strong><p>Record <b>time to detect</b> (Inject 0 → first confirmed malicious event), <b>time to contain</b> (→ flag 06), and <b>time to recover</b> (→ flag 10). Compare across teams. That's your mean-time-to-everything baseline.</p></div>
+        </div>
+        <figure class="figure reveal" style="max-width:420px;justify-self:center"><img src="assets/img/gameday/trophy.svg" alt="The Kraken Slayer trophy: a golden cup with a defeated tentacle draped over it"><figcaption><b>THE PRIZE</b> Awarded at 16:50 to the highest-scoring crew.</figcaption></figure>
+      </div>
+      <h3 style="margin-top:30px">Map it to ATT&amp;CK</h3>
+      <p>Before you write, fill in the right-hand column with the evidence your team found for each technique. Any row you can't fill is either a detection gap or something the Kraken didn't do. Know which.</p>
+      <div class="predict"><p>Before you look at your notes: which <b>one</b> row in this table will most teams fill in wrong, and why?</p>
+        <details><summary>Reveal</summary><p><b>Defense evasion (T1562.008).</b> The Kraken only <em>enumerated</em> the trails (<code>DescribeTrails</code>). It never called <code>StopLogging</code> or <code>DeleteTrail</code>. Teams who write "disabled CloudTrail" are reporting what they expected, not what the evidence shows. The real finding is "attacker reconnaissance of logging". That's still a great detection opportunity, because a CI role has no business describing trails.</p></details></div>
+      <div class="predict"><p>Your time-to-contain was probably <b>longer</b> than your time-to-detect. Which single control would have cut it the most, without a human in the loop?</p>
+        <details><summary>Reveal</summary><p>Several answers are defensible, and the debrief is the place to argue them. Strong ones: no long-term CI keys at all (<a href="day1.html#labs">OIDC federation</a>), which removes the initial access entirely; an <a href="day5.html#labs">EventBridge → Step Functions playbook</a> that revokes sessions on the first <code>CreateAccessKey</code> from a CI role; or SCPs that make the persistence moves impossible for CI principals in the first place. Be wary of "buy another tool" answers: the Kraken used nothing but valid credentials and normal APIs.</p></details></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Tactic</th><th>Technique (MITRE ATT&amp;CK / ATLAS)</th><th>Your evidence</th></tr></thead>
+          <tbody>
+            <tr><td>Initial access</td><td>T1552.001 Unsecured Credentials: Credentials in Files → T1078.004 Valid Accounts: Cloud Accounts</td><td class="muted">event ID · object key · time</td></tr>
+            <tr><td>Discovery</td><td>T1087.004 Cloud Account Discovery · T1580 Cloud Infrastructure Discovery · T1619 Cloud Storage Object Discovery</td><td class="muted">…</td></tr>
+            <tr><td>Persistence</td><td>T1098.001 Additional Cloud Credentials · T1098 Account Manipulation (trust policy) · T1053.003 Cron · T1053.006 Systemd Timers</td><td class="muted">…</td></tr>
+            <tr><td>Defense evasion</td><td>T1562.007 Disable or Modify Cloud Firewall · T1562.008 Disable or Modify Cloud Logs (attempted?)</td><td class="muted">…</td></tr>
+            <tr><td>Command &amp; control</td><td>T1071 Application Layer Protocol (HTTP beacon, DNS lookups)</td><td class="muted">…</td></tr>
+            <tr><td>Collection / exfil</td><td>T1530 Data from Cloud Storage</td><td class="muted">…</td></tr>
+            <tr><td>Impact</td><td>T1486 Data Encrypted for Impact (SSE-C) · T1565.001 Stored Data Manipulation</td><td class="muted">…</td></tr>
+            <tr><td>AI-specific</td><td>ATLAS AML.T0051.001 Indirect Prompt Injection (poisoned RAG document)</td><td class="muted">…</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="tabs">
+        <div class="tab-list"><button>Root-cause write-up</button><button>Holding statement</button><button>Retro board</button></div>
+        <div class="tab-panel">
+<pre data-title="KRAKEN-001-postmortem.md"><code class="language-markdown"># KRAKEN-001 — Post-incident review (blameless)
+**Team:** ____  **IC:** ____  **Scribe:** ____  **Severity:** SEV-1
+**Detected:** __:__ UTC  **Contained:** __:__ UTC  **Recovered:** __:__ UTC
+
+## 1. Summary (3 sentences a CEO can read)
+
+## 2. Timeline (UTC, evidence for every line)
+| Time | Actor | Event | Evidence (event ID / log / object) |
+|------|-------|-------|------------------------------------|
+|      |       | Initial access via …                         | |
+|      |       | Privilege: AssumeRole into …                 | |
+|      |       | Persistence #1 / #2 / #3 …                   | |
+|      |       | Impact: manifests overwritten (SSE-C) …      | |
+|      |       | Influence: knowledge base poisoned …         | |
+|      | Blue  | Contained: keys deactivated, sessions revoked | |
+
+## 3. Root cause & contributing factors (5 whys)
+- Why could the attacker act? …
+- Why did that credential exist? …
+- Why was the role so powerful? …
+- Why did nobody notice for N hours? …
+- Why was recovery possible / hard? …
+
+## 4. What went well / what hurt
+
+## 5. Action items
+| # | Action | Type (prevent/detect/respond) | Owner | Due |
+|---|--------|-------------------------------|-------|-----|
+| 1 | Replace CI user keys with OIDC federation (no long-term keys) | prevent | | |
+| 2 | Deny SSE-C org-wide via RCP | prevent | | |
+| 3 | … | | | |</code></pre>
+        </div>
+        <div class="tab-panel">
+<pre data-title="holding-statement.txt"><code class="language-text">FOR IMMEDIATE RELEASE — HOLDING STATEMENT
+
+Nimbus Interstellar is investigating a cybersecurity incident affecting a
+limited number of internal systems. We identified suspicious activity on
+[DATE] and immediately activated our incident response plan. All vessels
+remain safe and under the control of their crews.
+
+As a precaution we have [contained the affected systems / revoked access]
+and are restoring affected shipping records from protected backups. We have
+no evidence at this time that [customer payment data] was accessed.
+
+We will share further updates as our investigation progresses.
+Media contact: press@nimbus-interstellar.example
+
+-- Checklist: no speculation · no attribution · no technical detail that
+   helps the attacker · legal + IC approved · timestamped in the timeline</code></pre>
+        </div>
+        <div class="tab-panel">
+<pre data-title="retro-board.txt"><code class="language-text">KEEP      — what worked? (tools, queries, comms rhythm)
+DROP      — what slowed us down or broke things?
+START     — what guardrail / detection / runbook do we wish we'd had?
+SURPRISED — what did the Kraken do that nobody expected?
+SHOUT-OUT — who saved the day, and how?</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ QUIZ ============ -->
+    <section id="quiz">
+      <div class="eyebrow">Knowledge check</div>
+      <h2>Post-game quiz <span class="quiz-score" style="font-size:1rem"></span></h2>
+      <div class="quiz" data-id="gd-quiz">
+        <div class="q" data-answer="c">
+          <p>You delete a leaked access key at 14:20. At 14:40 the attacker is still making calls as <code>nimbus-ci-deploy-role</code>. Why?</p>
+          <div class="opts"><button data-k="a">IAM key deletion takes 30 minutes to propagate</button><button data-k="b">The attacker created a login profile</button><button data-k="c">They're using temporary role credentials minted before the deletion, which stay valid until they expire</button><button data-k="d">CloudTrail is replaying old events</button></div>
+          <div class="explain">STS credentials are independent of the long-term key that obtained them. Revoke them with a deny on <code>aws:TokenIssueTime</code> earlier than now (that's what "Revoke active sessions" does), or wait out the session duration and hope.</div>
+        </div>
+        <div class="q" data-answer="b">
+          <p>Why capture volatile evidence through SSM <em>before</em> attaching the empty isolation security group?</p>
+          <div class="opts"><button data-k="a">Security groups delete process memory</button><button data-k="b">The SSM agent needs outbound HTTPS to the SSM endpoints, and isolation cuts it (unless you've deployed VPC endpoints)</button><button data-k="c">Snapshots fail on isolated instances</button><button data-k="d">It's just tradition</button></div>
+          <div class="explain">Your live-response channel uses the network you're about to cut. In production, keep SSM, EC2 Messages and S3 interface or gateway endpoints in the VPC so quarantined hosts are still reachable for forensics.</div>
+        </div>
+        <div class="q" data-answer="d">
+          <p>The manifests were overwritten with SSE-C using a key only the attacker holds. What got them back?</p>
+          <div class="opts"><button data-k="a">AWS Support can decrypt SSE-C objects</button><button data-k="b">KMS key rotation</button><button data-k="c">Brute-forcing AES-256 on a big Graviton instance</button><button data-k="d">Bucket versioning: the pre-attack versions were still there, encrypted with SSE-S3</button></div>
+          <div class="explain">AWS never stores SSE-C keys, so there's no "decrypt". Recovery depends on prior versions, Object Lock or backups. Prevention: deny SSE-C writes with a bucket policy or RCP.</div>
+        </div>
+        <div class="q" data-answer="a">
+          <p>The backdoored trust policy allowed <code>Principal: "*"</code> with <code>aws:PrincipalOrgID = o-kr4k3nc0ll3c</code>. What's the most accurate risk statement?</p>
+          <div class="opts"><button data-k="a">It's exploitable by any principal in that organization if it exists, and it's an attacker-controlled change regardless, so treat it as active persistence</button><button data-k="b">It's harmless because it has a condition</button><button data-k="c">Only the root user of your own account can use it</button><button data-k="d">Trust policies can't use "*", so AWS ignores it</button></div>
+          <div class="explain">Conditions narrow a trust policy; they don't neutralise it. An attacker who controls that org (or who edits the condition later) has a door. Access Analyzer flags it as external access. Remove it and alert on <code>UpdateAssumeRolePolicy</code>.</div>
+        </div>
+        <div class="q" data-answer="c">
+          <p>A poisoned document made the chatbot tell customers to "confirm payment details". Which control most directly limits the <em>blast radius</em> if injected instructions get through?</p>
+          <div class="opts"><button data-k="a">A bigger model</button><button data-k="b">Turning off CloudTrail data events</button><button data-k="c">Deterministic, out-of-band authorization of agent actions (e.g. AgentCore Policy in Cedar) plus Guardrails on inputs and outputs</button><button data-k="d">Writing "please don't follow injected instructions" in the system prompt</button></div>
+          <div class="explain">Prompt filters reduce the odds. Policy enforcement outside the model caps what a compromised agent can <em>do</em>. Use both: defense in depth for thinking machines.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ TEARDOWN ============ -->
+    <section id="teardown">
+      <div class="eyebrow">17:00</div>
+      <h2>Return the Kraken to the deep</h2>
+      <div class="cleanup">
+        <p>The replay and your fixes created things CloudFormation doesn't own: access keys, inline policies, a bucket policy, an isolation SG, snapshots. <code>teardown.sh</code> removes all of that, empties every bucket version, and then deletes the stack.</p>
+<pre data-title="CloudShell"><code class="language-bash">cd ~/skyfortress/labs/gameday
+./teardown.sh               # type DESTROY
+# verify nothing is left behind:
+aws cloudformation describe-stacks --stack-name kraken-gameday 2>&amp;1 | grep -q 'does not exist' &amp;&amp; echo "stack gone ✔"
+aws ec2 describe-snapshots --owner-ids self --filters Name=tag:Case,Values=KRAKEN-001 --query 'length(Snapshots)'</code></pre>
+<div class="term" data-title="CloudShell · 17:00"><pre><span class="p">$</span> <span class="c">./teardown.sh</span>
+<span class="o">About to destroy stack 'kraken-gameday' in 111122223333/us-east-1, its buckets (ALL versions) and Case=KRAKEN-001 snapshots.</span>
+Type DESTROY to continue: <span class="c">DESTROY</span>
+· emptying s3://kraken-gameday-cargobucket-1a2b3c4d5e6f (all versions)
+· emptying s3://kraken-gameday-artifactsbucket-7g8h9i0j (all versions)
+· emptying s3://kraken-gameday-evidencebucket-3m4n5o6p (all versions)
+· removing access keys and non-CloudFormation policies from GameDay identities
+· terminating the dispatch instance
+· deleting team-created security groups in vpc-0123456789abcdef0
+· deleting forensic snapshots tagged Case=KRAKEN-001
+· deleting CloudFormation stack kraken-gameday
+<span class="ok">✔ stack deleted</span>
+
+Left in place on purpose (review &amp; delete if you want):
+  - EventBridge rules / SNS topics your team created in Act IV
+  - Any Organizations SCP/RCP you attached
+  - CloudTrail/Security Lake data about the GameDay (it's evidence — and it's yours)
+<span class="ok">✔ The Kraken has been returned to the deep.</span></pre></div>
+<p class="term-caption">Expected output. It takes about 3–6 minutes, mostly waiting for the instance to terminate and the stack delete to finish.</p>
+        <p>It deliberately leaves your Act IV EventBridge rule and SNS topic, plus any SCP or RCP you attached. Those are the good changes. Keep them, or delete them by hand.</p>
+      </div>
+      <div class="callout new"><strong class="ct">Coming up next week</strong><p>re:Invent 2026 (Nov 30 – Dec 4, Las Vegas) now includes the security content that used to be re:Inforce, with a dedicated security day on Thursday, December 3. Bring your GameDay war stories, and watch for agentic-security launches you can fold into next year's Kraken.</p></div>
+    </section>
+
+    <div class="pager"><a class="prev" href="day5.html"><small>← Previous</small>Day 5 · Response</a><a class="next" href="resources.html"><small>Next →</small>The Arsenal</a></div>
+  </main>
+</div>
+
+<footer id="site-footer"></footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+<script src="assets/js/site.js"></script>
+<script>
+(function () {
+  "use strict";
+  // ---------------------------------------------------------------- typewriter
+  const lines = [
+    "> incoming transmission from owlsley@nimbus-interstellar …",
+    "> 04:12Z  ci-deployer: AssumeRole → nimbus-ci-deploy-role (first time ever)",
+    "> 04:13Z  svc-telemetry: CreateAccessKey (user dormant 211 days)",
+    "> 04:15Z  s3://cargo/manifests/*  PutObject x-amz-server-side-encryption-customer-algorithm=AES256",
+    "> 04:16Z  dispatch-01 → dns-query *.kraken.example.com  NXDOMAIN … NXDOMAIN … NXDOMAIN",
+    "> all hands. this is not a drill. press ▶ start mission when your crew is ready."
+  ];
+  const typer = document.getElementById("typer");
+  const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (typer) {
+    if (still) { typer.textContent = lines[lines.length - 1]; }
+    else {
+      let li = 0, ci = 0;
+      (function tick() {
+        const L = lines[li];
+        typer.textContent = L.slice(0, ++ci);
+        if (ci < L.length) return setTimeout(tick, 22 + Math.random() * 30);
+        setTimeout(() => { li = (li + 1) % lines.length; ci = 0; tick(); }, li === lines.length - 1 ? 4200 : 1500);
+      })();
+    }
+  }
+
+  // ---------------------------------------------------------------- mission clock
+  const KEY = "skyfortress.gameday.start", DURATION = 210 * 60 * 1000, C = 326.73;
+  const INJECTS = [
+    [0, "Kickoff & briefing"], [15, "Inject 0 · anomalous API activity (Act I)"], [45, "Inject 1 · manifests unreadable (Act II)"],
+    [75, "Inject 2 · chatbot reroutes cargo"], [105, "Inject 3 · press inquiry (Act III)"], [135, "Inject 4 · Red Cell re-entry (Act IV)"],
+    [165, "Pencils down · final flag + write-up"], [170, "Team debriefs"], [200, "Awards ceremony"], [210, "End of mission"]
+  ];
+  const $ = (id) => document.getElementById(id);
+  const get = () => { try { return parseInt(localStorage.getItem(KEY), 10) || null; } catch (e) { return null; } };
+  const set = (v) => { try { v ? localStorage.setItem(KEY, String(v)) : localStorage.removeItem(KEY); } catch (e) {} };
+  let start = get();
+  const fmt = (ms) => { const s = Math.max(0, Math.floor(ms / 1000)); return Math.floor(s / 3600) + ":" + String(Math.floor((s % 3600) / 60)).padStart(2, "0") + ":" + String(s % 60).padStart(2, "0"); };
+  const fmtT = (m) => "T+" + Math.floor(m / 60) + ":" + String(m % 60).padStart(2, "0");
+  let lastInject = -1;
+  function paint() {
+    const clock = $("clock"); if (!clock) return;
+    if (!start) {
+      $("clock-digits").textContent = fmt(DURATION); $("clock-state").textContent = "STANDING BY";
+      $("ring-arc").style.strokeDashoffset = 0; clock.classList.remove("running", "over");
+      $("next-inject").innerHTML = "Next inject: <b>" + INJECTS[0][1] + "</b> at " + fmtT(0);
+      $("clock-start").textContent = "▶ Start mission"; return;
+    }
+    const el = Date.now() - start, left = DURATION - el;
+    $("clock-digits").textContent = fmt(left);
+    $("ring-arc").style.strokeDashoffset = (C * Math.min(1, el / DURATION)).toFixed(2);
+    clock.classList.add("running"); clock.classList.toggle("over", left <= 0);
+    $("clock-state").textContent = left <= 0 ? "MISSION OVER" : "MISSION LIVE";
+    $("clock-start").textContent = "● Mission running";
+    const mins = el / 60000;
+    const next = INJECTS.find((i) => i[0] > mins);
+    const cur = [...INJECTS].reverse().find((i) => i[0] <= mins);
+    $("next-inject").innerHTML = (cur ? "Now: <b>" + cur[1] + "</b><br>" : "") +
+      (next ? "Next: <b>" + next[1] + "</b> in " + fmt(next[0] * 60000 - el) : "That's a wrap. Run <b>teardown.sh</b>.");
+    const idx = INJECTS.indexOf(cur);
+    if (idx > lastInject) {
+      if (lastInject !== -1 && window.Skyfortress) window.Skyfortress.toast("🚨 " + cur[1]);
+      lastInject = idx;
+    }
+  }
+  if ($("clock-start")) {
+    $("clock-start").addEventListener("click", () => { if (!start) { start = Date.now(); set(start); lastInject = 0; if (window.Skyfortress) { window.Skyfortress.toast("🐙 Kraken Rising — mission clock started"); window.Skyfortress.confetti(40); } paint(); } });
+    $("clock-reset").addEventListener("click", () => { if (confirm("Reset the mission clock?")) { start = null; set(null); lastInject = -1; paint(); } });
+    paint(); setInterval(paint, 1000);
+  }
+
+  // ---------------------------------------------------------------- scoreboard (reads site.js state for this browser)
+  const CH = [
+    ["gd-flag1", "01 · Patient Zero's Fingerprint", 1, 100], ["gd-flag2", "02 · The Door You Can't See", 1, 150],
+    ["gd-flag3", "03 · A Heartbeat You Can't Hear", 1, 150], ["gd-flag4", "04 · A Lock You Can't Pick", 1, 200],
+    ["gd-flag5", "05 · The Poisoned Well", 1, 200], ["gd-flag6", "06 · Cut the Tentacle", 2, 250],
+    ["gd-flag7", "07 · Capture, then Quarantine", 2, 250], ["gd-flag8", "08 · Slam the Backdoors", 2, 300],
+    ["gd-flag9", "09 · Where Persistence Lives", 3, 300], ["gd-flag10", "10 · Restore the Manifests", 3, 350],
+    ["gd-flag11", "11 · Never Again: SSE-C", 4, 400], ["gd-flag12", "12 · Detect It Next Time", 4, 450],
+    ["gd-final", "★ · The Root Cause (boss)", 4, 500]
+  ];
+  const ACTS = ["Act I · Detect", "Act II · Contain", "Act III · Recover", "Act IV · Harden"];
+  const RANKS = [[0, "Plankton"], [400, "Barnacle"], [1000, "Tide Watcher"], [1800, "Reef Warden"], [2600, "Storm Breaker"], [3600, "Kraken Slayer 🏆"]];
+  function score() {
+    const flags = (window.Skyfortress && window.Skyfortress.state.flags) || {};
+    let total = 0, n = 0; const act = [[0, 0], [0, 0], [0, 0], [0, 0]];
+    const rows = CH.map(([id, name, a, pts]) => {
+      const got = flags[id] !== undefined; if (got) { total += pts; n++; act[a - 1][0]++; } act[a - 1][1]++;
+      return '<tr class="' + (got ? "got" : "") + '"><td><a href="#' + (id === "gd-final" ? "final" : "c" + id.replace("gd-flag", "")) + '" style="color:inherit">' + name + "</a></td><td>" + ["I", "II", "III", "IV"][a - 1] + "</td><td>" + (got ? pts : "—") + " / " + pts + "</td></tr>";
+    }).join("");
+    $("sb-rows").innerHTML = rows;
+    $("sb-total").textContent = total.toLocaleString();
+    $("sb-count").textContent = n + " / " + CH.length + " flags";
+    $("sb-rank").textContent = "Rank: " + [...RANKS].reverse().find((r) => total >= r[0])[1];
+    $("sb-acts").innerHTML = act.map((a, i) => "<div>" + ACTS[i] + " · " + a[0] + "/" + a[1] + '<div class="bar"><i style="width:' + (a[1] ? (a[0] / a[1]) * 100 : 0) + '%"></i></div></div>').join("");
+  }
+  if ($("scoreboard")) {
+    score();
+    document.querySelectorAll("form.flag").forEach((f) => f.addEventListener("submit", () => setTimeout(score, 350)));
+    addEventListener("storage", score);
+  }
+})();
+</script>
+</body>
+</html>

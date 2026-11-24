@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240">
+  <title>Owlsley, the Skyfortress security owl</title>
+  <defs>
+    <radialGradient id="ob" cx=".5" cy=".35" r=".7">
+      <stop offset="0" stop-color="#8b7cf6"/><stop offset=".6" stop-color="#5b45d6"/><stop offset="1" stop-color="#2e1f8f"/>
+    </radialGradient>
+    <radialGradient id="obelly" cx=".5" cy=".3" r=".7">
+      <stop offset="0" stop-color="#e9e4ff"/><stop offset="1" stop-color="#b5a8f7"/>
+    </radialGradient>
+    <radialGradient id="oeye" cx=".45" cy=".4" r=".6">
+      <stop offset="0" stop-color="#a5f3fc"/><stop offset=".5" stop-color="#22d3ee"/><stop offset="1" stop-color="#0e7490"/>
+    </radialGradient>
+    <linearGradient id="obeak" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffc35c"/><stop offset="1" stop-color="#ff8a00"/></linearGradient>
+    <linearGradient id="oshield" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffb347"/><stop offset="1" stop-color="#ff7a00"/></linearGradient>
+    <filter id="oglow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+  <ellipse cx="120" cy="222" rx="70" ry="9" fill="#000" opacity=".35"/>
+  <!-- ear tufts -->
+  <path d="M62 62 L48 18 L92 48 Z" fill="#3b2aa8"/>
+  <path d="M178 62 L192 18 L148 48 Z" fill="#3b2aa8"/>
+  <!-- body -->
+  <path d="M120 36 C176 36 200 80 200 130 C200 182 166 214 120 214 C74 214 40 182 40 130 C40 80 64 36 120 36 Z" fill="url(#ob)"/>
+  <!-- wings -->
+  <path d="M44 120 C24 150 32 190 62 200 C58 170 60 146 70 126 Z" fill="#3b2aa8"/>
+  <path d="M196 120 C216 150 208 190 178 200 C182 170 180 146 170 126 Z" fill="#3b2aa8"/>
+  <!-- belly -->
+  <path d="M120 112 C152 112 168 142 168 168 C168 196 146 208 120 208 C94 208 72 196 72 168 C72 142 88 112 120 112 Z" fill="url(#obelly)"/>
+  <g stroke="#9b8cf0" stroke-width="3" fill="none" stroke-linecap="round" opacity=".8">
+    <path d="M96 150 q6 6 12 0"/><path d="M118 146 q6 6 12 0"/><path d="M134 158 q6 6 12 0"/><path d="M104 170 q6 6 12 0"/>
+  </g>
+  <!-- eye discs -->
+  <circle cx="88" cy="92" r="34" fill="#efeaff"/>
+  <circle cx="152" cy="92" r="34" fill="#efeaff"/>
+  <!-- visor band -->
+  <path d="M50 86 Q120 66 190 86" stroke="#22d3ee" stroke-width="3" fill="none" opacity=".5"/>
+  <circle cx="88" cy="94" r="20" fill="url(#oeye)" filter="url(#oglow)"/>
+  <circle cx="152" cy="94" r="20" fill="url(#oeye)" filter="url(#oglow)"/>
+  <circle cx="90" cy="96" r="9" fill="#04121c"/>
+  <circle cx="150" cy="96" r="9" fill="#04121c"/>
+  <circle cx="95" cy="89" r="4.5" fill="#fff"/>
+  <circle cx="155" cy="89" r="4.5" fill="#fff"/>
+  <!-- brows -->
+  <path d="M58 64 Q88 52 112 70" stroke="#2a1d80" stroke-width="7" fill="none" stroke-linecap="round"/>
+  <path d="M182 64 Q152 52 128 70" stroke="#2a1d80" stroke-width="7" fill="none" stroke-linecap="round"/>
+  <!-- beak -->
+  <path d="M120 106 L108 118 Q120 136 132 118 Z" fill="url(#obeak)"/>
+  <!-- shield badge -->
+  <g transform="translate(120 168)">
+    <path d="M0 -24 L20 -16 V0 C20 14 10 22 0 26 C-10 22 -20 14 -20 0 V-16 Z" fill="url(#oshield)" stroke="#fff" stroke-width="2.5"/>
+    <rect x="-8" y="-4" width="16" height="13" rx="2.5" fill="#1b1060"/>
+    <path d="M-5 -4 v-5 a5 5 0 0 1 10 0 v5" stroke="#1b1060" stroke-width="3" fill="none"/>
+  </g>
+  <!-- feet -->
+  <path d="M96 210 l-6 10 M104 212 l0 11 M112 210 l6 10" stroke="#ff9900" stroke-width="5" stroke-linecap="round"/>
+  <path d="M128 210 l-6 10 M136 212 l0 11 M144 210 l6 10" stroke="#ff9900" stroke-width="5" stroke-linecap="round"/>
+</svg>

@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 560" font-family="Space Grotesk, Inter, sans-serif">
+  <title>Software supply chain: build, scan, SBOM, sign, push, verify at admission, run — and where the Kraken attacks each link</title>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#34d399"/></marker>
+    <marker id="r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#fb7185"/></marker>
+    <linearGradient id="pipe" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#22d3ee"/><stop offset=".5" stop-color="#34d399"/><stop offset="1" stop-color="#ff9900"/></linearGradient>
+    <filter id="g"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+  <rect width="1200" height="560" fill="#060b18"/>
+  <text x="40" y="46" fill="#34d399" font-size="15" letter-spacing="3">FIG 3.5 · ONLY SIGNED SHIPS SAIL — PROVENANCE FROM COMMIT TO POD</text>
+
+  <rect x="40" y="200" width="1120" height="12" rx="6" fill="url(#pipe)" opacity=".5" filter="url(#g)"/>
+
+  <g font-size="14" text-anchor="middle">
+    <!-- 7 stages, 160 apart, width 140 -->
+    <g transform="translate(40 140)"><rect width="140" height="130" rx="14" fill="#0b1a2e" stroke="#22d3ee"/>
+      <text x="70" y="34" fill="#fff" font-size="17" font-weight="600">① Source</text><text x="70" y="60" fill="#67e8f9">Inspector code</text><text x="70" y="80" fill="#67e8f9">security (repo)</text><text x="70" y="108" fill="#94a3b8" font-size="13">SAST · secrets · IaC</text></g>
+    <g transform="translate(200 140)"><rect width="140" height="130" rx="14" fill="#0b1a2e" stroke="#22d3ee"/>
+      <text x="70" y="34" fill="#fff" font-size="17" font-weight="600">② Build</text><text x="70" y="60" fill="#67e8f9">pinned deps</text><text x="70" y="80" fill="#67e8f9">CodeArtifact</text><text x="70" y="108" fill="#94a3b8" font-size="13">origin controls</text></g>
+    <g transform="translate(360 140)"><rect width="140" height="130" rx="14" fill="#06201a" stroke="#34d399"/>
+      <text x="70" y="34" fill="#fff" font-size="17" font-weight="600">③ SBOM</text><text x="70" y="60" fill="#86efac">sbomgen →</text><text x="70" y="80" fill="#86efac">inspector-scan</text><text x="70" y="108" fill="#94a3b8" font-size="13">CycloneDX · gate CI</text></g>
+    <g transform="translate(520 140)"><rect width="140" height="130" rx="14" fill="#06201a" stroke="#34d399"/>
+      <text x="70" y="34" fill="#fff" font-size="17" font-weight="600">④ Push</text><text x="70" y="60" fill="#86efac">ECR immutable</text><text x="70" y="80" fill="#86efac">tags + enhanced</text><text x="70" y="108" fill="#94a3b8" font-size="13">continuous scan</text></g>
+    <g transform="translate(680 140)"><rect width="140" height="130" rx="14" fill="#2a1a06" stroke="#ff9900" filter="url(#g)"/>
+      <text x="70" y="34" fill="#fff" font-size="17" font-weight="600">⑤ Sign</text><text x="70" y="60" fill="#ffb347">cosign + KMS</text><text x="70" y="80" fill="#ffb347">or AWS Signer</text><text x="70" y="108" fill="#94a3b8" font-size="13">signs the DIGEST</text></g>
+    <g transform="translate(840 140)"><rect width="140" height="130" rx="14" fill="#2a1a06" stroke="#ff9900" filter="url(#g)"/>
+      <text x="70" y="34" fill="#fff" font-size="17" font-weight="600">⑥ Admit</text><text x="70" y="60" fill="#ffb347">Kyverno</text><text x="70" y="80" fill="#ffb347">verifyImages</text><text x="70" y="108" fill="#94a3b8" font-size="13">tag → digest</text></g>
+    <g transform="translate(1000 140)"><rect width="160" height="130" rx="14" fill="#0b1a2e" stroke="#a78bfa"/>
+      <text x="80" y="34" fill="#fff" font-size="17" font-weight="600">⑦ Run</text><text x="80" y="60" fill="#c4b5fd">GuardDuty</text><text x="80" y="80" fill="#c4b5fd">runtime</text><text x="80" y="108" fill="#94a3b8" font-size="13">drift = finding</text></g>
+  </g>
+
+  <!-- attacks -->
+  <g font-size="14" fill="#fda4af">
+    <text x="110" y="330" text-anchor="middle">leaked token</text>
+    <text x="110" y="350" text-anchor="middle">in a commit</text>
+    <text x="270" y="330" text-anchor="middle">dependency</text>
+    <text x="270" y="350" text-anchor="middle">confusion</text>
+    <text x="430" y="330" text-anchor="middle">old PyYAML</text>
+    <text x="430" y="350" text-anchor="middle">CVE-2020-14343</text>
+    <text x="590" y="330" text-anchor="middle">tag overwrite</text>
+    <text x="590" y="350" text-anchor="middle">:v1 → evil</text>
+    <text x="750" y="330" text-anchor="middle">"signed" tag,</text>
+    <text x="750" y="350" text-anchor="middle">different digest</text>
+    <text x="910" y="330" text-anchor="middle">kubectl run</text>
+    <text x="910" y="350" text-anchor="middle">kraken-hotfix</text>
+    <text x="1080" y="330" text-anchor="middle">miner after</text>
+    <text x="1080" y="350" text-anchor="middle">deploy</text>
+  </g>
+  <g stroke="#fb7185" stroke-width="2" marker-end="url(#r)">
+    <path d="M110 312 V276"/><path d="M270 312 V276"/><path d="M430 312 V276"/><path d="M590 312 V276"/><path d="M750 312 V276"/><path d="M910 312 V276"/><path d="M1080 312 V276"/>
+  </g>
+
+  <rect x="40" y="400" width="1120" height="120" rx="16" fill="#0b1328" stroke="#334155"/>
+  <text x="60" y="432" fill="#fff" font-size="16" font-weight="600">SLSA-style thinking in one line per level</text>
+  <g font-size="14" fill="#cbd5e1">
+    <text x="60" y="460">Build L1: provenance exists · L2: provenance is signed by a hosted build service · L3: the build platform is hardened so even</text>
+    <text x="60" y="482">a malicious build step can't forge provenance. Today's lab gets you a signed artifact + enforced verification —</text>
+    <text x="60" y="504">the "verify at the gate" half that most orgs skip.</text>
+  </g>
+</svg>

@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 750" width="1600" height="750">
+<title>GuardDuty Extended Threat Detection attack sequence</title>
+<defs>
+<filter id="g" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+<radialGradient id="bgg" cx=".5" cy="0" r="1"><stop offset="0" stop-color="#0f1d48"/><stop offset="1" stop-color="#060a1a"/></radialGradient>
+<pattern id="dots" width="26" height="26" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1.2" fill="#8aa0ff" opacity=".12"/></pattern>
+<marker id="a-cyan" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#22d3ee"/></marker>
+<linearGradient id="f-cyan" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#22d3ee" stop-opacity=".22"/><stop offset="1" stop-color="#22d3ee" stop-opacity=".06"/></linearGradient>
+<marker id="a-blue" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#60a5fa"/></marker>
+<linearGradient id="f-blue" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#60a5fa" stop-opacity=".22"/><stop offset="1" stop-color="#60a5fa" stop-opacity=".06"/></linearGradient>
+<marker id="a-orange" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#ff9900"/></marker>
+<linearGradient id="f-orange" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff9900" stop-opacity=".22"/><stop offset="1" stop-color="#ff9900" stop-opacity=".06"/></linearGradient>
+<marker id="a-violet" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#a78bfa"/></marker>
+<linearGradient id="f-violet" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a78bfa" stop-opacity=".22"/><stop offset="1" stop-color="#a78bfa" stop-opacity=".06"/></linearGradient>
+<marker id="a-pink" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#fb7185"/></marker>
+<linearGradient id="f-pink" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fb7185" stop-opacity=".22"/><stop offset="1" stop-color="#fb7185" stop-opacity=".06"/></linearGradient>
+<marker id="a-green" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#34d399"/></marker>
+<linearGradient id="f-green" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#34d399" stop-opacity=".22"/><stop offset="1" stop-color="#34d399" stop-opacity=".06"/></linearGradient>
+<marker id="a-gold" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#fbbf24"/></marker>
+<linearGradient id="f-gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fbbf24" stop-opacity=".22"/><stop offset="1" stop-color="#fbbf24" stop-opacity=".06"/></linearGradient>
+<marker id="a-text" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#e8ecff"/></marker>
+<linearGradient id="f-text" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e8ecff" stop-opacity=".22"/><stop offset="1" stop-color="#e8ecff" stop-opacity=".06"/></linearGradient>
+<marker id="a-dim" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#b7c0e6"/></marker>
+<linearGradient id="f-dim" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b7c0e6" stop-opacity=".22"/><stop offset="1" stop-color="#b7c0e6" stop-opacity=".06"/></linearGradient>
+<marker id="a-muted" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#8a95c2"/></marker>
+<linearGradient id="f-muted" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8a95c2" stop-opacity=".22"/><stop offset="1" stop-color="#8a95c2" stop-opacity=".06"/></linearGradient>
+</defs>
+<rect width="1600" height="750" fill="url(#bgg)"/><rect width="1600" height="750" fill="url(#dots)"/>
+<text x="48" y="62" font-family="Space Grotesk, Inter, sans-serif" font-size="30" font-weight="700" fill="#e8ecff" text-anchor="start" letter-spacing="0" opacity="1">Extended Threat Detection: seven weak signals → one Critical story</text>
+<text x="48" y="94" font-family="Space Grotesk, Inter, sans-serif" font-size="16" font-weight="500" fill="#8a95c2" text-anchor="start" letter-spacing="0" opacity="1">GuardDuty correlates API activity, findings and resource context across a rolling window — no extra setup, no extra charge</text>
+<line x1="100" y1="380" x2="1150" y2="380" stroke="#60a5fa" stroke-width="3" stroke-opacity=".6"/>
+<circle cx="140" cy="380" r="13" fill="#060a1a" stroke="#60a5fa" stroke-width="3" filter="url(#g)"/><circle cx="140" cy="380" r="5" fill="#60a5fa"/>
+<line x1="140" y1="367" x2="140" y2="352" stroke="#60a5fa" stroke-opacity=".5" stroke-dasharray="3 4"/>
+<text x="140" y="296" font-family="JetBrains Mono, monospace" font-size="14" font-weight="500" fill="#60a5fa" text-anchor="middle" letter-spacing="1.5" opacity="1">DISCOVERY</text>
+<text x="140" y="318" font-family="JetBrains Mono, monospace" font-size="14" font-weight="500" fill="#8a95c2" text-anchor="middle" letter-spacing="0" opacity="1">02:58 UTC</text>
+<text x="140" y="340" font-family="JetBrains Mono, monospace" font-size="14" font-weight="500" fill="#e8ecff" text-anchor="middle" letter-spacing="0" opacity="1">DescribeInstances burst</text>
+<path d="M140 393 C 140 480, 620 470, 620 538" fill="none" stroke="#60a5fa" stroke-opacity=".35" stroke-width="2"/>
+<circle cx="300" cy="380" r="13" fill="#060a1a" stroke="#fb7185" stroke-width="3" filter="url(#g)"/><circle cx="300" cy="380" r="5" fill="#fb7185"/>
+<line x1="300" y1="367" x2="300" y2="252" stroke="#fb7185" stroke-opacity=".5" stroke-dasharray="3 4"/>
+<text x="300" y="196" font-family="JetBrains Mono, monospace" font-size="14" font-weight="500" fill="#fb7185" text-anchor="middle" letter-spacing="1.5" opacity="1">CREDENTIAL ACCESS</text>
+<text x="300" y="218" font-family="JetBrains Mono, monospace" font-size="14" font-weight="500" fill="#8a95c2" text-anchor="middle" letter-spacing="0" opacity="1">03:01 UTC</text>
+<text x="300" y="240" font-family="JetBrains Mono, monospace" font-size="14" font-weight="500" fill="#e8ecff" text-anchor="middle" letter-spacing="0" opacity="1">InstanceCredentialExfiltration</text>
+<path d="M300 393 C 300 480, 620 470, 620 538" fill="none" stroke="#fb7185" stroke-opacity=".35" stroke-width="2"/>
+<circle cx="460" cy="380" r="13" fill="#060a1a" stroke="#a78bfa" stroke-width="3" filter="url(#g)"/><circle cx="460" cy="380" r="5" fill="#a78bfa"/>
+<line x1="460" y1="367" x2="460" y2="352" stroke="#a78bfa" stroke-opacity=".5" stroke-dasharray="3 4"/>
+<text x="460" y="296" font-family="JetBrains Mono, monospace" font-size="14" font-weight="500" fill="#a78bfa" text-anchor="middle" letter-spacing="1.5" opacity="1">PERSISTENCE</text>
+<text x="460" y="318" font-family="JetBrains Mono, monospace" font-size="14" font-weight="500" fill="#8a95c2" text-anchor="middle" letter-spacing="0" opacity="1">03:04 UTC</text>
+<text x="460" y="340" font-family="JetBrains Mono, monospace" font-size="14" font-weight="500" fill="#e8ecff" text-anchor="middle" letter-spacing="0" opacity="1">CreateUser + CreateAccessKey</text>
+<path d="M460 393 C 460 480, 620 470, 620 538" fill="none" stroke="#a78bfa" stroke-opacity=".35" stroke-width="2"/>
+<circle cx="620" cy="380" r="13" fill="#060a1a" stroke="#fbbf24" stroke-width="3" filter="url(#g)"/><circle cx="620" cy="380" r="5" fill="#fbbf24"/>
+<line x1="620" y1="367" x2="620" y2="252" stroke="#fbbf24" stroke-opacity=".5" stroke-dasharray="3 4"/>
+<text x="620" y="196" font-family="JetBrains Mono, monospace" font-size="14" font-weight="500" fill="#fbbf24" text-anchor="middle" letter-spacing="1.5" opacity="1">DEFENSE EVASION</text>
+<text x="620" y="218" font-family="JetBrains Mono, monospace" font-size="14" font-weight="500" fill="#8a95c2" text-anchor="middle" letter-spacing="0" opacity="1">03:07 UTC</text>
+<text x="620" y="240" font-family="JetBrains Mono, monospace" font-size="14" font-weight="500" fill="#e8ecff" text-anchor="middle" letter-spacing="0" opacity="1">CloudTrailLoggingDisabled</text>
+<path d="M620 393 C 620 480, 620 470, 620 538" fill="none" stroke="#fbbf24" stroke-opacity=".35" stroke-width="2"/>
+<circle cx="780" cy="380" r="13" fill="#060a1a" stroke="#22d3ee" stroke-width="3" filter="url(#g)"/><circle cx="780" cy="380" r="5" fill="#22d3ee"/>
+<line x1="780" y1="367" x2="780" y2="352" stroke="#22d3ee" stroke-opacity=".5" stroke-dasharray="3 4"/>
+<text x="780" y="296" font-family="JetBrains Mono, monospace" font-size="14" font-weight="500" fill="#22d3ee" text-anchor="middle" letter-spacing="1.5" opacity="1">COLLECTION</text>
+<text x="780" y="318" font-family="JetBrains Mono, monospace" font-size="14" font-weight="500" fill="#8a95c2" text-anchor="middle" letter-spacing="0" opacity="1">03:12 UTC</text>
+<text x="780" y="340" font-family="JetBrains Mono, monospace" font-size="14" font-weight="500" fill="#e8ecff" text-anchor="middle" letter-spacing="0" opacity="1">GetObject sweep (S3 data)</text>
+<path d="M780 393 C 780 480, 620 470, 620 538" fill="none" stroke="#22d3ee" stroke-opacity=".35" stroke-width="2"/>
+<circle cx="940" cy="380" r="13" fill="#060a1a" stroke="#ff9900" stroke-width="3" filter="url(#g)"/><circle cx="940" cy="380" r="5" fill="#ff9900"/>
+<line x1="940" y1="367" x2="940" y2="252" stroke="#ff9900" stroke-opacity=".5" stroke-dasharray="3 4"/>
+<text x="940" y="196" font-family="JetBrains Mono, monospace" font-size="14" font-weight="500" fill="#ff9900" text-anchor="middle" letter-spacing="1.5" opacity="1">EXFILTRATION</text>
+<text x="940" y="218" font-family="JetBrains Mono, monospace" font-size="14" font-weight="500" fill="#8a95c2" text-anchor="middle" letter-spacing="0" opacity="1">03:15 UTC</text>
+<text x="940" y="240" font-family="JetBrains Mono, monospace" font-size="14" font-weight="500" fill="#e8ecff" text-anchor="middle" letter-spacing="0" opacity="1">Exfiltration:S3/AnomalousBehavior</text>
+<path d="M940 393 C 940 480, 620 470, 620 538" fill="none" stroke="#ff9900" stroke-opacity=".35" stroke-width="2"/>
+<circle cx="1100" cy="380" r="13" fill="#060a1a" stroke="#fb7185" stroke-width="3" filter="url(#g)"/><circle cx="1100" cy="380" r="5" fill="#fb7185"/>
+<line x1="1100" y1="367" x2="1100" y2="352" stroke="#fb7185" stroke-opacity=".5" stroke-dasharray="3 4"/>
+<text x="1100" y="296" font-family="JetBrains Mono, monospace" font-size="14" font-weight="500" fill="#fb7185" text-anchor="middle" letter-spacing="1.5" opacity="1">IMPACT</text>
+<text x="1100" y="318" font-family="JetBrains Mono, monospace" font-size="14" font-weight="500" fill="#8a95c2" text-anchor="middle" letter-spacing="0" opacity="1">03:18 UTC</text>
+<text x="1100" y="340" font-family="JetBrains Mono, monospace" font-size="14" font-weight="500" fill="#e8ecff" text-anchor="middle" letter-spacing="0" opacity="1">AnomalousBehavior.Delete</text>
+<path d="M1100 393 C 1100 480, 620 470, 620 538" fill="none" stroke="#fb7185" stroke-opacity=".35" stroke-width="2"/>
+<rect x="120" y="540" width="1000" height="170" rx="20" fill="#fb7185" fill-opacity=".1" stroke="#fb7185" stroke-width="2" filter="url(#g)"/>
+<text x="150" y="582" font-family="JetBrains Mono, monospace" font-size="16" font-weight="600" fill="#fb7185" text-anchor="start" letter-spacing="3" opacity="1">▲ CRITICAL</text>
+<text x="150" y="622" font-family="Space Grotesk, Inter, sans-serif" font-size="30" font-weight="700" fill="#e8ecff" text-anchor="start" letter-spacing="0" opacity="1">AttackSequence:S3/CompromisedData</text>
+<text x="150" y="656" font-family="Space Grotesk, Inter, sans-serif" font-size="16" font-weight="500" fill="#b7c0e6" text-anchor="start" letter-spacing="0" opacity="1">7 signals · 6 ATT&amp;CK tactics · 1 principal · 1 bucket — one finding instead of seven tickets</text>
+<text x="150" y="684" font-family="JetBrains Mono, monospace" font-size="15" font-weight="500" fill="#ff9900" text-anchor="start" letter-spacing="0" opacity="1">Indicators attached: SENSITIVE_DATA · MISCONFIGURATION</text>
+<rect x="1220" y="150" width="340" height="560" rx="22" fill="#ff9900" fill-opacity=".035" stroke="#ff9900" stroke-opacity=".45"/>
+<text x="1240" y="180" font-family="JetBrains Mono, monospace" font-size="14" font-weight="500" fill="#ff9900" text-anchor="start" letter-spacing="2.5" opacity="1">NEW INDICATORS · MAY 2026</text>
+<rect x="1245" y="210" width="250" height="28" rx="14" fill="#ff9900" fill-opacity=".14" stroke="#ff9900" stroke-opacity=".7"/>
+<text x="1370.0" y="229" font-family="JetBrains Mono, monospace" font-size="14" font-weight="500" fill="#ff9900" text-anchor="middle" letter-spacing="0" opacity="1">MALICIOUS_PACKAGE</text>
+<text x="1250" y="266" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="500" fill="#b7c0e6" text-anchor="start" letter-spacing="0" opacity="1">known-bad dependency on the resource</text>
+<rect x="1245" y="302" width="250" height="28" rx="14" fill="#ff9900" fill-opacity=".14" stroke="#ff9900" stroke-opacity=".7"/>
+<text x="1370.0" y="321" font-family="JetBrains Mono, monospace" font-size="14" font-weight="500" fill="#ff9900" text-anchor="middle" letter-spacing="0" opacity="1">MISCONFIGURATION</text>
+<text x="1250" y="358" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="500" fill="#b7c0e6" text-anchor="start" letter-spacing="0" opacity="1">a posture gap made it possible</text>
+<rect x="1245" y="394" width="250" height="28" rx="14" fill="#ff9900" fill-opacity=".14" stroke="#ff9900" stroke-opacity=".7"/>
+<text x="1370.0" y="413" font-family="JetBrains Mono, monospace" font-size="14" font-weight="500" fill="#ff9900" text-anchor="middle" letter-spacing="0" opacity="1">REACHABILITY</text>
+<text x="1250" y="450" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="500" fill="#b7c0e6" text-anchor="start" letter-spacing="0" opacity="1">resource reachable from the internet</text>
+<rect x="1245" y="486" width="250" height="28" rx="14" fill="#ff9900" fill-opacity=".14" stroke="#ff9900" stroke-opacity=".7"/>
+<text x="1370.0" y="505" font-family="JetBrains Mono, monospace" font-size="14" font-weight="500" fill="#ff9900" text-anchor="middle" letter-spacing="0" opacity="1">SENSITIVE_DATA</text>
+<text x="1250" y="542" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="500" fill="#b7c0e6" text-anchor="start" letter-spacing="0" opacity="1">data classified as sensitive involved</text>
+<rect x="1245" y="578" width="250" height="28" rx="14" fill="#ff9900" fill-opacity=".14" stroke="#ff9900" stroke-opacity=".7"/>
+<text x="1370.0" y="597" font-family="JetBrains Mono, monospace" font-size="14" font-weight="500" fill="#ff9900" text-anchor="middle" letter-spacing="0" opacity="1">VULNERABILITY</text>
+<text x="1250" y="634" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="500" fill="#b7c0e6" text-anchor="start" letter-spacing="0" opacity="1">exploitable CVE on the resource</text>
+</svg>

@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 760">
+<title>Illustrative console mock-up: Pull request</title>
+<rect width="1400" height="760" fill="#0d1226"/>
+<rect width="1400" height="52" fill="#151b38"/>
+<rect x="20" y="15" width="22" height="22" rx="6" fill="#a78bfa"/>
+<text x="56" y="33" font-family="Space Grotesk, Inter, sans-serif" font-size="16" font-weight="700" fill="#fff">Cloud Console</text>
+<rect x="400" y="12" width="420" height="28" rx="8" fill="#0d1226" stroke="#2b3463"/>
+<text x="416" y="31" font-family="Space Grotesk, Inter, sans-serif" font-size="14" fill="#6b76a8">Search services, features, docs</text>
+<text x="1100" y="32" font-family="Space Grotesk, Inter, sans-serif" font-size="14" fill="#c7d2fe">N. Virginia ▾</text>
+<text x="1215" y="32" font-family="JetBrains Mono, ui-monospace, monospace" font-size="13" fill="#c7d2fe">1111-2222-3333 ▾</text>
+<rect x="0" y="52" width="250" height="708" fill="#10162f"/>
+<text x="28" y="100" font-family="Space Grotesk, Inter, sans-serif" font-size="17" font-weight="700" fill="#fff">Pull request</text>
+<line x1="20" y1="116" x2="230" y2="116" stroke="#232b52"/>
+<text x="28" y="150" font-family="Space Grotesk, Inter, sans-serif" font-size="15" fill="#9aa6d1" font-weight="400">Conversation</text><text x="28" y="184" font-family="Space Grotesk, Inter, sans-serif" font-size="15" fill="#9aa6d1" font-weight="400">Commits</text><text x="28" y="218" font-family="Space Grotesk, Inter, sans-serif" font-size="15" fill="#ffffff" font-weight="600">Checks</text><rect x="12" y="200" width="4" height="24" rx="2" fill="#a78bfa"/><text x="28" y="252" font-family="Space Grotesk, Inter, sans-serif" font-size="15" fill="#9aa6d1" font-weight="400">Files changed</text>
+<text x="280" y="92" font-family="Space Grotesk, Inter, sans-serif" font-size="13" fill="#7f8bbd">nimbus / skyfortress-policies  ›  Pull requests  ›  #1  ›  Checks</text>
+
+<text x="280" y="134" font-family="Space Grotesk, Inter, sans-serif" font-size="26" font-weight="700" fill="#fff">tiny tweak, nothing to see  <tspan fill="#7f8bbd">#1</tspan></text>
+<rect x="280" y="152" width="46" height="26" rx="13" fill="#34d399"/><text x="303.0" y="170" text-anchor="middle" font-family="Space Grotesk, Inter, sans-serif" font-size="13" font-weight="600" fill="#0a0d1f">Open</text>
+<text x="356" y="170" font-family="Space Grotesk, Inter, sans-serif" font-size="14" fill="#9aa6d1">kraken/sneaky-policy → main · 1 file changed: policies/06-sneaky.identity.json</text>
+<rect x="280" y="200" width="1090" height="120" rx="12" fill="#111833" stroke="#fb7185" stroke-opacity=".7"/>
+<circle cx="312" cy="236" r="14" fill="#fb7185"/><text x="312" y="242" text-anchor="middle" font-family="Space Grotesk, Inter, sans-serif" font-size="16" font-weight="700" fill="#0a0d1f">✕</text>
+<text x="338" y="242" font-family="Space Grotesk, Inter, sans-serif" font-size="17" font-weight="700" fill="#fff">Some checks were not successful</text>
+<text x="338" y="270" font-family="JetBrains Mono, ui-monospace, monospace" font-size="14" fill="#fda4af">policy-robot / policy-checks (pull_request) — Failing after 23s</text>
+<rect x="1180" y="222" width="170" height="38" rx="8" fill="#3b1022" stroke="#fb7185"/><text x="1265" y="246" text-anchor="middle" font-family="Space Grotesk, Inter, sans-serif" font-size="14" fill="#fda4af">Merging is blocked</text>
+<text x="338" y="300" font-family="Space Grotesk, Inter, sans-serif" font-size="13" fill="#9aa6d1">Required by ruleset "protect-main" · review required: policy-checks</text>
+<text x="280" y="372" font-family="Space Grotesk, Inter, sans-serif" font-size="20" font-weight="700" fill="#fff">🤖 Least-Privilege Robot — job summary</text>
+<rect x="280" y="392" width="1090" height="138" rx="10" fill="#111833" stroke="#262f5a"/>
+<rect x="280" y="392" width="1090" height="46" rx="10" fill="#172042"/>
+<text x="296" y="421" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="600" fill="#c7d2fe">File</text>
+<text x="576" y="421" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="600" fill="#c7d2fe">Check</text>
+<text x="796" y="421" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="600" fill="#c7d2fe">Result</text>
+<text x="926" y="421" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="600" fill="#c7d2fe">Why</text>
+<line x1="280" y1="438" x2="1370" y2="438" stroke="#222a52"/>
+<text x="296" y="467" font-family="JetBrains Mono, ui-monospace, monospace" font-size="14" fill="#fff">06-sneaky.identity.json</text>
+<text x="576" y="467" font-family="JetBrains Mono, ui-monospace, monospace" font-size="14" fill="#dbe2ff">no-new-access</text>
+<text x="796" y="467" font-family="Space Grotesk, Inter, sans-serif" font-size="14" fill="#fb7185">❌ FAIL</text>
+<text x="926" y="467" font-family="Space Grotesk, Inter, sans-serif" font-size="14" fill="#dbe2ff">statement 0 grants new access</text>
+<line x1="280" y1="484" x2="1370" y2="484" stroke="#222a52"/>
+<text x="296" y="513" font-family="JetBrains Mono, ui-monospace, monospace" font-size="14" fill="#fff">06-sneaky.identity.json</text>
+<text x="576" y="513" font-family="JetBrains Mono, ui-monospace, monospace" font-size="14" fill="#dbe2ff">access-not-granted</text>
+<text x="796" y="513" font-family="Space Grotesk, Inter, sans-serif" font-size="14" fill="#fb7185">❌ FAIL</text>
+<text x="926" y="513" font-family="Space Grotesk, Inter, sans-serif" font-size="14" fill="#dbe2ff">s3:PutBucketPolicy is on the critical list</text>
+<rect x="280" y="560" width="1090" height="140" rx="12" fill="#0b0f22" stroke="#262f5a"/>
+<text x="300" y="592" font-family="JetBrains Mono, ui-monospace, monospace" font-size="13" fill="#34d399">✓ Configure AWS credentials (OIDC → SkyfortressPolicyRobot)</text>
+<text x="300" y="620" font-family="JetBrains Mono, ui-monospace, monospace" font-size="13" fill="#34d399">✓ Install boto3</text>
+<text x="300" y="648" font-family="JetBrains Mono, ui-monospace, monospace" font-size="13" fill="#fb7185">✕ Run Access Analyzer custom policy checks   Process completed with exit code 1.</text>
+<text x="300" y="680" font-family="Space Grotesk, Inter, sans-serif" font-size="13" fill="#7f8bbd">No access keys anywhere: the job assumed the robot role with a short-lived OIDC token.</text>
+
+</svg>

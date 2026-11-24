@@ -1,0 +1,24 @@
+[
+  {
+    "Name": "All management events (read + write)",
+    "FieldSelectors": [
+      { "Field": "eventCategory", "Equals": ["Management"] }
+    ]
+  },
+  {
+    "Name": "S3 data events - crown jewels only",
+    "FieldSelectors": [
+      { "Field": "eventCategory", "Equals": ["Data"] },
+      { "Field": "resources.type", "Equals": ["AWS::S3::Object"] },
+      { "Field": "resources.ARN", "StartsWith": ["arn:aws:s3:::skyfortress-crown-jewels-"] }
+    ]
+  },
+  {
+    "Name": "Network activity - VPC endpoint policy denials",
+    "FieldSelectors": [
+      { "Field": "eventCategory", "Equals": ["NetworkActivity"] },
+      { "Field": "eventSource", "Equals": ["s3.amazonaws.com", "kms.amazonaws.com", "secretsmanager.amazonaws.com"] },
+      { "Field": "errorCode", "Equals": ["VpceAccessDenied"] }
+    ]
+  }
+]

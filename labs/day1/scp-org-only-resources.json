@@ -1,0 +1,31 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "EnforceResourcePerimeterS3",
+      "Effect": "Deny",
+      "Action": [
+        "s3:GetObject",
+        "s3:GetObjectVersion",
+        "s3:PutObject",
+        "s3:ListBucket",
+        "s3:DeleteObject"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "StringNotEqualsIfExists": {
+          "aws:ResourceOrgID": "o-REPLACEME"
+        },
+        "ForAllValues:StringNotEquals": {
+          "aws:CalledVia": [
+            "cloudformation.amazonaws.com",
+            "athena.amazonaws.com"
+          ]
+        },
+        "ArnNotLike": {
+          "aws:PrincipalArn": "arn:aws:iam::*:role/perimeter-exempt/*"
+        }
+      }
+    }
+  ]
+}

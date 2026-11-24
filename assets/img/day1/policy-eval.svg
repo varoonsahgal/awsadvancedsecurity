@@ -1,0 +1,127 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 1120" font-family="Space Grotesk, Inter, sans-serif">
+  <title>AWS policy evaluation logic flowchart for a request within one account inside an Organization</title>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0b0f2a"/><stop offset="1" stop-color="#070b1c"/></linearGradient>
+    <linearGradient id="vio" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#a78bfa"/><stop offset="1" stop-color="#f472b6"/></linearGradient>
+    <filter id="g" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#a78bfa"/></marker>
+    <marker id="arR" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#fb7185"/></marker>
+    <marker id="arG" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#34d399"/></marker>
+  </defs>
+  <rect width="1400" height="1120" fill="url(#bg)"/>
+  <g stroke="#a78bfa" stroke-opacity=".06"><path d="M0 40 H1400 M0 80 H1400 M0 120 H1400 M0 160 H1400 M0 200 H1400 M0 240 H1400 M0 280 H1400 M0 320 H1400 M0 360 H1400 M0 400 H1400 M0 440 H1400 M0 480 H1400 M0 520 H1400 M0 560 H1400 M0 600 H1400 M0 640 H1400 M0 680 H1400 M0 720 H1400 M0 760 H1400 M0 800 H1400 M0 840 H1400 M0 880 H1400 M0 920 H1400 M0 960 H1400 M0 1000 H1400 M0 1040 H1400 M0 1080 H1400"/></g>
+
+  <text x="60" y="64" font-size="30" font-weight="700" fill="#fff">How AWS decides: <tspan fill="#a78bfa">ALLOW</tspan> or <tspan fill="#fb7185">DENY</tspan></text>
+  <text x="60" y="96" font-size="17" fill="#8a95c2">Single-account request, member account of an Organization. Default = implicit deny. Read top to bottom.</text>
+
+  <!-- request pill -->
+  <rect x="420" y="128" width="360" height="56" rx="28" fill="#141a44" stroke="url(#vio)" stroke-width="2"/>
+  <text x="600" y="163" font-size="19" fill="#fff" text-anchor="middle">Request: principal + action + resource + context</text>
+  <line x1="600" y1="184" x2="600" y2="214" stroke="#a78bfa" stroke-width="2.5" marker-end="url(#ar)"/>
+
+  <!-- step rows: diamond-ish boxes -->
+  <g font-size="18" fill="#fff">
+    <!-- 1 explicit deny -->
+    <rect x="390" y="218" width="420" height="72" rx="14" fill="#1b1240" stroke="#fb7185" stroke-width="2"/>
+    <text x="410" y="246" font-size="13" fill="#fb7185" font-family="JetBrains Mono, monospace">STEP 1 · ALL POLICY TYPES</text>
+    <text x="410" y="274">Any explicit <tspan font-weight="700">Deny</tspan> that matches?</text>
+
+    <!-- 2 RCP -->
+    <rect x="390" y="330" width="420" height="72" rx="14" fill="#16153f" stroke="#a78bfa" stroke-width="2"/>
+    <text x="410" y="358" font-size="13" fill="#a78bfa" font-family="JetBrains Mono, monospace">STEP 2 · RESOURCE CONTROL POLICIES</text>
+    <text x="410" y="386">Do RCPs on the resource's account allow?</text>
+
+    <!-- 3 SCP -->
+    <rect x="390" y="442" width="420" height="72" rx="14" fill="#16153f" stroke="#a78bfa" stroke-width="2"/>
+    <text x="410" y="470" font-size="13" fill="#a78bfa" font-family="JetBrains Mono, monospace">STEP 3 · SERVICE CONTROL POLICIES</text>
+    <text x="410" y="498">Do SCPs on the principal's account allow?</text>
+
+    <!-- 4 RBP -->
+    <rect x="390" y="554" width="420" height="72" rx="14" fill="#16153f" stroke="#22d3ee" stroke-width="2"/>
+    <text x="410" y="582" font-size="13" fill="#22d3ee" font-family="JetBrains Mono, monospace">STEP 4 · RESOURCE-BASED POLICY</text>
+    <text x="410" y="610">Does a resource policy allow this principal?</text>
+
+    <!-- 5 identity -->
+    <rect x="390" y="666" width="420" height="72" rx="14" fill="#16153f" stroke="#a78bfa" stroke-width="2"/>
+    <text x="410" y="694" font-size="13" fill="#a78bfa" font-family="JetBrains Mono, monospace">STEP 5 · IDENTITY-BASED POLICIES</text>
+    <text x="410" y="722">Does an identity policy allow?</text>
+
+    <!-- 6 boundary -->
+    <rect x="390" y="778" width="420" height="72" rx="14" fill="#16153f" stroke="#a78bfa" stroke-width="2"/>
+    <text x="410" y="806" font-size="13" fill="#a78bfa" font-family="JetBrains Mono, monospace">STEP 6 · PERMISSIONS BOUNDARY</text>
+    <text x="410" y="834">If a boundary is set, does it allow?</text>
+
+    <!-- 7 session -->
+    <rect x="390" y="890" width="420" height="72" rx="14" fill="#16153f" stroke="#a78bfa" stroke-width="2"/>
+    <text x="410" y="918" font-size="13" fill="#a78bfa" font-family="JetBrains Mono, monospace">STEP 7 · SESSION POLICY</text>
+    <text x="410" y="946">If a session policy was passed, does it allow?</text>
+  </g>
+
+  <!-- down arrows labelled -->
+  <g stroke="#a78bfa" stroke-width="2.5" marker-end="url(#ar)">
+    <line x1="600" y1="290" x2="600" y2="326"/><line x1="600" y1="402" x2="600" y2="438"/><line x1="600" y1="514" x2="600" y2="550"/>
+    <line x1="600" y1="626" x2="600" y2="662"/><line x1="600" y1="738" x2="600" y2="774"/><line x1="600" y1="850" x2="600" y2="886"/>
+    <line x1="600" y1="962" x2="600" y2="1006"/>
+  </g>
+  <g font-size="15" fill="#c9b8ff" font-family="JetBrains Mono, monospace">
+    <text x="612" y="314">no</text><text x="612" y="426">yes</text><text x="612" y="538">yes</text><text x="612" y="650">no / n.a.</text>
+    <text x="612" y="762">yes</text><text x="612" y="874">yes / none</text><text x="612" y="988">yes / none</text>
+  </g>
+
+  <!-- deny exits -->
+  <g stroke="#fb7185" stroke-width="2.5" fill="none" marker-end="url(#arR)">
+    <path d="M810 254 H960"/><path d="M810 366 H960"/><path d="M810 478 H960"/><path d="M810 702 H960"/><path d="M810 814 H960"/><path d="M810 926 H960"/>
+  </g>
+  <g font-size="15" fill="#fda4af" font-family="JetBrains Mono, monospace">
+    <text x="826" y="244">yes</text><text x="826" y="356">no</text><text x="826" y="468">no</text><text x="826" y="692">no</text><text x="826" y="804">no</text><text x="826" y="916">no</text>
+  </g>
+  <g font-family="Space Grotesk, Inter, sans-serif">
+    <rect x="966" y="226" width="200" height="56" rx="12" fill="#3a0d22" stroke="#fb7185" stroke-width="2"/><text x="1066" y="261" font-size="20" font-weight="700" fill="#fb7185" text-anchor="middle">EXPLICIT DENY</text>
+    <rect x="966" y="338" width="200" height="56" rx="12" fill="#2a0d1d" stroke="#fb7185" stroke-opacity=".6" stroke-width="2"/><text x="1066" y="373" font-size="18" fill="#fda4af" text-anchor="middle">implicit deny</text>
+    <rect x="966" y="450" width="200" height="56" rx="12" fill="#2a0d1d" stroke="#fb7185" stroke-opacity=".6" stroke-width="2"/><text x="1066" y="485" font-size="18" fill="#fda4af" text-anchor="middle">implicit deny</text>
+    <rect x="966" y="674" width="200" height="56" rx="12" fill="#2a0d1d" stroke="#fb7185" stroke-opacity=".6" stroke-width="2"/><text x="1066" y="709" font-size="18" fill="#fda4af" text-anchor="middle">implicit deny</text>
+    <rect x="966" y="786" width="200" height="56" rx="12" fill="#2a0d1d" stroke="#fb7185" stroke-opacity=".6" stroke-width="2"/><text x="1066" y="821" font-size="18" fill="#fda4af" text-anchor="middle">implicit deny</text>
+    <rect x="966" y="898" width="200" height="56" rx="12" fill="#2a0d1d" stroke="#fb7185" stroke-opacity=".6" stroke-width="2"/><text x="1066" y="933" font-size="18" fill="#fda4af" text-anchor="middle">implicit deny</text>
+  </g>
+
+  <!-- RBP shortcut allow (left) -->
+  <path d="M390 590 H250 V1040 H476" stroke="#34d399" stroke-width="2.5" fill="none" stroke-dasharray="7 6" marker-end="url(#arG)"/>
+  <text x="120" y="575" font-size="15" fill="#6ee7b7" font-family="JetBrains Mono, monospace">yes → ALLOW*</text>
+  <text x="60" y="620" font-size="14" fill="#8a95c2">* same-account shortcut:</text>
+  <text x="60" y="640" font-size="14" fill="#8a95c2">a resource policy naming the</text>
+  <text x="60" y="660" font-size="14" fill="#8a95c2">user / role-session ARN is</text>
+  <text x="60" y="680" font-size="14" fill="#8a95c2">enough. Naming the role ARN</text>
+  <text x="60" y="700" font-size="14" fill="#8a95c2">still lets boundaries and</text>
+  <text x="60" y="720" font-size="14" fill="#8a95c2">session policies cap it.</text>
+
+  <!-- final allow -->
+  <rect x="480" y="1010" width="240" height="64" rx="32" fill="#08311f" stroke="#34d399" stroke-width="3" filter="url(#g)"/>
+  <text x="600" y="1051" font-size="24" font-weight="700" fill="#34d399" text-anchor="middle">ALLOW</text>
+
+  <!-- side notes -->
+  <g font-size="15" fill="#b7c0e6">
+    <rect x="1200" y="226" width="170" height="282" rx="14" fill="#10153a" stroke="#a78bfa" stroke-opacity=".4"/>
+    <text x="1216" y="256" font-size="14" fill="#a78bfa" font-family="JetBrains Mono, monospace">GUARDRAILS</text>
+    <text x="1216" y="284">SCP + RCP never</text>
+    <text x="1216" y="304"><tspan font-weight="700" fill="#fff">grant</tspan>. They only</text>
+    <text x="1216" y="324">set the ceiling.</text>
+    <text x="1216" y="358">Don't apply to the</text>
+    <text x="1216" y="378">management account</text>
+    <text x="1216" y="398">or service-linked</text>
+    <text x="1216" y="418">roles.</text>
+    <text x="1216" y="452">Declarative policies</text>
+    <text x="1216" y="472">enforce at the service</text>
+    <text x="1216" y="492">control plane instead.</text>
+
+    <rect x="1200" y="674" width="170" height="288" rx="14" fill="#10153a" stroke="#22d3ee" stroke-opacity=".4"/>
+    <text x="1216" y="704" font-size="14" fill="#22d3ee" font-family="JetBrains Mono, monospace">CROSS-ACCOUNT</text>
+    <text x="1216" y="732">No shortcut. Caller's</text>
+    <text x="1216" y="752">identity policy AND</text>
+    <text x="1216" y="772">target's resource</text>
+    <text x="1216" y="792">policy (or role trust)</text>
+    <text x="1216" y="812">must both allow.</text>
+    <text x="1216" y="846">SCPs apply on the</text>
+    <text x="1216" y="866">caller side, RCPs on</text>
+    <text x="1216" y="886">the resource side.</text>
+  </g>
+</svg>

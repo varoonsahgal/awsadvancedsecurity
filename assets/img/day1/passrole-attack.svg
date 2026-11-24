@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 760" font-family="Space Grotesk, Inter, sans-serif">
+  <title>PassRole privilege escalation attack graph: low-privilege intern role passes a privileged role to a new Lambda function to read a secret</title>
+  <defs>
+    <linearGradient id="pbg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#140a26"/><stop offset="1" stop-color="#070b1c"/></linearGradient>
+    <linearGradient id="red" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fb7185"/><stop offset="1" stop-color="#f472b6"/></linearGradient>
+    <filter id="pg" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="7" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <marker id="pa" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#fb7185"/></marker>
+    <marker id="pv" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#a78bfa"/></marker>
+  </defs>
+  <rect width="1400" height="760" fill="url(#pbg)"/>
+  <text x="50" y="60" font-size="28" font-weight="700" fill="#fff">The PassRole Heist — attack graph</text>
+  <text x="50" y="90" font-size="16" fill="#8a95c2">The intern can't read the secret. But the intern can create a Lambda that can. iam:PassRole is the bridge.</text>
+
+  <!-- nodes -->
+  <g>
+    <!-- intern -->
+    <rect x="60" y="180" width="250" height="150" rx="18" fill="#1b1033" stroke="#fb7185" stroke-width="2.5"/>
+    <text x="80" y="212" font-size="13" fill="#fb7185" font-family="JetBrains Mono, monospace">① FOOTHOLD</text>
+    <text x="80" y="242" font-size="20" font-weight="700" fill="#fff">KrakenInternRole</text>
+    <text x="80" y="268" font-size="14" fill="#b7c0e6" font-family="JetBrains Mono, monospace">lambda:CreateFunction</text>
+    <text x="80" y="288" font-size="14" fill="#b7c0e6" font-family="JetBrains Mono, monospace">lambda:InvokeFunction</text>
+    <text x="80" y="308" font-size="14" fill="#fda4af" font-family="JetBrains Mono, monospace" font-weight="700">iam:PassRole  Resource:*</text>
+
+    <!-- recon -->
+    <rect x="410" y="120" width="250" height="110" rx="18" fill="#141435" stroke="#a78bfa" stroke-width="2"/>
+    <text x="430" y="152" font-size="13" fill="#a78bfa" font-family="JetBrains Mono, monospace">② RECON</text>
+    <text x="430" y="180" font-size="18" font-weight="700" fill="#fff">iam:ListRoles</text>
+    <text x="430" y="204" font-size="14" fill="#b7c0e6">trust: lambda.amazonaws.com</text>
+
+    <!-- privileged role -->
+    <rect x="410" y="300" width="250" height="130" rx="18" fill="#2a1a08" stroke="#ff9900" stroke-width="2.5" filter="url(#pg)"/>
+    <text x="430" y="332" font-size="13" fill="#ff9900" font-family="JetBrains Mono, monospace">③ THE PRIZE</text>
+    <text x="430" y="360" font-size="17" font-weight="700" fill="#fff">/privileged/</text>
+    <text x="430" y="382" font-size="17" font-weight="700" fill="#fff">NimbusOpsAutomationRole</text>
+    <text x="430" y="408" font-size="14" fill="#ffd59a" font-family="JetBrains Mono, monospace">secretsmanager:GetSecretValue</text>
+
+    <!-- lambda -->
+    <rect x="770" y="210" width="250" height="150" rx="18" fill="#1b1033" stroke="#fb7185" stroke-width="2.5"/>
+    <text x="790" y="242" font-size="13" fill="#fb7185" font-family="JetBrains Mono, monospace">④ WEAPONIZE</text>
+    <text x="790" y="272" font-size="20" font-weight="700" fill="#fff">λ kraken-heist</text>
+    <text x="790" y="298" font-size="14" fill="#b7c0e6" font-family="JetBrains Mono, monospace">create-function</text>
+    <text x="790" y="318" font-size="14" fill="#b7c0e6" font-family="JetBrains Mono, monospace">  --role …/privileged/…</text>
+    <text x="790" y="338" font-size="14" fill="#b7c0e6" font-family="JetBrains Mono, monospace">invoke → runs AS ops role</text>
+
+    <!-- secret -->
+    <rect x="1110" y="210" width="240" height="150" rx="18" fill="#2a0a1a" stroke="url(#red)" stroke-width="3" filter="url(#pg)"/>
+    <text x="1130" y="242" font-size="13" fill="#f472b6" font-family="JetBrains Mono, monospace">⑤ LOOT</text>
+    <text x="1130" y="272" font-size="18" font-weight="700" fill="#fff">Secrets Manager</text>
+    <text x="1130" y="296" font-size="14" fill="#f9a8d4" font-family="JetBrains Mono, monospace">skyfortress/heist/</text>
+    <text x="1130" y="316" font-size="14" fill="#f9a8d4" font-family="JetBrains Mono, monospace">  launch-codes</text>
+    <text x="1130" y="342" font-size="22">🔑🚀</text>
+  </g>
+
+  <!-- edges -->
+  <g stroke="#fb7185" stroke-width="3" fill="none" marker-end="url(#pa)">
+    <path d="M310 230 C 350 200, 370 180, 406 176"/>
+    <path d="M310 280 C 350 300, 370 340, 406 360"/>
+    <path d="M660 365 C 710 350, 730 320, 766 300"/>
+    <path d="M1020 285 H1106"/>
+  </g>
+  <path d="M310 255 C 500 260, 600 260, 766 262" stroke="#fb7185" stroke-width="2" stroke-dasharray="6 7" fill="none" marker-end="url(#pa)"/>
+  <g font-size="14" fill="#fda4af" font-family="JetBrains Mono, monospace">
+    <text x="680" y="250">CreateFunction</text>
+    <text x="664" y="392">iam:PassRole ✓</text>
+    <text x="1030" y="275">GetSecret</text>
+  </g>
+
+  <!-- defenses -->
+  <rect x="60" y="490" width="1290" height="230" rx="20" fill="#0c1430" stroke="#34d399" stroke-opacity=".6" stroke-width="2"/>
+  <text x="86" y="528" font-size="14" fill="#34d399" font-family="JetBrains Mono, monospace">THREE LAYERS THAT BREAK THE CHAIN</text>
+  <g>
+    <rect x="86" y="548" width="400" height="150" rx="14" fill="#0b2a20" stroke="#34d399" stroke-opacity=".5"/>
+    <text x="106" y="580" font-size="18" font-weight="700" fill="#fff">1 · Scope PassRole</text>
+    <text x="106" y="608" font-size="14" fill="#b7c0e6" font-family="JetBrains Mono, monospace">Resource: role/lambda-sandbox/*</text>
+    <text x="106" y="630" font-size="14" fill="#b7c0e6" font-family="JetBrains Mono, monospace">iam:PassedToService =</text>
+    <text x="106" y="652" font-size="14" fill="#b7c0e6" font-family="JetBrains Mono, monospace">  lambda.amazonaws.com</text>
+    <text x="106" y="680" font-size="14" fill="#6ee7b7">breaks edge ③ → ④</text>
+
+    <rect x="506" y="548" width="400" height="150" rx="14" fill="#0b2a20" stroke="#34d399" stroke-opacity=".5"/>
+    <text x="526" y="580" font-size="18" font-weight="700" fill="#fff">2 · Permissions boundary</text>
+    <text x="526" y="608" font-size="14" fill="#b7c0e6">A ceiling on the intern role itself:</text>
+    <text x="526" y="630" font-size="14" fill="#b7c0e6">even if someone re-widens the policy,</text>
+    <text x="526" y="652" font-size="14" fill="#b7c0e6">PassRole stays capped to sandbox roles.</text>
+    <text x="526" y="680" font-size="14" fill="#6ee7b7">survives future mistakes</text>
+
+    <rect x="926" y="548" width="400" height="150" rx="14" fill="#0b2a20" stroke="#34d399" stroke-opacity=".5"/>
+    <text x="946" y="580" font-size="18" font-weight="700" fill="#fff">3 · SCP on /privileged/*</text>
+    <text x="946" y="608" font-size="14" fill="#b7c0e6">Org-wide deny on passing privileged</text>
+    <text x="946" y="630" font-size="14" fill="#b7c0e6">roles unless aws:PrincipalArn is the</text>
+    <text x="946" y="652" font-size="14" fill="#b7c0e6">platform/admin role. Account admins too.</text>
+    <text x="946" y="680" font-size="14" fill="#6ee7b7">enforced above the account</text>
+  </g>
+</svg>

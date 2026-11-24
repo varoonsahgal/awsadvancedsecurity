@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 740">
+<title>Illustrative console mock-up: IAM</title>
+<rect width="1400" height="740" fill="#0d1226"/>
+<rect width="1400" height="52" fill="#151b38"/>
+<rect x="20" y="15" width="22" height="22" rx="6" fill="#a78bfa"/>
+<text x="56" y="33" font-family="Space Grotesk, Inter, sans-serif" font-size="16" font-weight="700" fill="#fff">Cloud Console</text>
+<rect x="400" y="12" width="420" height="28" rx="8" fill="#0d1226" stroke="#2b3463"/>
+<text x="416" y="31" font-family="Space Grotesk, Inter, sans-serif" font-size="14" fill="#6b76a8">Search services, features, docs</text>
+<text x="1100" y="32" font-family="Space Grotesk, Inter, sans-serif" font-size="14" fill="#c7d2fe">N. Virginia ▾</text>
+<text x="1215" y="32" font-family="JetBrains Mono, ui-monospace, monospace" font-size="13" fill="#c7d2fe">1111-2222-3333 ▾</text>
+<rect x="0" y="52" width="250" height="688" fill="#10162f"/>
+<text x="28" y="100" font-family="Space Grotesk, Inter, sans-serif" font-size="17" font-weight="700" fill="#fff">IAM</text>
+<line x1="20" y1="116" x2="230" y2="116" stroke="#232b52"/>
+<text x="28" y="150" font-family="Space Grotesk, Inter, sans-serif" font-size="15" fill="#9aa6d1" font-weight="400">Dashboard</text><text x="28" y="184" font-family="Space Grotesk, Inter, sans-serif" font-size="15" fill="#9aa6d1" font-weight="400">User groups</text><text x="28" y="218" font-family="Space Grotesk, Inter, sans-serif" font-size="15" fill="#9aa6d1" font-weight="400">Users</text><text x="28" y="252" font-family="Space Grotesk, Inter, sans-serif" font-size="15" fill="#ffffff" font-weight="600">Roles</text><rect x="12" y="234" width="4" height="24" rx="2" fill="#a78bfa"/><text x="28" y="286" font-family="Space Grotesk, Inter, sans-serif" font-size="15" fill="#9aa6d1" font-weight="400">Policies</text>
+<text x="280" y="92" font-family="Space Grotesk, Inter, sans-serif" font-size="13" fill="#7f8bbd">IAM  ›  Roles  ›  OrbitalInsightsReadRole</text>
+
+<text x="280" y="134" font-family="Space Grotesk, Inter, sans-serif" font-size="26" font-weight="700" fill="#fff">OrbitalInsightsReadRole</text>
+<text x="280" y="164" font-family="JetBrains Mono, ui-monospace, monospace" font-size="13" fill="#9aa6d1">arn:aws:iam::111122223333:role/OrbitalInsightsReadRole</text>
+<g font-family="Space Grotesk, Inter, sans-serif" font-size="15">
+  <text x="280" y="214" fill="#9aa6d1">Permissions</text>
+  <text x="400" y="214" fill="#fff" font-weight="700">Trust relationships</text><rect x="394" y="222" width="146" height="3" fill="#a78bfa"/>
+  <text x="572" y="214" fill="#9aa6d1">Tags</text><text x="640" y="214" fill="#9aa6d1">Last Accessed</text>
+</g>
+<line x1="280" y1="226" x2="1370" y2="226" stroke="#232b52"/>
+<text x="280" y="262" font-family="Space Grotesk, Inter, sans-serif" font-size="17" font-weight="700" fill="#fff">Trusted entities</text>
+<rect x="280" y="280" width="700" height="410" rx="12" fill="#070a18" stroke="#262f5a"/>
+<g font-family="JetBrains Mono, ui-monospace, monospace" font-size="15">
+  <text x="304" y="314" fill="#a5b4fc">{</text>
+  <text x="324" y="342"><tspan fill="#93c5fd">"Version"</tspan><tspan fill="#a5b4fc">: </tspan><tspan fill="#86efac">"2012-10-17"</tspan><tspan fill="#a5b4fc">,</tspan></text>
+  <text x="324" y="370"><tspan fill="#93c5fd">"Statement"</tspan><tspan fill="#a5b4fc">: [{</tspan></text>
+  <text x="344" y="398"><tspan fill="#93c5fd">"Effect"</tspan><tspan fill="#a5b4fc">: </tspan><tspan fill="#86efac">"Allow"</tspan><tspan fill="#a5b4fc">,</tspan></text>
+  <text x="344" y="426"><tspan fill="#93c5fd">"Principal"</tspan><tspan fill="#a5b4fc">: { </tspan><tspan fill="#93c5fd">"AWS"</tspan><tspan fill="#a5b4fc">:</tspan></text>
+  <text x="364" y="454" fill="#86efac">"arn:aws:iam::444455556666:role/</text>
+  <text x="364" y="482" fill="#86efac">  OrbitalInsightsScannerRole"</text>
+  <text x="344" y="510" fill="#a5b4fc">},</text>
+  <text x="344" y="538"><tspan fill="#93c5fd">"Action"</tspan><tspan fill="#a5b4fc">: </tspan><tspan fill="#86efac">"sts:AssumeRole"</tspan></text>
+  <text x="324" y="594" fill="#a5b4fc">}]</text>
+  <text x="304" y="622" fill="#a5b4fc">}</text>
+</g>
+<rect x="336" y="552" width="420" height="30" rx="6" fill="none" stroke="#fb7185" stroke-width="2.5" stroke-dasharray="7 5"/>
+<path d="M756 567 L1010 567" stroke="#fb7185" stroke-width="2.5"/>
+<rect x="1010" y="500" width="360" height="190" rx="12" fill="#2a0f1c" stroke="#fb7185"/>
+<text x="1030" y="534" font-family="Space Grotesk, Inter, sans-serif" font-size="16" font-weight="700" fill="#fda4af">Missing: Condition</text>
+<text x="1030" y="564" font-family="Space Grotesk, Inter, sans-serif" font-size="14" fill="#ffe4e6">No sts:ExternalId check. Whatever</text>
+<text x="1030" y="588" font-family="Space Grotesk, Inter, sans-serif" font-size="14" fill="#ffe4e6">ExternalId the vendor sends — any</text>
+<text x="1030" y="612" font-family="Space Grotesk, Inter, sans-serif" font-size="14" fill="#ffe4e6">tenant's — is accepted.</text>
+<text x="1030" y="650" font-family="JetBrains Mono, ui-monospace, monospace" font-size="12" fill="#fda4af">"StringEquals": {"sts:ExternalId": …}</text>
+
+</svg>

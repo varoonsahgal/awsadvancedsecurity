@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 560" font-family="Space Grotesk, Inter, sans-serif">
+  <title>Anatomy of DNS tunneling exfiltration and how Resolver query logs and DNS Firewall stop it</title>
+  <defs>
+    <marker id="r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#fb7185"/></marker>
+    <marker id="c" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#22d3ee"/></marker>
+    <filter id="g"><feGaussianBlur stdDeviation="6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0b0920"/><stop offset="1" stop-color="#1a0614"/></linearGradient>
+  </defs>
+  <rect width="1200" height="560" fill="url(#bg)"/>
+  <text x="40" y="46" fill="#fb7185" font-size="15" letter-spacing="3">BOSS · DNS TUNNEL ESCAPE — THE PROTOCOL EVERY FIREWALL LETS THROUGH</text>
+
+  <!-- query anatomy -->
+  <text x="40" y="100" fill="#fff" font-size="18" font-weight="600">One query, dissected</text>
+  <g font-family="JetBrains Mono, monospace" font-size="24">
+    <rect x="40" y="118" width="1120" height="64" rx="12" fill="#0a0716" stroke="#fb7185" stroke-opacity=".6"/>
+    <text x="64" y="160"><tspan fill="#fde68a">01</tspan><tspan fill="#94a3b8">-</tspan><tspan fill="#f472b6">mfrggzdfmztwq2lknnwg</tspan><tspan fill="#94a3b8">.</tspan><tspan fill="#22d3ee">x</tspan><tspan fill="#94a3b8">.</tspan><tspan fill="#fb7185">kraken-tunnel.example</tspan></text>
+  </g>
+  <g font-size="14">
+    <text x="70" y="212" fill="#fde68a">sequence #</text>
+    <text x="200" y="212" fill="#f472b6">base32 payload chunk (DNS-safe, ≤63 chars/label)</text>
+    <text x="640" y="212" fill="#22d3ee">channel</text>
+    <text x="760" y="212" fill="#fb7185">attacker's authoritative zone</text>
+  </g>
+
+  <!-- flow -->
+  <g font-size="15">
+    <rect x="40" y="260" width="200" height="90" rx="14" fill="#1e1b4b" stroke="#a78bfa"/>
+    <text x="140" y="296" fill="#fff" text-anchor="middle">cargo-box-07</text>
+    <text x="140" y="320" fill="#fda4af" text-anchor="middle" font-size="14">implant tunnel mode</text>
+    <rect x="330" y="260" width="240" height="90" rx="14" fill="#06202a" stroke="#22d3ee" filter="url(#g)"/>
+    <text x="450" y="296" fill="#fff" text-anchor="middle">Route 53 Resolver</text>
+    <text x="450" y="320" fill="#67e8f9" text-anchor="middle" font-size="14">recursion is ALLOWED egress</text>
+    <rect x="660" y="260" width="220" height="90" rx="14" fill="#1f0b12" stroke="#fb7185"/>
+    <text x="770" y="296" fill="#fff" text-anchor="middle">Kraken NS</text>
+    <text x="770" y="320" fill="#fda4af" text-anchor="middle" font-size="14">reassembles the chunks</text>
+  </g>
+  <path d="M240 305 H326" stroke="#22d3ee" stroke-width="3" marker-end="url(#c)"/>
+  <path d="M570 305 H656" stroke="#fb7185" stroke-width="3" stroke-dasharray="8 6" marker-end="url(#r)"/>
+  <text x="470" y="380" fill="#94a3b8" font-size="14" text-anchor="middle">Network Firewall never sees it: the resolver, not your instance, talks to the internet</text>
+
+  <!-- detection + response -->
+  <rect x="920" y="240" width="240" height="130" rx="14" fill="#06201a" stroke="#34d399"/>
+  <text x="940" y="270" fill="#86efac" font-size="16" font-weight="600">Signals</text>
+  <g font-size="14" fill="#d1fae5">
+    <text x="940" y="296">• long, high-entropy labels</text>
+    <text x="940" y="318">• one parent zone, many uniques</text>
+    <text x="940" y="340">• steady cadence from one srcaddr</text>
+    <text x="940" y="362">• NXDOMAIN storms</text>
+  </g>
+
+  <rect x="40" y="410" width="1120" height="120" rx="16" fill="#0a1a14" stroke="#34d399"/>
+  <text x="60" y="442" fill="#86efac" font-size="17" font-weight="600">Win condition</text>
+  <g font-size="15" fill="#e2e8f0">
+    <text x="60" y="472">① Resolver query logging → CloudWatch Logs Insights → reassemble chunks by sequence → decode base32 → read what was stolen</text>
+    <text x="60" y="498">② DNS Firewall: advanced rule (DNS_TUNNELING) for unknown zones + domain-list BLOCK for the known zone</text>
+    <text x="60" y="520">③ prove it: query logs flip to firewall_rule_action = BLOCK</text>
+  </g>
+</svg>

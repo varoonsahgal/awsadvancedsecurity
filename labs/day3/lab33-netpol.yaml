@@ -1,0 +1,50 @@
+# Lab 3.3 - NetworkPolicies (enforced by the VPC CNI network policy agent)
+# ---------- kraken: deny everything except DNS ----------
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: { name: default-deny-all, namespace: kraken }
+spec:
+  podSelector: {}
+  policyTypes: [Ingress, Egress]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: { name: allow-dns-only, namespace: kraken }
+spec:
+  podSelector: {}
+  policyTypes: [Egress]
+  egress:
+    - to:
+        - namespaceSelector: { matchLabels: { kubernetes.io/metadata.name: kube-system } }
+          podSelector: { matchLabels: { k8s-app: kube-dns } }
+      ports: [{ protocol: UDP, port: 53 }, { protocol: TCP, port: 53 }]
+---
+# ---------- nimbus: only nimbus talks to nimbus; egress = DNS + Pod Identity agent + HTTPS ----------
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: { name: same-namespace-ingress, namespace: nimbus }
+spec:
+  podSelector: {}
+  policyTypes: [Ingress]
+  ingress:
+    - from: [{ podSelector: {} }]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: { name: controlled-egress, namespace: nimbus }
+spec:
+  podSelector: {}
+  policyTypes: [Egress]
+  egress:
+    - to:
+        - namespaceSelector: { matchLabels: { kubernetes.io/metadata.name: kube-system } }
+          podSelector: { matchLabels: { k8s-app: kube-dns } }
+      ports: [{ protocol: UDP, port: 53 }, { protocol: TCP, port: 53 }]
+    - to: [{ ipBlock: { cidr: 169.254.170.23/32 } }]      # EKS Pod Identity agent
+      ports: [{ protocol: TCP, port: 80 }]
+    - to: [{ podSelector: {} }]                              # east-west inside nimbus
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except: [169.254.169.254/32]                     # never IMDS, even if hop limit regresses
+      ports: [{ protocol: TCP, port: 443 }]

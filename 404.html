@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lost in the Clouds — Operation Skyfortress</title>
+  <link rel="icon" href="/awsadvancedsecurity/assets/img/logo.svg" type="image/svg+xml">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=JetBrains+Mono:wght@400&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/awsadvancedsecurity/assets/css/site.css">
+  <style>
+    .lost { min-height: 78vh; display: grid; place-items: center; text-align: center; padding: 40px 16px; }
+    .lost img { width: 190px; margin: 0 auto 10px; animation: float 6s ease-in-out infinite; }
+    .lost .code { font-family: var(--display); font-size: clamp(5rem, 16vw, 9rem); font-weight: 700; line-height: 1; background: linear-gradient(180deg, #22d3ee, #a78bfa 60%, transparent); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  </style>
+</head>
+<body data-root="/awsadvancedsecurity/">
+<header id="site-nav"></header>
+<main class="lost">
+  <div>
+    <img src="/awsadvancedsecurity/assets/img/kraken.svg" alt="The Kraken, looking smug">
+    <div class="code">404</div>
+    <h2>The Kraken ate this page.</h2>
+    <p class="lead" style="max-width:560px;margin:0 auto 26px">No policy allows this path, so it's an implicit deny. (S3 would honestly say 403 here, but we're being polite.) Head back to the fortress.</p>
+    <a class="btn" href="/awsadvancedsecurity/index.html">⬅ Return to base</a>
+  </div>
+</main>
+<footer id="site-footer"></footer>
+<script src="/awsadvancedsecurity/assets/js/site.js"></script>
+</body>
+</html>

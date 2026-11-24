@@ -1,0 +1,102 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  Operation Skyfortress - Lab 1.2 "The PassRole Heist".
+  DELIBERATELY VULNERABLE. Deploy ONLY in the skyfortress-dev sandbox account (us-east-1).
+  The intern role can pass ANY role to Lambda - including a privileged ops role that can
+  read the launch-codes secret. Cost: ~$0.40/month for the secret (delete after the lab).
+
+Resources:
+  LaunchCodes:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: skyfortress/heist/launch-codes
+      Description: Nimbus Interstellar orbital launch codes. Do not exfiltrate. (Please.)
+      SecretString: '{"vessel":"NIMBUS-7","flag_b64":"U0tZe3Bhc3Nyb2xlX2lzX3RoZV9za2VsZXRvbl9rZXl9"}'
+      Tags: [{ Key: skyfortress, Value: lab-1-2 }]
+
+  # A privileged automation role that Lambda can assume. Path /privileged/ matters for the SCP fix.
+  OpsAutomationRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: NimbusOpsAutomationRole
+      Path: /privileged/
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: { Service: lambda.amazonaws.com }
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/ReadOnlyAccess
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: ReadLaunchCodes
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: secretsmanager:GetSecretValue
+                Resource: !Ref LaunchCodes
+      Tags: [{ Key: tier, Value: privileged }]
+
+  # The low-privilege role an intern's Lambda is SUPPOSED to use.
+  SandboxLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: InternSandboxLambdaRole
+      Path: /lambda-sandbox/
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: { Service: lambda.amazonaws.com }
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+
+  # The "attacker" foothold: a compromised intern identity.
+  InternRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: KrakenInternRole
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: { AWS: !Sub "arn:aws:iam::${AWS::AccountId}:root" }
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: InternDeveloperAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: BuildLambdas
+                Effect: Allow
+                Action:
+                  - lambda:CreateFunction
+                  - lambda:InvokeFunction
+                  - lambda:GetFunction
+                  - lambda:DeleteFunction
+                  - lambda:ListFunctions
+                Resource: "*"
+              - Sid: DiscoverRoles
+                Effect: Allow
+                Action: ["iam:ListRoles", "iam:GetRole"]
+                Resource: "*"
+              # THE BUG: PassRole on every role in the account.
+              - Sid: PassAnyRoleOops
+                Effect: Allow
+                Action: iam:PassRole
+                Resource: "*"
+              - Sid: ReadOwnLogs
+                Effect: Allow
+                Action: ["logs:GetLogEvents", "logs:FilterLogEvents", "logs:DescribeLogStreams"]
+                Resource: "*"
+
+Outputs:
+  InternRoleArn:
+    Value: !GetAtt InternRole.Arn
+  SandboxLambdaRoleArn:
+    Value: !GetAtt SandboxLambdaRole.Arn
+  SecretArn:
+    Value: !Ref LaunchCodes

@@ -1,0 +1,184 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMid slice">
+  <title>Kraken Rising: tentacles wrap the Skyfortress at sunset while searchlights sweep the storm</title>
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0a0618"/>
+      <stop offset=".28" stop-color="#2a0b2e"/>
+      <stop offset=".52" stop-color="#7a1838"/>
+      <stop offset=".7" stop-color="#e2533a"/>
+      <stop offset=".82" stop-color="#ff9a3c"/>
+      <stop offset="1" stop-color="#ffc56b"/>
+    </linearGradient>
+    <radialGradient id="sun" cx=".5" cy=".5" r=".5">
+      <stop offset="0" stop-color="#fff3c4"/>
+      <stop offset=".35" stop-color="#ffcf6b"/>
+      <stop offset=".7" stop-color="#ff8a3c" stop-opacity=".6"/>
+      <stop offset="1" stop-color="#ff5a3c" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="rock" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3a2340"/><stop offset=".5" stop-color="#1c1026"/><stop offset="1" stop-color="#0b0612"/>
+    </linearGradient>
+    <linearGradient id="wall" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#241a3d"/><stop offset=".5" stop-color="#3a2b5c"/><stop offset="1" stop-color="#1b1330"/>
+    </linearGradient>
+    <linearGradient id="roof" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffb347"/><stop offset="1" stop-color="#c2410c"/>
+    </linearGradient>
+    <linearGradient id="tent" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0" stop-color="#4a0a2c"/><stop offset=".55" stop-color="#b3204f"/><stop offset="1" stop-color="#fb7185"/>
+    </linearGradient>
+    <linearGradient id="beam" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0" stop-color="#fff6d6" stop-opacity=".75"/><stop offset="1" stop-color="#fff6d6" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="beam2" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0" stop-color="#9be7ff" stop-opacity=".6"/><stop offset="1" stop-color="#9be7ff" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="blur8"><feGaussianBlur stdDeviation="8"/></filter>
+    <filter id="blur3"><feGaussianBlur stdDeviation="3"/></filter>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="bigglow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="14" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <rect width="1600" height="1000" fill="url(#sky)"/>
+  <!-- stars -->
+  <g fill="#fff">
+    <circle cx="80" cy="60" r="1.6" opacity=".9"/><circle cx="210" cy="140" r="1.1"/><circle cx="340" cy="40" r="1.4" opacity=".8"/>
+    <circle cx="470" cy="110" r="1"/><circle cx="610" cy="30" r="1.7"/><circle cx="760" cy="90" r="1.1" opacity=".7"/>
+    <circle cx="900" cy="50" r="1.3"/><circle cx="1040" cy="120" r="1"/><circle cx="1180" cy="40" r="1.6"/>
+    <circle cx="1320" cy="100" r="1.2"/><circle cx="1460" cy="50" r="1.5"/><circle cx="1550" cy="160" r="1"/>
+    <circle cx="140" cy="230" r="1" opacity=".6"/><circle cx="1260" cy="210" r="1.1" opacity=".6"/><circle cx="700" cy="180" r="1" opacity=".5"/>
+  </g>
+
+  <!-- sun -->
+  <circle cx="800" cy="760" r="330" fill="url(#sun)"/>
+  <circle cx="800" cy="760" r="120" fill="#fff1c2" opacity=".85"/>
+
+  <!-- searchlight beams -->
+  <g filter="url(#blur3)">
+    <polygon points="690,470 260,0 470,0" fill="url(#beam)"/>
+    <polygon points="915,450 1260,0 1460,0" fill="url(#beam2)"/>
+    <polygon points="800,380 760,0 880,0" fill="url(#beam)" opacity=".5"/>
+  </g>
+
+  <!-- storm clouds (back) -->
+  <g fill="#2a0f2c" opacity=".85" filter="url(#blur8)">
+    <ellipse cx="200" cy="300" rx="320" ry="70"/><ellipse cx="1400" cy="280" rx="340" ry="80"/>
+    <ellipse cx="800" cy="210" rx="420" ry="60"/>
+  </g>
+  <g fill="#4a1538" opacity=".7">
+    <ellipse cx="160" cy="320" rx="220" ry="40"/><ellipse cx="1440" cy="300" rx="240" ry="44"/>
+  </g>
+
+  <!-- lightning -->
+  <g filter="url(#glow)" stroke-linejoin="round" stroke-linecap="round" fill="none">
+    <polyline points="300,250 270,330 310,340 250,470 290,480 230,600" stroke="#fff7d1" stroke-width="5"/>
+    <polyline points="1320,240 1350,320 1310,335 1370,450 1330,460 1390,560" stroke="#e0f2ff" stroke-width="4"/>
+    <polyline points="1350,320 1400,360" stroke="#e0f2ff" stroke-width="2.5"/>
+    <polyline points="290,480 330,520" stroke="#fff7d1" stroke-width="2.5"/>
+  </g>
+
+  <!-- far horizon clouds lit by sunset -->
+  <g fill="#ffb26b" opacity=".55">
+    <ellipse cx="300" cy="820" rx="380" ry="40"/><ellipse cx="1300" cy="830" rx="380" ry="42"/>
+  </g>
+  <g fill="#ff7f5c" opacity=".55">
+    <ellipse cx="520" cy="880" rx="420" ry="46"/><ellipse cx="1120" cy="890" rx="420" ry="46"/>
+  </g>
+
+  <!-- back tentacles (behind fortress) -->
+  <g fill="none" stroke="url(#tent)" stroke-linecap="round">
+    <path d="M520 1000 C470 820 500 640 640 560 C720 515 760 560 730 600" stroke-width="54"/>
+    <path d="M1080 1000 C1140 820 1110 640 960 560 C880 520 840 560 870 600" stroke-width="54"/>
+  </g>
+
+  <!-- floating rock island -->
+  <path d="M520 560 C600 540 1000 540 1080 560 C1060 640 980 700 900 760 C860 800 830 860 800 900 C770 860 740 800 700 760 C620 700 540 640 520 560 Z" fill="url(#rock)"/>
+  <path d="M560 575 C700 560 900 560 1040 575" stroke="#6b3d5e" stroke-width="4" fill="none" opacity=".7"/>
+  <g stroke="#120914" stroke-width="3" fill="none" opacity=".7">
+    <path d="M640 600 l30 60 l-12 40"/><path d="M930 610 l-26 70 l18 40"/><path d="M800 640 l-10 90 l14 70"/>
+  </g>
+  <!-- waterfall mist -->
+  <path d="M760 760 q-6 80 -30 160" stroke="#cfe9ff" stroke-width="6" opacity=".35" fill="none"/>
+
+  <!-- fortress walls -->
+  <rect x="580" y="470" width="440" height="95" fill="url(#wall)"/>
+  <g fill="#3a2b5c">
+    <rect x="580" y="452" width="26" height="22"/><rect x="622" y="452" width="26" height="22"/><rect x="664" y="452" width="26" height="22"/>
+    <rect x="910" y="452" width="26" height="22"/><rect x="952" y="452" width="26" height="22"/><rect x="994" y="452" width="26" height="22"/>
+  </g>
+  <!-- towers -->
+  <g>
+    <rect x="600" y="360" width="80" height="205" fill="url(#wall)"/>
+    <polygon points="590,360 640,270 690,360" fill="url(#roof)"/>
+    <rect x="920" y="350" width="80" height="215" fill="url(#wall)"/>
+    <polygon points="910,350 960,255 1010,350" fill="url(#roof)"/>
+    <rect x="735" y="260" width="130" height="305" fill="url(#wall)"/>
+    <polygon points="722,262 800,120 878,262" fill="url(#roof)"/>
+    <line x1="800" y1="120" x2="800" y2="70" stroke="#e8ecff" stroke-width="4"/>
+    <path d="M800 72 L850 86 L800 100 Z" fill="#ff9900"/>
+  </g>
+  <!-- glowing windows -->
+  <g fill="#ffcf6b" filter="url(#glow)">
+    <rect x="628" y="400" width="12" height="22" rx="6"/><rect x="650" y="400" width="12" height="22" rx="6"/>
+    <rect x="948" y="390" width="12" height="22" rx="6"/><rect x="970" y="390" width="12" height="22" rx="6"/>
+    <rect x="760" y="300" width="14" height="26" rx="7"/><rect x="826" y="300" width="14" height="26" rx="7"/>
+    <rect x="628" y="470" width="12" height="20" rx="6"/><rect x="960" y="470" width="12" height="20" rx="6"/>
+    <rect x="700" y="500" width="10" height="18" rx="5"/><rect x="890" y="500" width="10" height="18" rx="5"/>
+  </g>
+  <!-- shield emblem -->
+  <g transform="translate(800 400)" filter="url(#bigglow)">
+    <path d="M0 -52 L44 -34 V2 C44 32 22 50 0 60 C-22 50 -44 32 -44 2 V-34 Z" fill="#0b1028" stroke="#22d3ee" stroke-width="5"/>
+    <path d="M-22 6 h44 v-14 h-6 v-8 h-6 v8 h-6 v-14 h-8 v14 h-6 v-8 h-6 v8 h-6 z" fill="#22d3ee"/>
+  </g>
+  <!-- gate -->
+  <path d="M770 565 v-50 a30 30 0 0 1 60 0 v50 z" fill="#0b0612"/>
+
+  <!-- front tentacles wrapping fortress -->
+  <g fill="none" stroke="url(#tent)" stroke-linecap="round">
+    <path d="M300 1000 C320 820 420 700 560 640 C640 606 700 610 700 520 C700 470 660 450 630 470" stroke-width="64"/>
+    <path d="M1300 1000 C1280 820 1180 700 1040 640 C960 606 900 610 900 520 C900 460 950 440 980 470" stroke-width="64"/>
+    <path d="M760 1000 C740 900 720 800 760 720" stroke-width="40"/>
+    <path d="M60 1000 C120 860 160 760 120 660 C100 610 140 580 170 600" stroke-width="40"/>
+    <path d="M1540 1000 C1480 860 1440 760 1480 660 C1500 610 1460 580 1430 600" stroke-width="40"/>
+  </g>
+  <!-- suckers -->
+  <g fill="#ffc2d1" opacity=".85">
+    <circle cx="352" cy="850" r="10"/><circle cx="392" cy="790" r="9"/><circle cx="448" cy="735" r="8.5"/><circle cx="510" cy="690" r="8"/>
+    <circle cx="580" cy="655" r="7.5"/><circle cx="660" cy="605" r="7"/><circle cx="692" cy="545" r="6.5"/>
+    <circle cx="1248" cy="850" r="10"/><circle cx="1208" cy="790" r="9"/><circle cx="1152" cy="735" r="8.5"/><circle cx="1090" cy="690" r="8"/>
+    <circle cx="1020" cy="655" r="7.5"/><circle cx="940" cy="605" r="7"/><circle cx="908" cy="545" r="6.5"/>
+    <circle cx="118" cy="880" r="7"/><circle cx="140" cy="790" r="6.5"/><circle cx="1482" cy="880" r="7"/><circle cx="1460" cy="790" r="6.5"/>
+  </g>
+  <!-- tentacle highlight -->
+  <g fill="none" stroke="#ffd1dc" stroke-width="6" opacity=".3" stroke-linecap="round">
+    <path d="M320 960 C340 820 430 720 560 662"/><path d="M1280 960 C1260 820 1170 720 1040 662"/>
+  </g>
+
+  <!-- defender drones / owls -->
+  <g filter="url(#glow)">
+    <g transform="translate(470 330)"><circle r="12" fill="#22d3ee"/><path d="M-26 0 L-12 -5 L-12 5 Z M26 0 L12 -5 L12 5 Z" fill="#22d3ee"/></g>
+    <g transform="translate(1130 300)"><circle r="12" fill="#22d3ee"/><path d="M-26 0 L-12 -5 L-12 5 Z M26 0 L12 -5 L12 5 Z" fill="#22d3ee"/></g>
+    <g transform="translate(1000 200)"><circle r="8" fill="#a78bfa"/><path d="M-20 0 L-8 -4 L-8 4 Z M20 0 L8 -4 L8 4 Z" fill="#a78bfa"/></g>
+  </g>
+  <!-- laser bolts from drones to tentacles -->
+  <g stroke="#67e8f9" stroke-width="4" stroke-linecap="round" filter="url(#glow)">
+    <line x1="480" y1="345" x2="555" y2="470"/><line x1="1120" y1="315" x2="1040" y2="460"/>
+  </g>
+  <!-- sparks -->
+  <g fill="#fff3c4" filter="url(#glow)">
+    <circle cx="560" cy="478" r="7"/><circle cx="1036" cy="466" r="7"/>
+  </g>
+
+  <!-- fog bottom -->
+  <rect y="900" width="1600" height="100" fill="#2a0b1e" opacity=".45" filter="url(#blur8)"/>
+
+  <!-- label -->
+  <g font-family="Space Grotesk, Inter, sans-serif">
+    <text x="60" y="950" font-size="22" letter-spacing="8" fill="#ffe3c2" opacity=".9">GAMEDAY · KRAKEN RISING</text>
+    <text x="1540" y="950" text-anchor="end" font-size="18" letter-spacing="6" fill="#ffe3c2" opacity=".7">CASE KRAKEN-001</text>
+  </g>
+</svg>

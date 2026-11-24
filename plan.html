@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Course Plan — Operation Skyfortress</title>
+  <meta name="description" content="The full five-day plan for the Operation Skyfortress advanced AWS security bootcamp: outcomes, schedule, labs, assessment, costs and instructor guide.">
+  <meta property="og:image" content="https://varoonsahgal.github.io/awsadvancedsecurity/assets/img/og-card.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="theme-color" content="#060915">
+  <link rel="icon" href="assets/img/logo.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/site.css">
+  <style>
+    .dayplan { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 0; padding: 0; overflow: hidden; margin: 26px 0; }
+    .dayplan > img { height: 100%; object-fit: cover; border-right: 1px solid var(--border); }
+    .dayplan .body { padding: 28px 30px; }
+    .dayplan .d { font-family: var(--mono); font-size: 0.75rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--c); }
+    .dayplan h3 { font-size: 1.7rem; margin: 6px 0 10px; }
+    .dayplan .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; font-size: 0.93rem; }
+    .dayplan h4 { font-family: var(--mono); font-size: 0.75rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--c); margin: 10px 0 6px; }
+    .dayplan ul { margin: 0; padding-left: 1.1em; }
+    @media (max-width: 900px) { .dayplan { grid-template-columns: 1fr; } .dayplan > img { aspect-ratio: 16/9; border-right: 0; border-bottom: 1px solid var(--border); } .dayplan .cols { grid-template-columns: 1fr; } }
+    .dot { display: inline-block; width: 12px; height: 12px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+    .dot.half { background: transparent; border: 2px solid var(--accent); box-shadow: none; }
+    .matrix td { text-align: center; } .matrix td:first-child { text-align: left; }
+  </style>
+</head>
+<body>
+<header id="site-nav"></header>
+
+<section class="day-hero">
+  <div class="container">
+    <div class="reveal">
+      <div class="eyebrow">Mission plan</div>
+      <h1>The <span class="grad">Course Plan</span></h1>
+      <p class="lead">Everything an instructor, a student or a manager needs: outcomes, the hour-by-hour week, labs, assessment, lab environment, costs and facilitation notes.</p>
+      <div class="chips"><span class="chip accent">5 days · 40 contact hours</span><span class="chip">~60% hands-on</span><span class="chip">20+ labs · 6 bosses</span><span class="chip new">2026 edition</span></div>
+    </div>
+    <div class="banner reveal"><img src="assets/img/lab-org.svg" alt="Lab environment: AWS Organization with Security, Workloads, Sandbox and Forensics OUs" style="aspect-ratio:auto;object-fit:contain;background:#070b1c"></div>
+  </div>
+</section>
+
+<div class="container day-layout">
+  <nav class="toc" data-auto></nav>
+  <main class="day-content">
+
+    <section id="philosophy">
+      <div class="eyebrow">Design philosophy</div>
+      <h2>Why this course feels different</h2>
+      <div class="grid g2">
+        <div class="card"><h3>🎯 Mechanisms over menus</h3><p class="muted">We teach how AWS actually decides things: policy evaluation, envelope encryption, GuardDuty's signal correlation. Then the console buttons make sense, and so do the edge cases attackers use.</p></div>
+        <div class="card"><h3>🏢 Organization-scale by default</h3><p class="muted">Real environments have 40 accounts, not one. Every control is built at the org layer first (SCPs, RCPs, declarative policies, delegated admins), and then tested at the account layer.</p></div>
+        <div class="card"><h3>⚔️ Offense informs defense</h3><p class="muted">You exploit each weakness yourself, safely in your own sandbox, before you fix it. Once you've escalated through <code>iam:PassRole</code> yourself, you'll spot it in every code review afterwards.</p></div>
+        <div class="card"><h3>🤖 AI is in scope, both ways</h3><p class="muted">AI agents are a new attack surface (prompt injection, tool abuse) and a new defensive tool (AI investigations, Security Agent pentests). We cover both, with deterministic guardrails.</p></div>
+      </div>
+    </section>
+
+    <section id="outcomes">
+      <div class="eyebrow">Program outcomes</div>
+      <h2>After five days, graduates can…</h2>
+      <ul class="objectives">
+        <li>Predict the outcome of any AWS authorization request across identity, resource, boundary, session, SCP and RCP layers, and explain why.</li>
+        <li>Design and ship a multi-account guardrail set (SCPs, RCPs, declarative policies) with a CI pipeline that blocks risky policy changes.</li>
+        <li>Build a data perimeter that stops credential use from outside the organization and data movement to untrusted resources.</li>
+        <li>Stand up organization-wide detection and run hypothesis-driven threat hunts in OCSF data using SQL.</li>
+        <li>Write, test and deploy detections as code, and tune GuardDuty and Security Hub to reduce noise.</li>
+        <li>Lock down egress, edge and Kubernetes workloads, and enforce signed, scanned images at admission.</li>
+        <li>Apply KMS key policies, grants and encryption context correctly, and start a post-quantum migration plan.</li>
+        <li>Defend S3 against ransomware (including SSE-C abuse) and recover from it.</li>
+        <li>Attack and then defend an LLM app and an AI agent with Guardrails and Cedar-based AgentCore Policy.</li>
+        <li>Run a credential-compromise and EC2-forensics response end to end, and automate it with Step Functions.</li>
+      </ul>
+    </section>
+
+    <section id="glance">
+      <div class="eyebrow">At a glance</div>
+      <h2>The week on one page</h2>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Day</th><th>Theme</th><th>Labs</th><th>Boss fight</th><th>2026 highlights</th></tr></thead>
+        <tbody>
+          <tr><td><b>Mon</b></td><td><a href="day1.html">Keys to the Kingdom</a><br><span class="muted">Identity &amp; org guardrails</span></td><td>Policy Evaluation Arena · The PassRole Heist · Build the Data Perimeter · Least-Privilege Robot</td><td>The Confused Deputy</td><td>SCP quotas 10/10,240 · default departure SCPs · Identity Center multi-Region · account access manager</td></tr>
+          <tr><td><b>Tue</b></td><td><a href="day2.html">Eyes in the Sky</a><br><span class="muted">Detection &amp; threat hunting</span></td><td>Light the Beacons · Summon the Kraken · Hunt the Deep · Tripwires as Code</td><td>The 3 A.M. Backdoor</td><td>Unified Security Hub · new attack-sequence indicators · AI Protection · declarative GuardDuty enablement</td></tr>
+          <tr><td><b>Wed</b></td><td><a href="day3.html">Walls &amp; Moats</a><br><span class="muted">Network, workload &amp; supply chain</span></td><td>Cut the Kraken's Line · Shields Up · Kubernetes Citadel · Poisoned Supply</td><td>DNS Tunnel Escape</td><td>Runtime Monitoring in Threat Analytics plan · Inspector code security · Verified Access for TCP</td></tr>
+          <tr><td><b>Thu</b></td><td><a href="day4.html">Vaults &amp; Thinking Machines</a><br><span class="muted">Data, crypto &amp; AI security</span></td><td>Crypto Dojo · Ransom in the Clouds · Jailbreak the Starship AI · Leash the Agent</td><td>The Poisoned Manifest</td><td>AgentCore Policy (Cedar) + Guardrails · ML-DSA in KMS · ML-KEM TLS · OWASP Agentic Top 10</td></tr>
+          <tr><td><b>Fri</b></td><td><a href="day5.html">Kraken Rising</a> + <a href="gameday.html">GameDay</a><br><span class="muted">IR, forensics, automation</span></td><td>Burned Keys · Digital Autopsy · Autopilot Defense · <b>GameDay capstone</b></td><td>The Kraken's Last Stand</td><td>AWS Security Agent (GA) · GuardDuty AI investigations · Security Incident Response · NIST 800-61r3</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="daily">
+      <div class="eyebrow">Daily structure</div>
+      <h2>The rhythm of a Skyfortress day</h2>
+      <div class="grid g2">
+        <div>
+          <div class="timeline">
+            <div class="slot"><div class="time">08:45</div><div class="what"><b>Morning transmission</b>: a 5-minute story beat. What did the Kraken do overnight?</div></div>
+            <div class="slot"><div class="time">09:00</div><div class="what"><b>Concept block 1</b>: two modules with whiteboard and diagrams <span class="chip">75 min</span></div></div>
+            <div class="slot lab-slot"><div class="time">10:15</div><div class="what"><b>Lab A</b> <span class="chip accent">75 min</span></div></div>
+            <div class="slot break-slot"><div class="time">11:30</div><div class="what">Break and lab debrief</div></div>
+            <div class="slot lab-slot"><div class="time">11:45</div><div class="what"><b>Lab B</b> <span class="chip accent">60 min</span></div></div>
+            <div class="slot break-slot"><div class="time">12:45</div><div class="what">Lunch</div></div>
+            <div class="slot"><div class="time">13:30</div><div class="what"><b>Concept block 2</b> <span class="chip">60 min</span></div></div>
+            <div class="slot lab-slot"><div class="time">14:30</div><div class="what"><b>Labs C + D</b> <span class="chip accent">105 min</span></div></div>
+            <div class="slot lab-slot"><div class="time">16:15</div><div class="what"><b>Boss fight</b>: open-ended, in pairs <span class="chip accent">35 min</span></div></div>
+            <div class="slot"><div class="time">16:50</div><div class="what"><b>Quiz + leaderboard</b>, then go home</div></div>
+          </div>
+        </div>
+        <div>
+          <div class="callout tip"><strong class="ct">Pairing model</strong><p>Students work in pairs ("driver" and "navigator") and swap at every lab. On GameDay, two pairs join up to form a team of four.</p></div>
+          <div class="callout info"><strong class="ct">Instructor-to-student ratio</strong><p>1 lead instructor plus 1 lab assistant per 12 students. Labs have full solutions behind spoilers, so assistants can focus on <em>why</em> questions instead of typos.</p></div>
+          <div class="callout gotcha"><strong class="ct">The 15-minute rule</strong><p>If you've been stuck for 15 minutes, open the hint. Stuck for 25, open the solution and keep going. The boss fight is where you struggle on purpose, not the setup steps.</p></div>
+          <div class="callout new"><strong class="ct">re:Invent week bonus</strong><p>If you run the course during or right after re:Invent 2026 (Nov 30 – Dec 4), replace the 08:45 transmission with "what just shipped" and map each launch to that day's modules.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="days">
+      <div class="eyebrow">Day by day</div>
+      <h2>Detailed breakdown</h2>
+
+      <article class="card dayplan reveal" style="--c:#a78bfa">
+        <img src="assets/img/day1/banner.svg" alt="">
+        <div class="body">
+          <span class="d">Day 1 · Monday</span>
+          <h3>Keys to the Kingdom: Identity Is the Perimeter</h3>
+          <div class="cols">
+            <div><h4>Modules</h4><ul>
+              <li>1.1 Policy evaluation logic, layer by layer</li>
+              <li>1.2 Org guardrails in 2026: SCPs, RCPs, declarative policies, root access</li>
+              <li>1.3 Workforce &amp; machine identity: Identity Center, ABAC, OIDC for CI, agent identity</li>
+              <li>1.4 Least privilege at scale with Access Analyzer</li>
+              <li>1.5 Data perimeters</li>
+            </ul></div>
+            <div><h4>Labs</h4><ul>
+              <li>1.1 Policy Evaluation Arena</li><li>1.2 The PassRole Heist</li><li>1.3 Build the Data Perimeter</li><li>1.4 Least-Privilege Robot (policy checks in CI)</li><li>👾 Boss: The Confused Deputy</li>
+            </ul></div>
+          </div>
+          <p style="margin-top:16px"><a href="day1.html">Open Day 1 →</a></p>
+        </div>
+      </article>
+
+      <article class="card dayplan reveal" style="--c:#22d3ee">
+        <img src="assets/img/day2/banner.svg" alt="">
+        <div class="body">
+          <span class="d">Day 2 · Tuesday</span>
+          <h3>Eyes in the Sky: Detection &amp; Threat Hunting</h3>
+          <div class="cols">
+            <div><h4>Modules</h4><ul>
+              <li>2.1 The logging foundation: trails, data and network activity events, Athena vs Security Lake (CloudTrail Lake closed to new customers on May 31, 2026)</li>
+              <li>2.2 GuardDuty in 2026: protection plans, Extended Threat Detection</li>
+              <li>2.3 The new Security Hub: exposures, correlation, AI inventory</li>
+              <li>2.4 Hypothesis-driven threat hunting with OCSF and ATT&amp;CK</li>
+              <li>2.5 Detection-as-code</li>
+            </ul></div>
+            <div><h4>Labs</h4><ul>
+              <li>2.1 Light the Beacons (org-wide detection)</li><li>2.2 Summon the Kraken (attack simulation)</li><li>2.3 Hunt the Deep (SQL hunts)</li><li>2.4 Tripwires as Code</li><li>👾 Boss: The 3 A.M. Backdoor</li>
+            </ul></div>
+          </div>
+          <p style="margin-top:16px"><a href="day2.html">Open Day 2 →</a></p>
+        </div>
+      </article>
+
+      <article class="card dayplan reveal" style="--c:#34d399">
+        <img src="assets/img/day3/banner.svg" alt="">
+        <div class="body">
+          <span class="d">Day 3 · Wednesday</span>
+          <h3>Walls &amp; Moats: Network, Workload &amp; Supply Chain</h3>
+          <div class="cols">
+            <div><h4>Modules</h4><ul>
+              <li>3.1 The network perimeter: VPC BPA, inspection VPCs, egress filtering</li>
+              <li>3.2 Edge protection: WAF, bots and AI crawlers, Shield</li>
+              <li>3.3 Zero-trust access: Verified Access, Session Manager, IMDSv2</li>
+              <li>3.4 Containers &amp; EKS: Pod Identity, network policy, runtime</li>
+              <li>3.5 Software supply chain: scan, SBOM, sign, verify</li>
+            </ul></div>
+            <div><h4>Labs</h4><ul>
+              <li>3.1 Cut the Kraken's Line (egress lockdown)</li><li>3.2 Shields Up (WAF vs. a bot swarm)</li><li>3.3 Kubernetes Citadel</li><li>3.4 Poisoned Supply</li><li>👾 Boss: DNS Tunnel Escape</li>
+            </ul></div>
+          </div>
+          <p style="margin-top:16px"><a href="day3.html">Open Day 3 →</a></p>
+        </div>
+      </article>
+
+      <article class="card dayplan reveal" style="--c:#fbbf24">
+        <img src="assets/img/day4/banner.svg" alt="">
+        <div class="body">
+          <span class="d">Day 4 · Thursday</span>
+          <h3>Vaults &amp; Thinking Machines: Data, Crypto &amp; AI Security</h3>
+          <div class="cols">
+            <div><h4>Modules</h4><ul>
+              <li>4.1 KMS mastery: policies, grants, encryption context</li>
+              <li>4.2 Post-quantum readiness: ML-KEM, ML-DSA</li>
+              <li>4.3 Ransomware resilience: SSE-C abuse, Object Lock, air-gapped backup</li>
+              <li>4.4 Securing GenAI: OWASP LLM Top 10, Guardrails</li>
+              <li>4.5 Securing agents: AgentCore Identity, Gateway, Policy, MCP risks</li>
+            </ul></div>
+            <div><h4>Labs</h4><ul>
+              <li>4.1 Crypto Dojo</li><li>4.2 Ransom in the Clouds</li><li>4.3 Jailbreak the Starship AI</li><li>4.4 Leash the Agent (Cedar)</li><li>👾 Boss: The Poisoned Manifest</li>
+            </ul></div>
+          </div>
+          <p style="margin-top:16px"><a href="day4.html">Open Day 4 →</a></p>
+        </div>
+      </article>
+
+      <article class="card dayplan reveal" style="--c:#fb7185">
+        <img src="assets/img/day5/banner.svg" alt="">
+        <div class="body">
+          <span class="d">Day 5 · Friday</span>
+          <h3>Kraken Rising: Incident Response, Forensics &amp; Automation</h3>
+          <div class="cols">
+            <div><h4>Morning modules</h4><ul>
+              <li>5.1 IR on AWS: NIST 800-61r3, Security Incident Response service</li>
+              <li>5.2 Credential compromise &amp; session revocation</li>
+              <li>5.3 Workload forensics</li>
+              <li>5.4 Automation &amp; AI agents in the SOC</li>
+              <li>5.5 Tabletops and blameless retros</li>
+            </ul></div>
+            <div><h4>Labs → Capstone</h4><ul>
+              <li>5.1 Burned Keys</li><li>5.2 Digital Autopsy</li><li>5.3 Autopilot Defense</li><li>👾 Boss: The Kraken's Last Stand</li><li>🏆 <a href="gameday.html">GameDay</a>, 13:30–17:00</li>
+            </ul></div>
+          </div>
+          <p style="margin-top:16px"><a href="day5.html">Open Day 5 →</a></p>
+        </div>
+      </article>
+    </section>
+
+    <section id="coverage">
+      <div class="eyebrow">Coverage map</div>
+      <h2>Skills × days</h2>
+      <p class="muted">● primary focus &nbsp; ○ revisited. Domains broadly follow the AWS Certified Security – Specialty blueprint, plus AI security.</p>
+      <div class="table-wrap"><table class="matrix">
+        <thead><tr><th>Domain</th><th>D1</th><th>D2</th><th>D3</th><th>D4</th><th>D5</th><th>GameDay</th></tr></thead>
+        <tbody>
+          <tr><td>Identity &amp; access management</td><td><span class="dot"></span></td><td></td><td><span class="dot half"></span></td><td><span class="dot half"></span></td><td><span class="dot half"></span></td><td><span class="dot"></span></td></tr>
+          <tr><td>Security governance (multi-account)</td><td><span class="dot"></span></td><td><span class="dot half"></span></td><td></td><td><span class="dot half"></span></td><td><span class="dot half"></span></td><td><span class="dot half"></span></td></tr>
+          <tr><td>Threat detection &amp; logging</td><td></td><td><span class="dot"></span></td><td><span class="dot half"></span></td><td><span class="dot half"></span></td><td><span class="dot half"></span></td><td><span class="dot"></span></td></tr>
+          <tr><td>Infrastructure security</td><td></td><td></td><td><span class="dot"></span></td><td></td><td><span class="dot half"></span></td><td><span class="dot"></span></td></tr>
+          <tr><td>Data protection &amp; cryptography</td><td><span class="dot half"></span></td><td></td><td></td><td><span class="dot"></span></td><td></td><td><span class="dot half"></span></td></tr>
+          <tr><td>AI / agent security</td><td><span class="dot half"></span></td><td><span class="dot half"></span></td><td><span class="dot half"></span></td><td><span class="dot"></span></td><td><span class="dot half"></span></td><td><span class="dot half"></span></td></tr>
+          <tr><td>Incident response &amp; forensics</td><td></td><td><span class="dot half"></span></td><td></td><td></td><td><span class="dot"></span></td><td><span class="dot"></span></td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="assessment">
+      <div class="eyebrow">Assessment</div>
+      <h2>How progress is measured</h2>
+      <div class="grid g3">
+        <div class="card"><h3>🚩 Flags (50%)</h3><p class="muted">Flags (<code>SKY{...}</code>) are planted inside lab environments. You only find them by actually exploiting or fixing the thing. The site checks each flag's SHA-256 hash in your browser.</p></div>
+        <div class="card"><h3>🧠 Quizzes (20%)</h3><p class="muted">8–10 scenario questions per day, built to catch "I clicked through it" learning. Every answer comes with an explanation.</p></div>
+        <div class="card"><h3>🏆 GameDay (30%)</h3><p class="muted">The team score combines flags, a root-cause write-up, and hardening changes that hold up against the instructor's re-attack. Breaking production costs points.</p></div>
+      </div>
+      <div class="callout info"><strong class="ct">Completion</strong><p>A student completes the course with 3 of 5 boss badges, at least 60% across the quizzes, and an active role in a GameDay team that submits a root-cause analysis. XP levels are just for fun (and bragging rights).</p></div>
+    </section>
+
+    <section id="environment">
+      <div class="eyebrow">Lab environment</div>
+      <h2>Your sandbox fortress</h2>
+      <figure class="figure"><img src="assets/img/lab-org.svg" alt="Organization with Security, Workloads, Sandbox and Forensics OUs"><figcaption><b>FIG P.1</b> The minimum is a management account plus <code>skyfortress-dev</code> and <code>skyfortress-prod</code>. The security tooling, log archive and forensics accounts make the experience more realistic and are recommended for instructor-led cohorts.</figcaption></figure>
+      <p>Each student (or pair) gets their <b>own</b> AWS Organization, because SCPs, RCPs and declarative policies have to be applied at the org layer. <a href="setup.html">Lab 0</a> builds it in about 45 minutes. Instructor-led cohorts can pre-provision with the same scripts.</p>
+      <div class="callout warn"><strong class="ct">Never use a production organization</strong><p>Several labs deliberately create vulnerable resources, simulate attacks, and attach deny-all policies. Always use dedicated, disposable sandbox accounts with budget alarms.</p></div>
+    </section>
+
+    <section id="costs">
+      <div class="eyebrow">Budget</div>
+      <h2>What it costs</h2>
+      <p>Estimates assume us-east-1, on-demand pricing, and that you tear down at the end of each lab (every lab has a cleanup block). New accounts often get free-tier and free-trial periods for GuardDuty, Security Hub, Inspector and Macie, which lowers costs further.</p>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Day</th><th>Biggest cost drivers</th><th>Est. per student</th></tr></thead>
+        <tbody>
+          <tr><td>Lab 0</td><td>Org setup, CloudTrail, budget alarms</td><td>&lt; $1</td></tr>
+          <tr><td>Day 1</td><td>Lambda, Secrets Manager, S3, VPC endpoint</td><td>~$1</td></tr>
+          <tr><td>Day 2</td><td>GuardDuty / Security Hub (often in trial), Security Lake, Athena scans</td><td>$2–5</td></tr>
+          <tr><td>Day 3</td><td><b>Network Firewall endpoint (~$0.40/hr)</b>, <b>EKS control plane (~$0.10/hr)</b>, NAT gateway, WAF</td><td>$4–8</td></tr>
+          <tr><td>Day 4</td><td>KMS keys (prorated), Bedrock tokens, AWS Backup</td><td>$1–3</td></tr>
+          <tr><td>Day 5 + GameDay</td><td>EC2 instances, snapshots, Step Functions</td><td>$2–4</td></tr>
+          <tr><td><b>Total</b></td><td></td><td><b>≈ $10–20</b></td></tr>
+        </tbody>
+      </table></div>
+      <div class="callout cost"><strong class="ct">The #1 way to blow your budget</strong><p>Leaving the Day 3 Network Firewall or the EKS cluster running overnight. Run the cleanup blocks. The <code>labs/setup/nuke-check.sh</code> script lists the expensive resources still alive.</p></div>
+    </section>
+
+    <section id="prework">
+      <div class="eyebrow">Before Monday</div>
+      <h2>Pre-work (about 2 hours)</h2>
+      <ol class="steps" data-lab="pre">
+        <li><strong>Complete Lab 0</strong><p>Set up your sandbox organization, CloudShell tooling and budget alarms. <a href="setup.html">Go to Lab 0 →</a></p></li>
+        <li><strong>Refresh the IAM policy grammar</strong><p>Read the AWS docs pages "Policy evaluation logic" and "IAM JSON policy elements reference". Have <code>Condition</code> operators fresh in your head.</p></li>
+        <li><strong>Skim MITRE ATT&amp;CK for Cloud (IaaS)</strong><p>Know the tactic names. We use them on Day 2 and Day 5.</p></li>
+        <li><strong>Enable Bedrock model access</strong><p>In your <code>skyfortress-dev</code> account, enable access to an Anthropic Claude model in Amazon Bedrock (Day 4 needs it). Approval is usually instant, but do it early.</p></li>
+        <li><strong>Read the OWASP Top 10 for LLM Applications (2025)</strong><p>At least LLM01 (prompt injection) and LLM06 (excessive agency).</p></li>
+      </ol>
+    </section>
+
+    <section id="instructor">
+      <div class="eyebrow">For instructors</div>
+      <h2>Facilitation guide</h2>
+      <div class="grid g2">
+        <div class="card"><h3>📦 What's in the repo</h3><ul>
+          <li><code>dayN.html</code>: student-facing content</li>
+          <li><code>labs/dayN/</code>: templates, scripts and policies</li>
+          <li><code>instructor/</code>: flag answer keys, solutions, timing notes. <b>Gitignored</b>, so it is never published to Pages. Share it privately.</li>
+        </ul></div>
+        <div class="card"><h3>⏱ Pacing levers</h3><ul>
+          <li>Running long? Every lab's stretch goal can be skipped.</li>
+          <li>Running short? Boss fights can expand to 60 minutes.</li>
+          <li>Day 3 is the heaviest day. Pre-deploy the EKS cluster at lunch.</li>
+        </ul></div>
+        <div class="card"><h3>🎭 Running the story</h3><ul>
+          <li>Read the morning "transmission" aloud. Doing voices is optional but encouraged.</li>
+          <li>Put the leaderboard on a screen at the 16:50 quiz block.</li>
+          <li>Hand out physical stickers that match the badges.</li>
+        </ul></div>
+        <div class="card"><h3>🧯 When things break</h3><ul>
+          <li>Service-quota or Region issues: every lab lists a fallback.</li>
+          <li>Bedrock access delays: Day 4 labs include a local fallback path.</li>
+          <li>Keep one pre-built "golden" sandbox for demos.</li>
+        </ul></div>
+      </div>
+    </section>
+
+    <div class="pager"><a class="prev" href="index.html"><small>← Back</small>Home</a><a class="next" href="setup.html"><small>Next →</small>Lab 0: Sandbox setup</a></div>
+  </main>
+</div>
+
+<footer id="site-footer"></footer>
+<script src="assets/js/site.js"></script>
+</body>
+</html>

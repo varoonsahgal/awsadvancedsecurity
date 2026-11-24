@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 700">
+  <title>SSE-C ransomware attack path and the layered defenses that stop it</title>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0b0f26"/><stop offset="1" stop-color="#1c0d1c"/></linearGradient>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#fb7185"/></marker>
+    <marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#34d399"/></marker>
+    <marker id="ay" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#fbbf24"/></marker>
+    <filter id="gl"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <style>
+      text { font-family: "Space Grotesk", Inter, sans-serif; fill: #e8ecff; }
+      .h { font-size: 22px; font-weight: 700; }
+      .t { font-size: 17px; font-weight: 600; }
+      .s { font-size: 14px; fill: #b7c0e6; }
+      .m { font-family: "JetBrains Mono", monospace; font-size: 13px; }
+    </style>
+  </defs>
+  <rect width="1200" height="700" fill="url(#bg)"/>
+  <text x="40" y="50" class="h" style="fill:#fbbf24">RANSOM IN THE CLOUDS — ATTACK vs. LAYERS</text>
+  <text x="40" y="78" class="s">The SSE-C technique needs only leaked credentials with s3:GetObject + s3:PutObject. No malware. No exploit. Just an API call.</text>
+
+  <!-- attacker -->
+  <g transform="translate(40 120)">
+    <rect width="230" height="150" rx="18" fill="#2a0f1c" stroke="#fb7185" stroke-width="2"/>
+    <text x="20" y="36" class="t" style="fill:#fb7185">🐙 Kraken</text>
+    <text x="20" y="62" class="s">leaked access key from</text>
+    <text x="20" y="82" class="s">a public repo / CI log</text>
+    <text x="20" y="112" class="m" style="fill:#fda4af">CopyObject + SSE-C</text>
+    <text x="20" y="132" class="m" style="fill:#fda4af">x-amz-…-customer-key</text>
+  </g>
+
+  <!-- attack arrows through layers -->
+  <path d="M270 195 L1000 195" stroke="#fb7185" stroke-width="3" stroke-dasharray="10 6" marker-end="url(#ar)"/>
+
+  <!-- layers -->
+  <g>
+    <rect x="300" y="110" width="150" height="290" rx="14" fill="#1d1430" stroke="#a78bfa" stroke-width="2"/>
+    <text x="375" y="140" text-anchor="middle" class="t" style="fill:#c4b5fd">① RCP</text>
+    <text x="375" y="236" text-anchor="middle" class="s">org-wide Deny</text>
+    <text x="375" y="256" text-anchor="middle" class="s">s3:PutObject if</text>
+    <text x="375" y="276" text-anchor="middle" class="m" style="fill:#86efac;font-size:11px">…customer-algorithm</text>
+    <text x="375" y="294" text-anchor="middle" class="s">is present</text>
+    <text x="375" y="380" text-anchor="middle" class="m" style="fill:#c4b5fd;font-size:12px">member accts only</text>
+
+    <rect x="470" y="110" width="150" height="290" rx="14" fill="#132238" stroke="#22d3ee" stroke-width="2"/>
+    <text x="545" y="140" text-anchor="middle" class="t" style="fill:#67e8f9">② Bucket</text>
+    <text x="545" y="236" text-anchor="middle" class="s">bucket policy deny</text>
+    <text x="545" y="256" text-anchor="middle" class="s">+ block SSE-C</text>
+    <text x="545" y="276" text-anchor="middle" class="s">encryption type</text>
+    <text x="545" y="380" text-anchor="middle" class="m" style="fill:#67e8f9;font-size:12px">per bucket</text>
+
+    <rect x="640" y="110" width="150" height="290" rx="14" fill="#2a1d0c" stroke="#fbbf24" stroke-width="2"/>
+    <text x="715" y="140" text-anchor="middle" class="t" style="fill:#fbbf24">③ Versions</text>
+    <text x="715" y="236" text-anchor="middle" class="s">Object Lock keeps</text>
+    <text x="715" y="256" text-anchor="middle" class="s">the clean version;</text>
+    <text x="715" y="276" text-anchor="middle" class="s">deletes are refused</text>
+    <text x="715" y="380" text-anchor="middle" class="m" style="fill:#fbbf24;font-size:12px">GOV · COMPLIANCE</text>
+
+    <rect x="810" y="110" width="150" height="290" rx="14" fill="#0f2a22" stroke="#34d399" stroke-width="2"/>
+    <text x="885" y="140" text-anchor="middle" class="t" style="fill:#34d399">④ Air gap</text>
+    <text x="885" y="236" text-anchor="middle" class="s">logically air-</text>
+    <text x="885" y="256" text-anchor="middle" class="s">gapped Backup</text>
+    <text x="885" y="276" text-anchor="middle" class="s">vault + MPA restore</text>
+    <text x="885" y="380" text-anchor="middle" class="m" style="fill:#34d399;font-size:12px">survives takeover</text>
+  </g>
+  <!-- shields on attack line -->
+  <g filter="url(#gl)">
+    <circle cx="375" cy="195" r="22" fill="#a78bfa"/><text x="375" y="202" text-anchor="middle" style="font-size:20px">🛡</text>
+    <circle cx="545" cy="195" r="22" fill="#22d3ee"/><text x="545" y="202" text-anchor="middle" style="font-size:20px">🛡</text>
+    <circle cx="715" cy="195" r="22" fill="#fbbf24"/><text x="715" y="202" text-anchor="middle" style="font-size:20px">⏳</text>
+    <circle cx="885" cy="195" r="22" fill="#34d399"/><text x="885" y="202" text-anchor="middle" style="font-size:20px">🔒</text>
+  </g>
+
+  <!-- bucket -->
+  <g transform="translate(1000 120)">
+    <path d="M0 20 Q80 0 160 20 L140 260 Q80 280 20 260 Z" fill="#3b2410" stroke="#fbbf24" stroke-width="3"/>
+    <ellipse cx="80" cy="20" rx="80" ry="16" fill="#5a3714" stroke="#fbbf24" stroke-width="3"/>
+    <text x="80" y="90" text-anchor="middle" class="t">cargo bucket</text>
+    <rect x="30" y="112" width="100" height="26" rx="6" fill="#0f2a22" stroke="#34d399"/><text x="80" y="130" text-anchor="middle" class="m" style="fill:#86efac;font-size:11px">v1 clean 🔒</text>
+    <rect x="30" y="146" width="100" height="26" rx="6" fill="#2a0f1c" stroke="#fb7185"/><text x="80" y="164" text-anchor="middle" class="m" style="fill:#fda4af;font-size:11px">v2 SSE-C 💀</text>
+    <rect x="30" y="180" width="100" height="26" rx="6" fill="#2a0f1c" stroke="#fb7185"/><text x="80" y="198" text-anchor="middle" class="m" style="fill:#fda4af;font-size:11px">README-RANSOM</text>
+  </g>
+
+  <!-- recovery path -->
+  <path d="M1080 400 Q1080 480 900 500 L310 500" stroke="#34d399" stroke-width="3" fill="none" marker-end="url(#ag)"/>
+  <text x="700" y="488" text-anchor="middle" class="t" style="fill:#34d399">recover: get-object --version-id v1 → copy back as latest</text>
+
+  <!-- detection row -->
+  <rect x="40" y="540" width="1120" height="120" rx="18" fill="#101630" stroke="#3a4680" stroke-width="2"/>
+  <text x="64" y="574" class="t" style="fill:#fbbf24">Detect while it happens</text>
+  <text x="64" y="604" class="s">• CloudTrail data events: CopyObject + SSE-C headers from odd IP/ASN</text>
+  <text x="64" y="628" class="s">• GuardDuty S3 Protection: anomalous access by the leaked key</text>
+  <text x="640" y="604" class="s">• Sudden lifecycle rule (expire in 7 days) = the ransom clock</text>
+  <text x="640" y="628" class="s">• Respond: deactivate key, deny by aws:TokenIssueTime, restore</text>
+</svg>

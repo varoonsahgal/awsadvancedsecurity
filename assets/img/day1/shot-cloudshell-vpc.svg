@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 760">
+<title>Illustrative console mock-up: CloudShell</title>
+<rect width="1400" height="760" fill="#0d1226"/>
+<rect width="1400" height="52" fill="#151b38"/>
+<rect x="20" y="15" width="22" height="22" rx="6" fill="#a78bfa"/>
+<text x="56" y="33" font-family="Space Grotesk, Inter, sans-serif" font-size="16" font-weight="700" fill="#fff">Cloud Console</text>
+<rect x="400" y="12" width="420" height="28" rx="8" fill="#0d1226" stroke="#2b3463"/>
+<text x="416" y="31" font-family="Space Grotesk, Inter, sans-serif" font-size="14" fill="#6b76a8">Search services, features, docs</text>
+<text x="1100" y="32" font-family="Space Grotesk, Inter, sans-serif" font-size="14" fill="#c7d2fe">N. Virginia ▾</text>
+<text x="1215" y="32" font-family="JetBrains Mono, ui-monospace, monospace" font-size="13" fill="#c7d2fe">1111-2222-3333 ▾</text>
+<rect x="0" y="52" width="250" height="708" fill="#10162f"/>
+<text x="28" y="100" font-family="Space Grotesk, Inter, sans-serif" font-size="17" font-weight="700" fill="#fff">CloudShell</text>
+<line x1="20" y1="116" x2="230" y2="116" stroke="#232b52"/>
+<text x="28" y="150" font-family="Space Grotesk, Inter, sans-serif" font-size="15" fill="#9aa6d1" font-weight="400">us-east-1</text><text x="28" y="184" font-family="Space Grotesk, Inter, sans-serif" font-size="15" fill="#9aa6d1" font-weight="400">+ Actions ▾</text><text x="28" y="218" font-family="Space Grotesk, Inter, sans-serif" font-size="15" fill="#ffffff" font-weight="600">  Create VPC environment</text><rect x="12" y="200" width="4" height="24" rx="2" fill="#a78bfa"/><text x="28" y="252" font-family="Space Grotesk, Inter, sans-serif" font-size="15" fill="#9aa6d1" font-weight="400">  Delete environment</text>
+<text x="280" y="92" font-family="Space Grotesk, Inter, sans-serif" font-size="13" fill="#7f8bbd">CloudShell  ›  Actions  ›  Create VPC environment</text>
+
+<rect x="250" y="52" width="1150" height="708" fill="#070a18"/>
+<rect x="280" y="80" width="1090" height="250" rx="10" fill="#05070f" stroke="#262f5a"/>
+<text x="300" y="112" font-family="JetBrains Mono, ui-monospace, monospace" font-size="14" fill="#34d399">[cloudshell-user@ip-10-0-1-10 ~]$</text>
+<rect x="420" y="170" width="560" height="540" rx="14" fill="#151b38" stroke="#3b4580"/>
+<text x="448" y="214" font-family="Space Grotesk, Inter, sans-serif" font-size="22" font-weight="700" fill="#fff">Create a VPC environment</text>
+<text x="448" y="242" font-family="Space Grotesk, Inter, sans-serif" font-size="13" fill="#9aa6d1">The environment runs inside your VPC and uses its routing and endpoints.</text>
+<g font-family="Space Grotesk, Inter, sans-serif" font-size="14">
+  <text x="448" y="286" fill="#c7d2fe" font-weight="600">Name</text>
+  <rect x="448" y="296" width="504" height="38" rx="8" fill="#0d1226" stroke="#3b4580"/><text x="462" y="321" fill="#fff">sky-perimeter</text>
+  <text x="448" y="368" fill="#c7d2fe" font-weight="600">Virtual private cloud (VPC)</text>
+  <rect x="448" y="378" width="504" height="38" rx="8" fill="#0d1226" stroke="#3b4580"/><text x="462" y="403" fill="#fff" font-family="JetBrains Mono, ui-monospace, monospace">vpc-0abc12de34f567890 (sky-perimeter)</text><text x="928" y="403" fill="#9aa6d1">▾</text>
+  <text x="448" y="450" fill="#c7d2fe" font-weight="600">Subnet</text>
+  <rect x="448" y="460" width="504" height="38" rx="8" fill="#0d1226" stroke="#3b4580"/><text x="462" y="485" fill="#fff" font-family="JetBrains Mono, ui-monospace, monospace">subnet-0123abcd (private, no IGW)</text><text x="928" y="485" fill="#9aa6d1">▾</text>
+  <text x="448" y="532" fill="#c7d2fe" font-weight="600">Security group</text>
+  <rect x="448" y="542" width="504" height="38" rx="8" fill="#0d1226" stroke="#3b4580"/><text x="462" y="567" fill="#fff" font-family="JetBrains Mono, ui-monospace, monospace">sg-0fedcba9 (CloudShellSecurityGroup)</text><text x="928" y="567" fill="#9aa6d1">▾</text>
+</g>
+<rect x="760" y="636" width="90" height="40" rx="8" fill="none" stroke="#3b4580"/><text x="805" y="661" text-anchor="middle" font-family="Space Grotesk, Inter, sans-serif" font-size="14" fill="#dbe2ff">Cancel</text>
+<rect x="862" y="636" width="90" height="40" rx="8" fill="#ff9900"/><text x="907" y="661" text-anchor="middle" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="700" fill="#0a0d1f">Create</text>
+<g transform="translate(1010 300)">
+  <rect width="340" height="170" rx="12" fill="#1b1340" stroke="#a78bfa"/>
+  <text x="18" y="34" font-family="Space Grotesk, Inter, sans-serif" font-size="15" font-weight="700" fill="#c4b5fd">Map to stack outputs</text>
+  <text x="18" y="66" font-family="JetBrains Mono, ui-monospace, monospace" font-size="13" fill="#dbe2ff">VPC            ← VpcId</text>
+  <text x="18" y="94" font-family="JetBrains Mono, ui-monospace, monospace" font-size="13" fill="#dbe2ff">Subnet         ← PrivateSubnetId</text>
+  <text x="18" y="122" font-family="JetBrains Mono, ui-monospace, monospace" font-size="13" fill="#dbe2ff">Security group ← CloudShell…GroupId</text>
+  <text x="18" y="152" font-family="Space Grotesk, Inter, sans-serif" font-size="13" fill="#9aa6d1">Up to 2 VPC environments per user.</text>
+</g>
+
+</svg>

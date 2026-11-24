@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" font-family="Space Grotesk, Inter, sans-serif">
+  <title>Zero-trust access: AWS Verified Access evaluates identity and device posture with Cedar on every request; Session Manager replaces bastion hosts</title>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#34d399"/></marker>
+    <marker id="r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#fb7185"/></marker>
+    <filter id="g"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <radialGradient id="va" cx=".5" cy=".5" r=".6"><stop offset="0" stop-color="#065f46"/><stop offset="1" stop-color="#022c22"/></radialGradient>
+  </defs>
+  <rect width="1200" height="600" fill="#060b18"/>
+  <text x="40" y="46" fill="#34d399" font-size="15" letter-spacing="3">FIG 3.3 · NEVER TRUST THE NETWORK — VERIFY EVERY REQUEST</text>
+
+  <!-- users -->
+  <g font-size="15">
+    <rect x="40" y="100" width="210" height="96" rx="14" fill="#0f172a" stroke="#34d399"/>
+    <text x="60" y="130" fill="#fff" font-size="17">👩‍🚀 Engineer</text>
+    <text x="60" y="154" fill="#86efac">IdC group: cargo-ops</text>
+    <text x="60" y="176" fill="#86efac">device: managed, disk enc ✓</text>
+    <rect x="40" y="230" width="210" height="96" rx="14" fill="#1a0b14" stroke="#fb7185"/>
+    <text x="60" y="260" fill="#fff" font-size="17">🐙 Stolen session</text>
+    <text x="60" y="284" fill="#fda4af">right password, wrong laptop</text>
+    <text x="60" y="306" fill="#fda4af">posture: unknown ✗</text>
+  </g>
+
+  <!-- trust providers -->
+  <rect x="300" y="380" width="250" height="110" rx="14" fill="#0b1a2e" stroke="#60a5fa"/>
+  <text x="320" y="410" fill="#93c5fd" font-size="16" font-weight="600">Trust providers</text>
+  <text x="320" y="436" fill="#e2e8f0" font-size="14">identity: IAM Identity Center / OIDC</text>
+  <text x="320" y="460" fill="#e2e8f0" font-size="14">device: CrowdStrike, Jamf, JumpCloud…</text>
+  <text x="320" y="482" fill="#94a3b8" font-size="13">claims → context for the policy</text>
+
+  <!-- VA -->
+  <circle cx="610" cy="210" r="130" fill="url(#va)" stroke="#34d399" stroke-width="2" filter="url(#g)"/>
+  <text x="610" y="170" fill="#ecfdf5" font-size="20" text-anchor="middle" font-weight="700">Verified Access</text>
+  <text x="610" y="196" fill="#a7f3d0" font-size="14" text-anchor="middle">per-request decision</text>
+  <rect x="510" y="212" width="200" height="74" rx="10" fill="#011a14" stroke="#34d399" stroke-opacity=".6"/>
+  <g font-family="JetBrains Mono, monospace" font-size="12.5" fill="#86efac">
+    <text x="520" y="232">permit(principal,action,resource)</text>
+    <text x="520" y="250">when { context.idc.groups</text>
+    <text x="520" y="268">  .contains("cargo-ops") &amp;&amp;</text>
+    <text x="520" y="284">  context.dev.compliant };</text>
+  </g>
+  <path d="M425 380 C470 340 500 320 530 300" stroke="#60a5fa" stroke-width="2" fill="none" stroke-dasharray="5 5" marker-end="url(#a)"/>
+
+  <path d="M250 148 C340 148 400 170 478 190" stroke="#34d399" stroke-width="3" fill="none" marker-end="url(#a)"/>
+  <path d="M250 278 C340 278 400 250 478 236" stroke="#fb7185" stroke-width="3" fill="none" marker-end="url(#r)"/>
+  <text x="300" y="320" fill="#fb7185" font-size="14">403 — posture claim missing</text>
+
+  <!-- apps -->
+  <g font-size="15">
+    <rect x="860" y="90" width="300" height="80" rx="14" fill="#0f172a" stroke="#34d399"/>
+    <text x="880" y="120" fill="#fff" font-size="17">HTTPS app (internal ALB)</text>
+    <text x="880" y="146" fill="#86efac">no public IP, no VPN</text>
+    <rect x="860" y="190" width="300" height="80" rx="14" fill="#0f172a" stroke="#34d399"/>
+    <text x="880" y="220" fill="#fff" font-size="17">TCP: SSH / RDP / Postgres</text>
+    <text x="880" y="246" fill="#86efac">non-HTTP endpoints (2025)</text>
+  </g>
+  <path d="M740 180 C800 150 820 135 858 130" stroke="#34d399" stroke-width="3" fill="none" marker-end="url(#a)"/>
+  <path d="M740 230 H858" stroke="#34d399" stroke-width="3" marker-end="url(#a)"/>
+
+  <!-- session manager lane -->
+  <rect x="640" y="380" width="520" height="180" rx="16" fill="#0b1328" stroke="#ff9900" stroke-opacity=".7"/>
+  <text x="660" y="412" fill="#ffb347" font-size="17" font-weight="600">Operator shell access: Session Manager, not bastions</text>
+  <g font-size="14" fill="#e2e8f0">
+    <text x="660" y="442">✓ no inbound port 22 · no SSH keys to leak or rotate</text>
+    <text x="660" y="466">✓ IAM-authorized (ssm:StartSession) with tag conditions</text>
+    <text x="660" y="490">✓ every keystroke logged to S3 / CloudWatch (KMS-encrypted)</text>
+    <text x="660" y="514">✓ works over VPC endpoints for fully private subnets</text>
+  </g>
+  <text x="660" y="544" fill="#94a3b8" font-size="13">and on every instance: IMDSv2 required — hop limit 1 on container hosts</text>
+</svg>

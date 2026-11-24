@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 470" role="img" aria-labelledby="t d">
+<title id="t">Tracked vs untracked connections when isolating</title><desc id="d">Swapping directly to a restrictive security group leaves tracked attacker connections alive; flushing through an allow-all group first makes them untracked so they drop.</desc>
+<defs>
+ <radialGradient id="bg" cx=".2" cy="0" r="1.2"><stop offset="0" stop-color="#2a0f2e"/><stop offset=".55" stop-color="#0b0d24"/><stop offset="1" stop-color="#070914"/></radialGradient>
+ <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M40 0H0V40" fill="none" stroke="#ffffff" stroke-opacity=".035"/></pattern>
+ <filter id="glow" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+ <marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#b7c0e6"/></marker>
+ <marker id="arR" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#fb7185"/></marker>
+ <marker id="arG" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#34d399"/></marker>
+ <marker id="arO" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#ff9900"/></marker>
+</defs>
+<rect width="1200" height="470" rx="22" fill="url(#bg)"/><rect width="1200" height="470" rx="22" fill="url(#grid)"/>
+<rect x="1" y="1" width="1198" height="468" rx="21" fill="none" stroke="#fb7185" stroke-opacity=".25"/>
+<text x="40" y="52" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="600" fill="#fbbf24" text-anchor="start" letter-spacing="4">GOTCHA · SECURITY GROUPS ARE STATEFUL</text>
+<text x="40" y="84" font-family="Space Grotesk, Inter, sans-serif" font-size="22" font-weight="600" fill="#e8ecff" text-anchor="start" >Changing the SG doesn't cut a connection the SG is already tracking</text>
+<rect x="40" y="110" width="540" height="330" rx="18" fill="#fb7185" fill-opacity=".06" stroke="#fb7185" stroke-opacity=".5"/><text x="64" y="144" font-family="Space Grotesk, Inter, sans-serif" font-size="18" font-weight="700" fill="#fb7185" text-anchor="start" >✗  Swap straight to quarantine</text>
+<rect x="64" y="230" width="130" height="80" rx="14" fill="#fb7185" fill-opacity="0.12" stroke="#fb7185" stroke-opacity=".75" stroke-width="1.6"/>
+<text x="129.0" y="258" font-family="Space Grotesk, Inter, sans-serif" font-size="15" font-weight="600" fill="#fff" text-anchor="middle" >Kraken C2</text>
+<text x="129.0" y="282" font-family="Space Grotesk, Inter, sans-serif" font-size="13" font-weight="400" fill="#b7c0e6" text-anchor="middle" >reverse shell</text>
+<rect x="426" y="230" width="130" height="80" rx="14" fill="#22d3ee" fill-opacity="0.12" stroke="#22d3ee" stroke-opacity=".75" stroke-width="1.6"/>
+<text x="491.0" y="258" font-family="Space Grotesk, Inter, sans-serif" font-size="15" font-weight="600" fill="#fff" text-anchor="middle" >Victim</text>
+<text x="491.0" y="282" font-family="Space Grotesk, Inter, sans-serif" font-size="13" font-weight="400" fill="#b7c0e6" text-anchor="middle" >i-0…web07</text>
+<rect x="240" y="172" width="230.32" height="26" rx="13" fill="#fb7185" fill-opacity=".18" stroke="#fb7185" stroke-opacity=".7"/><text x="355.15999999999997" y="190" font-family="JetBrains Mono, ui-monospace, monospace" font-size="12" font-weight="600" fill="#fb7185" text-anchor="middle" >workload-web → ir-quarantine</text>
+<path d="M196 270 H424" stroke="#fb7185" stroke-width="4" stroke-dasharray="10 6"/><text x="310" y="260" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="600" fill="#fb7185" text-anchor="middle" >established flow is TRACKED</text>
+<text x="310" y="300" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="600" fill="#fb7185" text-anchor="middle" >→ still flowing!</text>
+<text x="64" y="360" font-family="Space Grotesk, Inter, sans-serif" font-size="15" font-weight="400" fill="#b7c0e6" text-anchor="start" >New connections are blocked, but the attacker's live</text>
+<text x="64" y="382" font-family="Space Grotesk, Inter, sans-serif" font-size="15" font-weight="400" fill="#b7c0e6" text-anchor="start" >session survives until it goes idle or closes.</text>
+<text x="64" y="414" font-family="JetBrains Mono, ui-monospace, monospace" font-size="14" font-weight="400" fill="#8a95c2" text-anchor="start" >(tracked TCP idle timeout defaults to 5 days)</text>
+<rect x="620" y="110" width="540" height="330" rx="18" fill="#34d399" fill-opacity=".06" stroke="#34d399" stroke-opacity=".5"/><text x="644" y="144" font-family="Space Grotesk, Inter, sans-serif" font-size="18" font-weight="700" fill="#34d399" text-anchor="start" >✓  Flush first, then quarantine</text>
+<rect x="644" y="230" width="130" height="80" rx="14" fill="#fb7185" fill-opacity="0.12" stroke="#fb7185" stroke-opacity=".75" stroke-width="1.6"/>
+<text x="709.0" y="258" font-family="Space Grotesk, Inter, sans-serif" font-size="15" font-weight="600" fill="#fff" text-anchor="middle" >Kraken C2</text>
+<text x="709.0" y="282" font-family="Space Grotesk, Inter, sans-serif" font-size="13" font-weight="400" fill="#b7c0e6" text-anchor="middle" >reverse shell</text>
+<rect x="1006" y="230" width="130" height="80" rx="14" fill="#22d3ee" fill-opacity="0.12" stroke="#22d3ee" stroke-opacity=".75" stroke-width="1.6"/>
+<text x="1071.0" y="258" font-family="Space Grotesk, Inter, sans-serif" font-size="15" font-weight="600" fill="#fff" text-anchor="middle" >Victim</text>
+<text x="1071.0" y="282" font-family="Space Grotesk, Inter, sans-serif" font-size="13" font-weight="400" fill="#b7c0e6" text-anchor="middle" >i-0…web07</text>
+<rect x="800" y="172" width="260.08" height="26" rx="13" fill="#fbbf24" fill-opacity=".18" stroke="#fbbf24" stroke-opacity=".7"/><text x="930.04" y="190" font-family="JetBrains Mono, ui-monospace, monospace" font-size="12" font-weight="600" fill="#fbbf24" text-anchor="middle" >① ir-flush (allow all 0.0.0.0/0)</text>
+<rect x="800" y="204" width="133.6" height="26" rx="13" fill="#34d399" fill-opacity=".18" stroke="#34d399" stroke-opacity=".7"/><text x="866.8" y="222" font-family="JetBrains Mono, ui-monospace, monospace" font-size="12" font-weight="600" fill="#34d399" text-anchor="middle" >② ir-quarantine</text>
+<path d="M776 270 H880" stroke="#34d399" stroke-width="4" stroke-dasharray="10 6"/><path d="M930 270 H1004" stroke="#34d399" stroke-width="4" stroke-dasharray="10 6" opacity=".3"/><g stroke="#fb7185" stroke-width="6" stroke-linecap="round"><path d="M893 256 l26 28 M919 256 l-26 28"/></g><text x="906" y="320" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="600" fill="#34d399" text-anchor="middle" >untracked → dropped</text>
+<text x="644" y="360" font-family="Space Grotesk, Inter, sans-serif" font-size="15" font-weight="400" fill="#b7c0e6" text-anchor="start" >Allow-all rules in BOTH directions make flows untracked;</text>
+<text x="644" y="382" font-family="Space Grotesk, Inter, sans-serif" font-size="15" font-weight="400" fill="#b7c0e6" text-anchor="start" >the next SG change evaluates every packet fresh.</text>
+<text x="644" y="414" font-family="JetBrains Mono, ui-monospace, monospace" font-size="14" font-weight="400" fill="#8a95c2" text-anchor="start" >ICMP is always tracked · NACLs also cut instantly</text>
+</svg>

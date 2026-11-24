@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 440">
+  <title>GameDay inject timeline from 13:30 to 17:00</title>
+  <defs>
+    <linearGradient id="tbg" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#0d0a24"/><stop offset="1" stop-color="#1a0a1e"/></linearGradient>
+    <linearGradient id="tl" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#22d3ee"/><stop offset=".5" stop-color="#ff9900"/><stop offset="1" stop-color="#fb7185"/></linearGradient>
+    <filter id="tg" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+  <rect width="1400" height="440" fill="url(#tbg)"/>
+  <g font-family="Space Grotesk, Inter, sans-serif">
+    <text x="40" y="52" font-size="26" font-weight="700" fill="#ffe3c2">INJECT TIMELINE</text>
+    <text x="40" y="80" font-size="15" fill="#b7c0e6" letter-spacing="2">The game master drops these on schedule, whether or not you're ready. That's the point.</text>
+    <rect x="80" y="214" width="1240" height="10" rx="5" fill="url(#tl)" filter="url(#tg)"/>
+
+    <!-- markers: x = 80 + minutes/210*1240 -->
+    <g text-anchor="middle">
+      <g transform="translate(80 219)"><circle r="18" fill="#0d0a24" stroke="#22d3ee" stroke-width="4"/><text y="6" font-size="15" fill="#22d3ee">🚀</text>
+        <text y="-40" font-size="16" font-weight="700" fill="#fff">13:30</text><text y="56" font-size="15" fill="#a5f3fc">Kickoff</text><text y="76" font-size="14" fill="#8a95c2">brief · roles</text></g>
+      <g transform="translate(169 219)"><circle r="18" fill="#0d0a24" stroke="#22d3ee" stroke-width="4"/><text y="6" font-size="15" font-weight="700" fill="#22d3ee">0</text>
+        <text y="-40" font-size="16" font-weight="700" fill="#fff">13:45</text><text y="-90" font-size="14" fill="#a5f3fc">"odd API calls</text><text y="-70" font-size="14" fill="#a5f3fc">from the build user"</text></g>
+      <g transform="translate(346 219)"><circle r="18" fill="#0d0a24" stroke="#60a5fa" stroke-width="4"/><text y="6" font-size="15" font-weight="700" fill="#60a5fa">1</text>
+        <text y="-40" font-size="16" font-weight="700" fill="#fff">14:15</text><text y="56" font-size="15" fill="#bfdbfe">Manifests unreadable</text><text y="76" font-size="14" fill="#8a95c2">ops escalates</text></g>
+      <g transform="translate(523 219)"><circle r="18" fill="#0d0a24" stroke="#a78bfa" stroke-width="4"/><text y="6" font-size="15" font-weight="700" fill="#a78bfa">2</text>
+        <text y="-40" font-size="16" font-weight="700" fill="#fff">14:45</text><text y="-90" font-size="14" fill="#ddd6fe">chatbot reroutes</text><text y="-70" font-size="14" fill="#ddd6fe">cargo to "Kraken Station"</text></g>
+      <g transform="translate(700 219)"><circle r="18" fill="#0d0a24" stroke="#ff9900" stroke-width="4"/><text y="6" font-size="15" font-weight="700" fill="#ff9900">3</text>
+        <text y="-40" font-size="16" font-weight="700" fill="#fff">15:15</text><text y="56" font-size="15" fill="#ffd7a8">Press inquiry</text><text y="76" font-size="14" fill="#8a95c2">statement due in 20 min</text></g>
+      <g transform="translate(877 219)"><circle r="18" fill="#0d0a24" stroke="#fb7185" stroke-width="4"/><text y="6" font-size="15" font-weight="700" fill="#fb7185">4</text>
+        <text y="-40" font-size="16" font-weight="700" fill="#fff">15:45</text><text y="-90" font-size="14" fill="#fecdd3">Red Cell</text><text y="-70" font-size="14" fill="#fecdd3">re-entry attempt</text></g>
+      <g transform="translate(1054 219)"><circle r="18" fill="#fb7185"/><text y="6" font-size="15" fill="#0d0a24">✎</text>
+        <text y="-40" font-size="16" font-weight="700" fill="#fff">16:15</text><text y="56" font-size="15" fill="#fecdd3">Pencils down</text><text y="76" font-size="14" fill="#8a95c2">final flag · write-up</text></g>
+      <g transform="translate(1084 219)"><text y="120" font-size="14" fill="#b7c0e6">16:20 debriefs</text></g>
+      <g transform="translate(1261 219)"><circle r="18" fill="#ff9900"/><text y="6" font-size="15" fill="#0d0a24">🏆</text>
+        <text y="-40" font-size="16" font-weight="700" fill="#fff">16:50</text><text y="56" font-size="15" fill="#ffd7a8">Awards</text><text y="76" font-size="14" fill="#8a95c2">Kraken Slayer crowned</text></g>
+      <g transform="translate(1320 219)"><text y="-40" font-size="14" fill="#8a95c2">17:00</text></g>
+    </g>
+    <!-- act bands -->
+    <g font-size="14" letter-spacing="3" text-anchor="middle">
+      <rect x="169" y="380" width="250" height="34" rx="17" fill="#22d3ee" opacity=".16"/><text x="294" y="402" fill="#67e8f9">ACT I · DETECT</text>
+      <rect x="430" y="380" width="250" height="34" rx="17" fill="#34d399" opacity=".16"/><text x="555" y="402" fill="#6ee7b7">ACT II · CONTAIN</text>
+      <rect x="691" y="380" width="200" height="34" rx="17" fill="#ff9900" opacity=".16"/><text x="791" y="402" fill="#ffc06b">ACT III · RECOVER</text>
+      <rect x="902" y="380" width="190" height="34" rx="17" fill="#fb7185" opacity=".16"/><text x="997" y="402" fill="#fda4af">ACT IV · HARDEN</text>
+    </g>
+  </g>
+</svg>

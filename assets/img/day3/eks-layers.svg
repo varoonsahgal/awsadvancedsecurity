@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 700" font-family="Space Grotesk, Inter, sans-serif">
+  <title>EKS defense layers from AWS account down to runtime, and the IMDS credential-theft path they close</title>
+  <defs>
+    <marker id="r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#fb7185"/></marker>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#34d399"/></marker>
+    <filter id="g"><feGaussianBlur stdDeviation="6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+  <rect width="1200" height="700" fill="#060b18"/>
+  <text x="40" y="46" fill="#34d399" font-size="15" letter-spacing="3">FIG 3.4 · THE KUBERNETES CITADEL — SIX RINGS</text>
+
+  <!-- concentric rings -->
+  <g transform="translate(380 380)">
+    <circle r="300" fill="#04131a" stroke="#22d3ee" stroke-opacity=".5" stroke-width="2"/>
+    <circle r="250" fill="#05191f" stroke="#22d3ee" stroke-opacity=".6" stroke-width="2"/>
+    <circle r="200" fill="#061f24" stroke="#34d399" stroke-opacity=".6" stroke-width="2"/>
+    <circle r="150" fill="#07262a" stroke="#34d399" stroke-opacity=".7" stroke-width="2"/>
+    <circle r="100" fill="#082e2e" stroke="#34d399" stroke-width="2"/>
+    <circle r="52" fill="#065f46" stroke="#a7f3d0" stroke-width="2" filter="url(#g)"/>
+    <text y="-2" fill="#ecfdf5" font-size="17" text-anchor="middle" font-weight="700">your</text>
+    <text y="18" fill="#ecfdf5" font-size="17" text-anchor="middle" font-weight="700">pod</text>
+    <g font-size="15" text-anchor="middle">
+      <text y="-272" fill="#67e8f9">① Account / SCPs / RCPs</text>
+      <text y="-222" fill="#67e8f9">② Cluster access entries (API mode)</text>
+      <text y="-172" fill="#86efac">③ Node: IMDSv2 · hop limit 1</text>
+      <text y="-122" fill="#86efac">④ Pod Identity</text>
+      <text y="-72" fill="#a7f3d0">⑤ NetworkPolicy</text>
+    </g>
+    <text x="0" y="80" fill="#fde68a" font-size="14" text-anchor="middle">⑥ GuardDuty runtime</text>
+    <circle r="88" fill="none" stroke="#ff9900" stroke-width="2" stroke-dasharray="4 8"/>
+  </g>
+
+  <!-- attack path -->
+  <g>
+    <rect x="760" y="100" width="400" height="230" rx="16" fill="#1a0b14" stroke="#fb7185"/>
+    <text x="780" y="132" fill="#fda4af" font-size="17" font-weight="600">🐙 The classic EKS credential heist</text>
+    <g font-size="14.5" fill="#fecdd3">
+      <text x="780" y="164">1. RCE in a pod (vulnerable dependency)</text>
+      <text x="780" y="190">2. PUT 169.254.169.254/latest/api/token</text>
+      <text x="800" y="212" fill="#fda4af">hop limit 2 → the pod gets an answer</text>
+      <text x="780" y="238">3. GET …/iam/security-credentials/&lt;node-role&gt;</text>
+      <text x="780" y="264">4. aws s3 cp s3://citadel-vault/… with NODE perms</text>
+      <text x="780" y="290">5. every pod on every node = the node role</text>
+    </g>
+    <text x="780" y="318" fill="#94a3b8" font-size="13">"node roles are not pod roles"</text>
+  </g>
+  <path d="M760 220 C690 240 600 300 470 350" stroke="#fb7185" stroke-width="3" fill="none" stroke-dasharray="7 6" marker-end="url(#r)"/>
+
+  <g>
+    <rect x="760" y="360" width="400" height="290" rx="16" fill="#06201a" stroke="#34d399"/>
+    <text x="780" y="392" fill="#86efac" font-size="17" font-weight="600">🛡 How the rings close it</text>
+    <g font-size="14.5" fill="#d1fae5">
+      <text x="780" y="424">③ hop limit 1: the token response dies at</text>
+      <text x="800" y="446">the pod's network hop — IMDS goes silent</text>
+      <text x="780" y="474">④ Pod Identity: one IAM role per service account,</text>
+      <text x="800" y="496">via agent at 169.254.170.23, session-tagged</text>
+      <text x="780" y="524">⑤ default-deny egress; IMDS in an except block</text>
+      <text x="780" y="552">② no aws-auth ConfigMap; cluster-admin is an</text>
+      <text x="800" y="574">explicit, auditable access policy association</text>
+      <text x="780" y="602">⑥ GuardDuty runtime agent watches process,</text>
+      <text x="800" y="624">file &amp; DNS events → Backdoor:Runtime/…</text>
+    </g>
+  </g>
+</svg>

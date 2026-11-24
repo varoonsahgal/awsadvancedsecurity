@@ -1,0 +1,321 @@
+[
+  {
+    "Name": "deny-spoofed-edge-header",
+    "Priority": 0,
+    "Action": {
+      "Block": {}
+    },
+    "Statement": {
+      "RegexMatchStatement": {
+        "RegexString": ".",
+        "FieldToMatch": {
+          "SingleHeader": {
+            "Name": "x-amzn-waf-partner"
+          }
+        },
+        "TextTransformations": [
+          {
+            "Priority": 0,
+            "Type": "NONE"
+          }
+        ]
+      }
+    },
+    "VisibilityConfig": {
+      "SampledRequestsEnabled": true,
+      "CloudWatchMetricsEnabled": true,
+      "MetricName": "deny-spoofed-edge-header"
+    }
+  },
+  {
+    "Name": "partner-key",
+    "Priority": 1,
+    "Action": {
+      "Count": {}
+    },
+    "Statement": {
+      "ByteMatchStatement": {
+        "SearchString": "nimbus-orbital-7",
+        "FieldToMatch": {
+          "SingleHeader": {
+            "Name": "x-partner-key"
+          }
+        },
+        "TextTransformations": [
+          {
+            "Priority": 0,
+            "Type": "NONE"
+          }
+        ],
+        "PositionalConstraint": "EXACTLY"
+      }
+    },
+    "RuleLabels": [
+      {
+        "Name": "partner:keyed"
+      }
+    ],
+    "VisibilityConfig": {
+      "SampledRequestsEnabled": true,
+      "CloudWatchMetricsEnabled": true,
+      "MetricName": "partner-key"
+    }
+  },
+  {
+    "Name": "partner-trusted-ip",
+    "Priority": 2,
+    "Action": {
+      "Count": {}
+    },
+    "Statement": {
+      "IPSetReferenceStatement": {
+        "ARN": "REPLACE_WITH_IPSET_ARN"
+      }
+    },
+    "RuleLabels": [
+      {
+        "Name": "partner:trusted-ip"
+      }
+    ],
+    "VisibilityConfig": {
+      "SampledRequestsEnabled": true,
+      "CloudWatchMetricsEnabled": true,
+      "MetricName": "partner-trusted-ip"
+    }
+  },
+  {
+    "Name": "partner-allow",
+    "Priority": 3,
+    "Action": {
+      "Allow": {
+        "CustomRequestHandling": {
+          "InsertHeaders": [
+            {
+              "Name": "partner",
+              "Value": "verified"
+            }
+          ]
+        }
+      }
+    },
+    "Statement": {
+      "AndStatement": {
+        "Statements": [
+          {
+            "LabelMatchStatement": {
+              "Scope": "LABEL",
+              "Key": "partner:keyed"
+            }
+          },
+          {
+            "LabelMatchStatement": {
+              "Scope": "LABEL",
+              "Key": "partner:trusted-ip"
+            }
+          },
+          {
+            "ByteMatchStatement": {
+              "SearchString": "/partner/",
+              "FieldToMatch": {
+                "UriPath": {}
+              },
+              "TextTransformations": [
+                {
+                  "Priority": 0,
+                  "Type": "NONE"
+                }
+              ],
+              "PositionalConstraint": "STARTS_WITH"
+            }
+          }
+        ]
+      }
+    },
+    "VisibilityConfig": {
+      "SampledRequestsEnabled": true,
+      "CloudWatchMetricsEnabled": true,
+      "MetricName": "partner-allow"
+    }
+  },
+  {
+    "Name": "login-rate",
+    "Priority": 5,
+    "Action": {
+      "Block": {}
+    },
+    "Statement": {
+      "RateBasedStatement": {
+        "Limit": 10,
+        "EvaluationWindowSec": 60,
+        "AggregateKeyType": "IP",
+        "ScopeDownStatement": {
+          "ByteMatchStatement": {
+            "SearchString": "/login",
+            "FieldToMatch": {
+              "UriPath": {}
+            },
+            "TextTransformations": [
+              {
+                "Priority": 0,
+                "Type": "NONE"
+              }
+            ],
+            "PositionalConstraint": "STARTS_WITH"
+          }
+        }
+      }
+    },
+    "VisibilityConfig": {
+      "SampledRequestsEnabled": true,
+      "CloudWatchMetricsEnabled": true,
+      "MetricName": "login-rate"
+    }
+  },
+  {
+    "Name": "global-rate",
+    "Priority": 6,
+    "Action": {
+      "Block": {
+        "CustomResponse": {
+          "ResponseCode": 429,
+          "CustomResponseBodyKey": "kraken-repelled"
+        }
+      }
+    },
+    "Statement": {
+      "RateBasedStatement": {
+        "Limit": 100,
+        "EvaluationWindowSec": 60,
+        "AggregateKeyType": "IP"
+      }
+    },
+    "VisibilityConfig": {
+      "SampledRequestsEnabled": true,
+      "CloudWatchMetricsEnabled": true,
+      "MetricName": "global-rate"
+    }
+  },
+  {
+    "Name": "aws-ip-reputation",
+    "Priority": 10,
+    "OverrideAction": {
+      "None": {}
+    },
+    "Statement": {
+      "ManagedRuleGroupStatement": {
+        "VendorName": "AWS",
+        "Name": "AWSManagedRulesAmazonIpReputationList"
+      }
+    },
+    "VisibilityConfig": {
+      "SampledRequestsEnabled": true,
+      "CloudWatchMetricsEnabled": true,
+      "MetricName": "aws-ip-reputation"
+    }
+  },
+  {
+    "Name": "aws-common",
+    "Priority": 20,
+    "OverrideAction": {
+      "None": {}
+    },
+    "Statement": {
+      "ManagedRuleGroupStatement": {
+        "VendorName": "AWS",
+        "Name": "AWSManagedRulesCommonRuleSet"
+      }
+    },
+    "VisibilityConfig": {
+      "SampledRequestsEnabled": true,
+      "CloudWatchMetricsEnabled": true,
+      "MetricName": "aws-common"
+    }
+  },
+  {
+    "Name": "aws-sqli",
+    "Priority": 30,
+    "OverrideAction": {
+      "None": {}
+    },
+    "Statement": {
+      "ManagedRuleGroupStatement": {
+        "VendorName": "AWS",
+        "Name": "AWSManagedRulesSQLiRuleSet"
+      }
+    },
+    "VisibilityConfig": {
+      "SampledRequestsEnabled": true,
+      "CloudWatchMetricsEnabled": true,
+      "MetricName": "aws-sqli"
+    }
+  },
+  {
+    "Name": "aws-known-bad-inputs",
+    "Priority": 40,
+    "OverrideAction": {
+      "None": {}
+    },
+    "Statement": {
+      "ManagedRuleGroupStatement": {
+        "VendorName": "AWS",
+        "Name": "AWSManagedRulesKnownBadInputsRuleSet"
+      }
+    },
+    "VisibilityConfig": {
+      "SampledRequestsEnabled": true,
+      "CloudWatchMetricsEnabled": true,
+      "MetricName": "aws-known-bad-inputs"
+    }
+  },
+  {
+    "Name": "aws-linux",
+    "Priority": 45,
+    "OverrideAction": {
+      "None": {}
+    },
+    "Statement": {
+      "ManagedRuleGroupStatement": {
+        "VendorName": "AWS",
+        "Name": "AWSManagedRulesLinuxRuleSet"
+      }
+    },
+    "VisibilityConfig": {
+      "SampledRequestsEnabled": true,
+      "CloudWatchMetricsEnabled": true,
+      "MetricName": "aws-linux"
+    }
+  },
+  {
+    "Name": "aws-bot-control",
+    "Priority": 50,
+    "OverrideAction": {
+      "None": {}
+    },
+    "Statement": {
+      "ManagedRuleGroupStatement": {
+        "VendorName": "AWS",
+        "Name": "AWSManagedRulesBotControlRuleSet",
+        "ManagedRuleGroupConfigs": [
+          {
+            "AWSManagedRulesBotControlRuleSet": {
+              "InspectionLevel": "COMMON"
+            }
+          }
+        ],
+        "RuleActionOverrides": [
+          {
+            "Name": "SignalKnownBotDataCenter",
+            "ActionToUse": {
+              "Count": {}
+            }
+          }
+        ]
+      }
+    },
+    "VisibilityConfig": {
+      "SampledRequestsEnabled": true,
+      "CloudWatchMetricsEnabled": true,
+      "MetricName": "aws-bot-control"
+    }
+  }
+]

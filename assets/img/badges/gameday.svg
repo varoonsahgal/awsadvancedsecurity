@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <title>LEGEND badge</title>
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff9900"/><stop offset="1" stop-color="#fb7185"/></linearGradient>
+    <radialGradient id="i" cx=".5" cy=".35" r=".7"><stop offset="0" stop-color="#2a2f6b"/><stop offset="1" stop-color="#0b1028"/></radialGradient>
+    <filter id="f" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+  <g filter="url(#f)"><path d="M100 8 L180 54 V146 L100 192 L20 146 V54 Z" fill="url(#g)"/></g>
+  <path d="M100 22 L168 61 V139 L100 178 L32 139 V61 Z" fill="url(#i)"/>
+  <path d="M100 22 L168 61 V139 L100 178 L32 139 V61 Z" fill="none" stroke="url(#g)" stroke-width="2" opacity=".7"/>
+  <g transform="translate(0 -6)"><path d="M70 56 h60 v26 a30 30 0 0 1 -60 0 Z" fill="#fff"/><path d="M70 64 h-16 a16 16 0 0 0 16 24 M130 64 h16 a16 16 0 0 1 -16 24" fill="none" stroke="#fff" stroke-width="6"/><rect x="94" y="110" width="12" height="18" fill="#fff"/><rect x="76" y="128" width="48" height="12" rx="3" fill="#fff"/><path d="M100 64 l5 10 l11 1 l-8 7 l3 11 l-11 -6 l-11 6 l3 -11 l-8 -7 l11 -1 Z" fill="#0b1028"/></g>
+  <path d="M18 146 H182 L170 164 L182 182 H18 L30 164 Z" fill="url(#g)"/>
+  <text x="100" y="170" text-anchor="middle" font-family="Space Grotesk, Inter, sans-serif" font-weight="700" font-size="15" letter-spacing="2" fill="#0b1028">LEGEND</text>
+  <g fill="#fff"><circle cx="40" cy="40" r="2"/><circle cx="168" cy="30" r="1.6"/><circle cx="178" cy="100" r="1.4"/></g>
+</svg>

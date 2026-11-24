@@ -1,0 +1,14 @@
+{
+  "manifest_id": "ORION-0451",
+  "vessel": "NIS Halcyon Drift",
+  "origin": "Ceres Freeport, Dock 7",
+  "destination": "Europa Relay Station",
+  "status": "IN_TRANSIT",
+  "eta_utc": "2026-12-04T09:30:00Z",
+  "cargo": [
+    { "sku": "H2O-ICE-900", "description": "Potable ice blocks", "units": 1200 },
+    { "sku": "MED-KIT-12", "description": "Trauma med kits", "units": 340 },
+    { "sku": "SOLAR-FOIL-3", "description": "Thin-film solar foil rolls", "units": 75 }
+  ],
+  "handling": "Keep below -20C. Do not reroute without dispatcher sign-off."
+}

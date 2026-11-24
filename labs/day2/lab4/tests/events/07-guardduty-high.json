@@ -1,0 +1,22 @@
+{
+  "version": "0",
+  "id": "7bf73129-1428-4cd3-a780-95db273d1007",
+  "detail-type": "GuardDuty Finding",
+  "source": "aws.guardduty",
+  "account": "222222222222",
+  "time": "2026-11-24T03:01:00Z",
+  "region": "us-east-1",
+  "resources": [],
+  "detail": {
+    "schemaVersion": "2.0",
+    "accountId": "222222222222",
+    "region": "us-east-1",
+    "id": "b2c6a2f5e1d0",
+    "type": "UnauthorizedAccess:IAMUser/InstanceCredentialExfiltration.InsideAWS",
+    "severity": 8,
+    "title": "Credentials for instance role nimbus-web used from a different AWS account.",
+    "resource": {
+      "resourceType": "AccessKey"
+    }
+  }
+}

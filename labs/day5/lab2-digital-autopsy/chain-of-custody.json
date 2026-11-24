@@ -1,0 +1,28 @@
+{
+  "case_id": "IR-2026-1204-007",
+  "incident_commander": "your-name",
+  "evidence": [
+    {
+      "item": "EBS snapshot of root volume, nimbus-web-07",
+      "aws_id": "snap-REPLACE",
+      "source": "vol-REPLACE attached to i-REPLACE",
+      "collected_at_utc": "2026-12-04T09:41:00Z",
+      "collected_by": "arn:aws:sts::ACCOUNT:assumed-role/IR-Responder/you",
+      "method": "ec2 create-snapshots (crash-consistent)",
+      "sha256": "n/a for snapshot - record snapshot id + volume id; hash mounted image if exported",
+      "storage": "same account, tagged ir-case; copy to forensic account with CMK re-encryption for real cases"
+    },
+    {
+      "item": "Memory image (AVML LiME format)",
+      "aws_id": "s3://skyfortress-d5-evidence-ACCOUNT/IR-2026-1204-007/nimbus-web-07.lime",
+      "collected_at_utc": "REPLACE",
+      "collected_by": "REPLACE",
+      "method": "avml via SSM Run Command to attached evidence volume",
+      "sha256": "REPLACE (sha256sum output)",
+      "storage": "S3 Object Lock GOVERNANCE, versioned, SSE-KMS"
+    }
+  ],
+  "transfers": [
+    { "from": "", "to": "", "at_utc": "", "reason": "" }
+  ]
+}

@@ -1,0 +1,90 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 700" width="1600" height="700">
+<title>Detection-as-code pipeline</title>
+<defs>
+<filter id="g" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+<radialGradient id="bgg" cx=".5" cy="0" r="1"><stop offset="0" stop-color="#0f1d48"/><stop offset="1" stop-color="#060a1a"/></radialGradient>
+<pattern id="dots" width="26" height="26" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1.2" fill="#8aa0ff" opacity=".12"/></pattern>
+<marker id="a-cyan" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#22d3ee"/></marker>
+<linearGradient id="f-cyan" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#22d3ee" stop-opacity=".22"/><stop offset="1" stop-color="#22d3ee" stop-opacity=".06"/></linearGradient>
+<marker id="a-blue" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#60a5fa"/></marker>
+<linearGradient id="f-blue" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#60a5fa" stop-opacity=".22"/><stop offset="1" stop-color="#60a5fa" stop-opacity=".06"/></linearGradient>
+<marker id="a-orange" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#ff9900"/></marker>
+<linearGradient id="f-orange" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff9900" stop-opacity=".22"/><stop offset="1" stop-color="#ff9900" stop-opacity=".06"/></linearGradient>
+<marker id="a-violet" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#a78bfa"/></marker>
+<linearGradient id="f-violet" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a78bfa" stop-opacity=".22"/><stop offset="1" stop-color="#a78bfa" stop-opacity=".06"/></linearGradient>
+<marker id="a-pink" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#fb7185"/></marker>
+<linearGradient id="f-pink" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fb7185" stop-opacity=".22"/><stop offset="1" stop-color="#fb7185" stop-opacity=".06"/></linearGradient>
+<marker id="a-green" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#34d399"/></marker>
+<linearGradient id="f-green" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#34d399" stop-opacity=".22"/><stop offset="1" stop-color="#34d399" stop-opacity=".06"/></linearGradient>
+<marker id="a-gold" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#fbbf24"/></marker>
+<linearGradient id="f-gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fbbf24" stop-opacity=".22"/><stop offset="1" stop-color="#fbbf24" stop-opacity=".06"/></linearGradient>
+<marker id="a-text" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#e8ecff"/></marker>
+<linearGradient id="f-text" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e8ecff" stop-opacity=".22"/><stop offset="1" stop-color="#e8ecff" stop-opacity=".06"/></linearGradient>
+<marker id="a-dim" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#b7c0e6"/></marker>
+<linearGradient id="f-dim" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b7c0e6" stop-opacity=".22"/><stop offset="1" stop-color="#b7c0e6" stop-opacity=".06"/></linearGradient>
+<marker id="a-muted" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#8a95c2"/></marker>
+<linearGradient id="f-muted" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8a95c2" stop-opacity=".22"/><stop offset="1" stop-color="#8a95c2" stop-opacity=".06"/></linearGradient>
+</defs>
+<rect width="1600" height="700" fill="url(#bgg)"/><rect width="1600" height="700" fill="url(#dots)"/>
+<text x="48" y="62" font-family="Space Grotesk, Inter, sans-serif" font-size="30" font-weight="700" fill="#e8ecff" text-anchor="start" letter-spacing="0" opacity="1">Tripwires as code</text>
+<text x="48" y="94" font-family="Space Grotesk, Inter, sans-serif" font-size="16" font-weight="500" fill="#8a95c2" text-anchor="start" letter-spacing="0" opacity="1">Detections live in git, ship through CI with tests, and get tuned from real alerts — just like application code</text>
+<rect x="40" y="130" width="520" height="290" rx="22" fill="#a78bfa" fill-opacity=".035" stroke="#a78bfa" stroke-opacity=".45" stroke-dasharray="7 7"/>
+<text x="60" y="160" font-family="JetBrains Mono, monospace" font-size="14" font-weight="500" fill="#a78bfa" text-anchor="start" letter-spacing="2.5" opacity="1">BUILD TIME · GIT + CI</text>
+<rect x="70" y="180" width="220" height="90" rx="14" fill="url(#f-violet)" stroke="#a78bfa" stroke-width="1.6"/>
+<rect x="70" y="180" width="5" height="90" rx="2.5" fill="#a78bfa"/>
+<text x="90" y="211.0" font-family="Space Grotesk, Inter, sans-serif" font-size="18" font-weight="600" fill="#e8ecff" text-anchor="start" letter-spacing="0" opacity="1">git repo</text>
+<text x="90" y="233.0" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="500" fill="#b7c0e6" text-anchor="start" letter-spacing="0" opacity="1">patterns/*.json</text>
+<text x="90" y="253.0" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="500" fill="#b7c0e6" text-anchor="start" letter-spacing="0" opacity="1">detector.py · tests/</text>
+<rect x="310" y="180" width="220" height="90" rx="14" fill="url(#f-green)" stroke="#34d399" stroke-width="1.6"/>
+<rect x="310" y="180" width="5" height="90" rx="2.5" fill="#34d399"/>
+<text x="330" y="211.0" font-family="Space Grotesk, Inter, sans-serif" font-size="18" font-weight="600" fill="#e8ecff" text-anchor="start" letter-spacing="0" opacity="1">CI checks</text>
+<text x="330" y="233.0" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="500" fill="#b7c0e6" text-anchor="start" letter-spacing="0" opacity="1">test-event-pattern</text>
+<text x="330" y="253.0" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="500" fill="#b7c0e6" text-anchor="start" letter-spacing="0" opacity="1">pytest · tf validate</text>
+<rect x="190" y="300" width="220" height="90" rx="14" fill="url(#f-orange)" stroke="#ff9900" stroke-width="1.6"/>
+<rect x="190" y="300" width="5" height="90" rx="2.5" fill="#ff9900"/>
+<text x="210" y="341.0" font-family="Space Grotesk, Inter, sans-serif" font-size="18" font-weight="600" fill="#e8ecff" text-anchor="start" letter-spacing="0" opacity="1">terraform apply</text>
+<text x="210" y="363.0" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="500" fill="#b7c0e6" text-anchor="start" letter-spacing="0" opacity="1">rules · Lambda · SNS</text>
+<path d="M290 225 L306 225" fill="none" stroke="#a78bfa" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#a-violet)"/>
+<path d="M420 270 L420 285 L300 285 L300 296" fill="none" stroke="#34d399" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#a-green)"/>
+<rect x="600" y="130" width="960" height="290" rx="22" fill="#22d3ee" fill-opacity=".035" stroke="#22d3ee" stroke-opacity=".45" stroke-dasharray="7 7"/>
+<text x="620" y="160" font-family="JetBrains Mono, monospace" font-size="14" font-weight="500" fill="#22d3ee" text-anchor="start" letter-spacing="2.5" opacity="1">RUN TIME · EVERY API CALL IS AN EVENT</text>
+<rect x="630" y="200" width="200" height="90" rx="14" fill="url(#f-orange)" stroke="#ff9900" stroke-width="1.6"/>
+<rect x="630" y="200" width="5" height="90" rx="2.5" fill="#ff9900"/>
+<text x="650" y="241.0" font-family="Space Grotesk, Inter, sans-serif" font-size="18" font-weight="600" fill="#e8ecff" text-anchor="start" letter-spacing="0" opacity="1">CloudTrail</text>
+<text x="650" y="263.0" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="500" fill="#b7c0e6" text-anchor="start" letter-spacing="0" opacity="1">mgmt events</text>
+<rect x="860" y="200" width="200" height="90" rx="14" fill="url(#f-cyan)" stroke="#22d3ee" stroke-width="1.6" filter="url(#g)"/>
+<rect x="860" y="200" width="5" height="90" rx="2.5" fill="#22d3ee"/>
+<text x="880" y="241.0" font-family="Space Grotesk, Inter, sans-serif" font-size="18" font-weight="600" fill="#e8ecff" text-anchor="start" letter-spacing="0" opacity="1">EventBridge</text>
+<text x="880" y="263.0" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="500" fill="#b7c0e6" text-anchor="start" letter-spacing="0" opacity="1">rule: pattern match</text>
+<rect x="1090" y="200" width="200" height="90" rx="14" fill="url(#f-blue)" stroke="#60a5fa" stroke-width="1.6"/>
+<rect x="1090" y="200" width="5" height="90" rx="2.5" fill="#60a5fa"/>
+<text x="1110" y="231.0" font-family="Space Grotesk, Inter, sans-serif" font-size="18" font-weight="600" fill="#e8ecff" text-anchor="start" letter-spacing="0" opacity="1">Lambda detector</text>
+<text x="1110" y="253.0" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="500" fill="#b7c0e6" text-anchor="start" letter-spacing="0" opacity="1">decide · enrich</text>
+<text x="1110" y="273.0" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="500" fill="#b7c0e6" text-anchor="start" letter-spacing="0" opacity="1">dedupe · score</text>
+<rect x="1320" y="160" width="210" height="70" rx="14" fill="url(#f-pink)" stroke="#fb7185" stroke-width="1.6"/>
+<rect x="1320" y="160" width="5" height="70" rx="2.5" fill="#fb7185"/>
+<text x="1340" y="201.0" font-family="Space Grotesk, Inter, sans-serif" font-size="17" font-weight="600" fill="#e8ecff" text-anchor="start" letter-spacing="0" opacity="1">SNS / chat</text>
+<rect x="1320" y="250" width="210" height="70" rx="14" fill="url(#f-cyan)" stroke="#22d3ee" stroke-width="1.6"/>
+<rect x="1320" y="250" width="5" height="70" rx="2.5" fill="#22d3ee"/>
+<text x="1340" y="291.0" font-family="Space Grotesk, Inter, sans-serif" font-size="17" font-weight="600" fill="#e8ecff" text-anchor="start" letter-spacing="0" opacity="1">Security Hub</text>
+<rect x="1320" y="340" width="210" height="62" rx="14" fill="url(#f-green)" stroke="#34d399" stroke-width="1.6"/>
+<rect x="1320" y="340" width="5" height="62" rx="2.5" fill="#34d399"/>
+<text x="1340" y="377.0" font-family="Space Grotesk, Inter, sans-serif" font-size="17" font-weight="600" fill="#e8ecff" text-anchor="start" letter-spacing="0" opacity="1">Ticket / SOAR</text>
+<path d="M410 345 L585 345 L585 245 L626 245" fill="none" stroke="#ff9900" stroke-width="2.2" stroke-linejoin="round" stroke-dasharray="6 6" marker-end="url(#a-orange)"/>
+<path d="M830 245 L856 245" fill="none" stroke="#ff9900" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#a-orange)"/>
+<path d="M1060 245 L1086 245" fill="none" stroke="#22d3ee" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#a-cyan)"/>
+<path d="M1290 230 L1305 230 L1305 195 L1316 195" fill="none" stroke="#fb7185" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#a-pink)"/>
+<path d="M1290 260 L1305 260 L1305 285 L1316 285" fill="none" stroke="#22d3ee" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#a-cyan)"/>
+<path d="M1290 280 L1300 280 L1300 371 L1316 371" fill="none" stroke="#34d399" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#a-green)"/>
+<path d="M1425 402 C 1425 560, 300 560, 180 420" fill="none" stroke="#fbbf24" stroke-width="2.2" stroke-dasharray="6 6" marker-end="url(#a-gold)"/>
+<text x="800" y="548" font-family="JetBrains Mono, monospace" font-size="14" font-weight="500" fill="#fbbf24" text-anchor="middle" letter-spacing="0" opacity="1">feedback: every false positive becomes a test case</text>
+<rect x="40" y="590" width="1520" height="80" rx="16" fill="#0a1230" stroke="#fbbf24" stroke-opacity=".5"/>
+<text x="70" y="624" font-family="JetBrains Mono, monospace" font-size="14" font-weight="500" fill="#fbbf24" text-anchor="start" letter-spacing="2" opacity="1">PRECISION</text>
+<text x="70" y="650" font-family="Space Grotesk, Inter, sans-serif" font-size="15" font-weight="500" fill="#b7c0e6" text-anchor="start" letter-spacing="0" opacity="1">alert only on what a human must act on</text>
+<text x="445" y="624" font-family="JetBrains Mono, monospace" font-size="14" font-weight="500" fill="#fbbf24" text-anchor="start" letter-spacing="2" opacity="1">OWNERSHIP</text>
+<text x="445" y="650" font-family="Space Grotesk, Inter, sans-serif" font-size="15" font-weight="500" fill="#b7c0e6" text-anchor="start" letter-spacing="0" opacity="1">every rule names an owner + runbook</text>
+<text x="820" y="624" font-family="JetBrains Mono, monospace" font-size="14" font-weight="500" fill="#fbbf24" text-anchor="start" letter-spacing="2" opacity="1">LATENCY</text>
+<text x="820" y="650" font-family="Space Grotesk, Inter, sans-serif" font-size="15" font-weight="500" fill="#b7c0e6" text-anchor="start" letter-spacing="0" opacity="1">event → human in &lt; 5 min</text>
+<text x="1195" y="624" font-family="JetBrains Mono, monospace" font-size="14" font-weight="500" fill="#fbbf24" text-anchor="start" letter-spacing="2" opacity="1">COVERAGE</text>
+<text x="1195" y="650" font-family="Space Grotesk, Inter, sans-serif" font-size="15" font-weight="500" fill="#b7c0e6" text-anchor="start" letter-spacing="0" opacity="1">map each rule to an ATT&amp;CK ID</text>
+</svg>

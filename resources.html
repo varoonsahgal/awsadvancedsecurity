@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>The Arsenal — Operation Skyfortress</title>
+  <meta name="description" content="Cheat sheets, condition keys, GuardDuty findings, hunting queries, IR checklists, tools and reading list for advanced AWS security.">
+  <meta property="og:image" content="https://varoonsahgal.github.io/awsadvancedsecurity/assets/img/og-card.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="theme-color" content="#060915">
+  <link rel="icon" href="assets/img/logo.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/site.css">
+  <style>
+    .evalflow { counter-reset: e; list-style: none; padding: 0; }
+    .evalflow li { counter-increment: e; padding: 12px 16px 12px 58px; position: relative; border-radius: 12px; background: var(--panel); border: 1px solid var(--border); margin: 10px 0; }
+    .evalflow li::before { content: counter(e); position: absolute; left: 16px; top: 11px; width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center; background: color-mix(in srgb, var(--accent) 25%, transparent); color: var(--accent); font-family: var(--mono); font-weight: 600; }
+    .evalflow li b.deny { color: var(--red); } .evalflow li b.allow { color: var(--green); }
+    .tool { display: flex; gap: 14px; align-items: flex-start; }
+    .tool .e { font-size: 1.8rem; line-height: 1; }
+    .tool h3 { font-size: 1.05rem; margin: 0 0 4px; }
+    .tool p { font-size: 0.9rem; color: var(--text-dim); margin: 0; }
+    dl.gloss dt { font-family: var(--display); font-weight: 600; color: #fff; margin-top: 14px; }
+    dl.gloss dd { margin: 2px 0 0; color: var(--text-dim); font-size: 0.95rem; }
+  </style>
+</head>
+<body>
+<header id="site-nav"></header>
+
+<section class="day-hero">
+  <div class="container">
+    <div class="reveal">
+      <div class="eyebrow">Reference</div>
+      <h1>The <span class="grad">Arsenal</span></h1>
+      <p class="lead">Everything you'll want open in another tab on Monday morning, and still bookmarked a year from now: cheat sheets, condition keys, finding types, hunting queries, IR checklists, tools and a reading list.</p>
+      <div class="chips"><span class="chip accent">Cheat sheets</span><span class="chip">Queries</span><span class="chip">Checklists</span><span class="chip">Tools</span></div>
+    </div>
+    <div class="banner reveal"><img src="assets/img/arsenal.svg" alt="A glowing treasure chest of security tools: key, magnifier, shield, lock, terminal"></div>
+  </div>
+</section>
+
+<div class="container day-layout">
+  <nav class="toc" data-auto></nav>
+  <main class="day-content">
+
+    <section id="policy-eval">
+      <div class="eyebrow">Cheat sheet</div>
+      <h2>Policy evaluation in 8 steps</h2>
+      <p class="muted">For a request inside a single account. For cross-account access, the identity side <em>and</em> the resource side must both allow it.</p>
+      <ol class="evalflow">
+        <li>Any applicable <b class="deny">explicit Deny</b> in any policy wins immediately. That includes identity, resource, boundary, session, SCP and RCP.</li>
+        <li><b>SCPs</b> on the principal's account and every OU above it must allow the action (SCPs never apply to the management account or service-linked roles).</li>
+        <li><b>RCPs</b> on the resource's account and its OUs must allow the action on supported resources (S3, STS, KMS, SQS, Secrets Manager and more).</li>
+        <li>A <b>resource-based policy</b> that names the principal can grant access on its own in the same account. If it names an <em>IAM user ARN</em> or a <em>role session ARN</em>, implicit denies in boundaries and session policies don't limit it. If it names a <em>role ARN</em>, they do.</li>
+        <li><b>Permissions boundaries</b> cap what identity policies can grant.</li>
+        <li><b>Session policies</b> (passed on AssumeRole or federation) cap the session further.</li>
+        <li><b>Identity-based policies</b> must contain an <b class="allow">Allow</b>.</li>
+        <li>Nothing allowed it? Then it's an <b class="deny">implicit deny</b>. Declarative policies sit outside this flow: they set the service's configuration, so the API refuses a non-compliant change before any authorization decision.</li>
+      </ol>
+      <figure class="figure"><img src="assets/img/day1/policy-eval.svg" alt="Flowchart of AWS policy evaluation logic"><figcaption><b>FIG A.1</b> The same flow as a diagram, from Day 1. Click to zoom.</figcaption></figure>
+      <div class="callout tip"><strong class="ct">Mnemonic</strong><p><b>"Deny, Org, Resource, Boundary, Session, Identity."</b> If any gate says no, the answer is no. A resource policy can open its own door, but it can't get past the Org gates.</p></div>
+    </section>
+
+    <section id="org-policies">
+      <div class="eyebrow">Cheat sheet</div>
+      <h2>AWS Organizations policy types</h2>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Type</th><th>Controls</th><th>Applies to</th><th>Use it for</th></tr></thead>
+        <tbody>
+          <tr><td><b>SCP</b></td><td>Max permissions of <em>principals</em></td><td>IAM users and roles in member accounts</td><td>Region lock, protecting security tooling, denying root, deny-leave-org. Now 10 per node and 10,240 characters each (May 2026)</td></tr>
+          <tr><td><b>RCP</b></td><td>Max permissions on <em>resources</em></td><td>Resources of supported services in member accounts</td><td>Data perimeter: only org principals, enforce TLS, block SSE-C, confused-deputy protection</td></tr>
+          <tr><td><b>Declarative</b></td><td>Service <em>configuration</em> baseline</td><td>The account's service settings</td><td>EC2 (IMDSv2, block public AMI/snapshot sharing, VPC BPA, serial console), GuardDuty enablement (Oct 2026), Security Hub CSPM (Nov 2026)</td></tr>
+          <tr><td><b>Backup</b></td><td>Backup plans</td><td>Resources by tag</td><td>Org-wide backup baselines</td></tr>
+          <tr><td><b>Tag</b></td><td>Tag key/value standards</td><td>Tagged resources</td><td>Make ABAC tags trustworthy</td></tr>
+          <tr><td><b>AI services opt-out</b></td><td>Content use for service improvement</td><td>AI services</td><td>Data-governance requirements</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="condition-keys">
+      <div class="eyebrow">Cheat sheet</div>
+      <h2>Data perimeter condition keys</h2>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Key</th><th>Asks</th><th>Typical home</th></tr></thead>
+        <tbody>
+          <tr><td><code>aws:PrincipalOrgID</code></td><td>Is the <em>caller</em> from my org?</td><td>Resource policies, RCPs</td></tr>
+          <tr><td><code>aws:ResourceOrgID</code></td><td>Does the <em>target resource</em> belong to my org?</td><td>SCPs, VPC endpoint policies</td></tr>
+          <tr><td><code>aws:SourceOrgID</code> / <code>aws:SourceAccount</code> / <code>aws:SourceArn</code></td><td>On whose behalf is an AWS service calling?</td><td>Resource policies, RCPs (confused deputy)</td></tr>
+          <tr><td><code>aws:SourceVpce</code> / <code>aws:SourceVpc</code></td><td>Did the request arrive through my endpoint or VPC?</td><td>Resource policies, RCPs</td></tr>
+          <tr><td><code>aws:SourceIp</code></td><td>Public IP of the caller (not set for requests through VPC endpoints)</td><td>Network perimeter for public paths</td></tr>
+          <tr><td><code>aws:PrincipalIsAWSService</code></td><td>Is the caller an AWS service principal?</td><td>Exempt service calls from perimeter denies</td></tr>
+          <tr><td><code>aws:ViaAWSService</code></td><td>Did a service make this call on the principal's behalf (forward access session)?</td><td>Exempt, for example, S3 → KMS calls</td></tr>
+          <tr><td><code>aws:PrincipalTag/…</code> / <code>aws:ResourceTag/…</code></td><td>Do the tags match?</td><td>ABAC</td></tr>
+          <tr><td><code>aws:TokenIssueTime</code></td><td>When were these credentials issued?</td><td>Session revocation (IR)</td></tr>
+          <tr><td><code>aws:SecureTransport</code></td><td>Was TLS used?</td><td>Enforce HTTPS on buckets and queues</td></tr>
+          <tr><td><code>iam:PassedToService</code></td><td>Which service is receiving the role?</td><td>Scope <code>iam:PassRole</code></td></tr>
+          <tr><td><code>kms:EncryptionContext:…</code> / <code>kms:ViaService</code></td><td>What context and which service?</td><td>KMS key policies</td></tr>
+        </tbody>
+      </table></div>
+<pre data-title="RCP: only my org may touch my S3 (with service exemption)"><code class="language-json">{
+  "Version": "2012-10-17",
+  "Statement": [{
+    "Sid": "EnforceOrgIdentities",
+    "Effect": "Deny",
+    "Principal": "*",
+    "Action": ["s3:*", "sts:*", "kms:*", "sqs:*", "secretsmanager:*"],
+    "Resource": "*",
+    "Condition": {
+      "StringNotEqualsIfExists": { "aws:PrincipalOrgID": "o-xxxxxxxxxx" },
+      "BoolIfExists": { "aws:PrincipalIsAWSService": "false" }
+    }
+  }]
+}</code></pre>
+    </section>
+
+    <section id="guardduty">
+      <div class="eyebrow">Cheat sheet</div>
+      <h2>GuardDuty findings worth memorising</h2>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Finding type</th><th>What it means</th><th>First move</th></tr></thead>
+        <tbody>
+          <tr><td><code>AttackSequence:IAM/CompromisedCredentials</code></td><td>Extended Threat Detection: a multi-stage sequence with stolen credentials</td><td>Open the sequence timeline, then follow the credential-compromise playbook</td></tr>
+          <tr><td><code>AttackSequence:S3/CompromisedData</code></td><td>Sequence ending in data access or exfiltration in S3</td><td>Scope the data touched, then lock the bucket</td></tr>
+          <tr><td><code>AttackSequence:EKS/CompromisedCluster</code></td><td>Multi-stage attack inside an EKS cluster</td><td>Isolate the workload and rotate the cluster creds</td></tr>
+          <tr><td><code>UnauthorizedAccess:IAMUser/InstanceCredentialExfiltration.OutsideAWS</code></td><td>EC2 role creds used from outside AWS</td><td>Revoke the role's sessions and enforce IMDSv2</td></tr>
+          <tr><td><code>Stealth:IAMUser/CloudTrailLoggingDisabled</code></td><td>Someone stopped or deleted a trail</td><td>Re-enable it, protect it with an SCP, hunt the actor</td></tr>
+          <tr><td><code>Policy:IAMUser/RootCredentialUsage</code></td><td>Root was used</td><td>Verify with the owner, or treat it as an incident</td></tr>
+          <tr><td><code>Backdoor:EC2/C&amp;CActivity.B!DNS</code></td><td>Instance queried a known C2 domain</td><td>Isolate, snapshot, start forensics</td></tr>
+          <tr><td><code>CryptoCurrency:EC2/BitcoinTool.B!DNS</code></td><td>Mining pool lookups</td><td>Isolate, and find the initial access</td></tr>
+          <tr><td><code>Persistence:IAMUser/AnomalousBehavior</code></td><td>Unusual persistence-style API calls (CreateAccessKey and similar)</td><td>Check new keys, users and roles</td></tr>
+          <tr><td><code>Discovery:S3/AnomalousBehavior</code></td><td>Unusual listing and enumeration of S3</td><td>Who, from where, using which credentials?</td></tr>
+        </tbody>
+      </table></div>
+      <div class="callout new"><strong class="ct">2026: indicators on sequences</strong><p>Attack sequences now carry <code>MALICIOUS_PACKAGE</code>, <code>MISCONFIGURATION</code>, <code>REACHABILITY</code>, <code>SENSITIVE_DATA</code> and <code>VULNERABILITY</code> indicators (May 2026). Use them to rank which sequence to work first.</p></div>
+    </section>
+
+    <section id="hunting">
+      <div class="eyebrow">Query pack</div>
+      <h2>Threat-hunting SQL</h2>
+      <p class="muted">For CloudTrail logs in Athena. Adjust table names to your setup (Security Lake OCSF tables use <code>api.operation</code>, <code>actor.user.uid</code> and similar).</p>
+      <div class="tabs">
+        <div class="tab-list"><button>Console logins w/o MFA</button><button>New access keys</button><button>Defense evasion</button><button>Rare user agents</button></div>
+        <div class="tab-panel">
+<pre data-title="athena.sql"><code class="language-sql">SELECT eventtime, useridentity.arn, sourceipaddress,
+       json_extract_scalar(additionaleventdata, '$.MFAUsed') AS mfa
+FROM cloudtrail_logs
+WHERE eventname = 'ConsoleLogin'
+  AND json_extract_scalar(additionaleventdata, '$.MFAUsed') = 'No'
+  AND eventtime &gt; to_iso8601(current_timestamp - interval '7' day)
+ORDER BY eventtime DESC;</code></pre>
+        </div>
+        <div class="tab-panel">
+<pre data-title="athena.sql"><code class="language-sql">SELECT eventtime, useridentity.arn AS actor,
+       json_extract_scalar(requestparameters, '$.userName') AS target_user,
+       sourceipaddress, useragent
+FROM cloudtrail_logs
+WHERE eventname IN ('CreateAccessKey', 'CreateLoginProfile', 'UpdateLoginProfile')
+ORDER BY eventtime DESC
+LIMIT 100;</code></pre>
+        </div>
+        <div class="tab-panel">
+<pre data-title="athena.sql"><code class="language-sql">SELECT eventtime, eventsource, eventname, useridentity.arn, sourceipaddress, errorcode
+FROM cloudtrail_logs
+WHERE eventname IN ('StopLogging','DeleteTrail','UpdateTrail','PutEventSelectors',
+                    'DeleteDetector','DisassociateFromMasterAccount','UpdateDetector',
+                    'DeleteFlowLogs','DisableSecurityHub','DeleteConfigurationRecorder')
+ORDER BY eventtime DESC;</code></pre>
+        </div>
+        <div class="tab-panel">
+<pre data-title="athena.sql"><code class="language-sql">-- user agents seen fewer than 5 times in 30 days: often attacker tooling
+SELECT useragent, count(*) AS n, array_agg(DISTINCT useridentity.arn) AS who
+FROM cloudtrail_logs
+WHERE eventtime &gt; to_iso8601(current_timestamp - interval '30' day)
+GROUP BY useragent
+HAVING count(*) &lt; 5
+ORDER BY n ASC;</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <section id="ir">
+      <div class="eyebrow">Checklist</div>
+      <h2>The first 15 minutes of a cloud incident</h2>
+      <ol class="steps" data-lab="ref-ir">
+        <li><strong>Declare and assign</strong><p>Name an Incident Commander and a scribe. Open a channel and a case (in AWS Security Incident Response, if you use it). Start a timeline.</p></li>
+        <li><strong>Preserve before you poke</strong><p>Check that CloudTrail is still logging (<code>get-trail-status</code>). Snapshot volumes before you change instances. Don't terminate anything.</p></li>
+        <li><strong>Identify the principal</strong><p>Is it an access key, a role session or an Identity Center user? <code>lookup-events</code> on <code>AccessKeyId</code>, then trace AssumeRole chains.</p></li>
+        <li><strong>Contain identity</strong><p>Deactivate keys. Revoke role sessions (a deny on <code>aws:TokenIssueTime</code>). Attach a quarantine SCP to the account if needed.</p></li>
+        <li><strong>Contain workloads</strong><p>Swap in an isolation security group. Remember that tracked connections persist, so use a NACL if needed. Detach from the ASG and enable termination protection.</p></li>
+        <li><strong>Scope the blast radius</strong><p>What could this principal reach? Use Access Analyzer, IAM policy simulation and Detective. What <em>did</em> it reach? Check CloudTrail data events.</p></li>
+        <li><strong>Hunt for persistence</strong><p>New users, keys, roles, trust-policy edits, Lambda functions, EventBridge rules, AMIs or snapshots shared outside the org.</p></li>
+        <li><strong>Communicate</strong><p>Send a status update every 30 minutes. Bring in legal and comms early if data may be involved.</p></li>
+      </ol>
+<pre data-title="Revoke all sessions for a role issued before now"><code class="language-bash">NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+aws iam put-role-policy --role-name compromised-role --policy-name AWSRevokeOlderSessions \
+  --policy-document "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Deny\",\"Action\":\"*\",\"Resource\":\"*\",\"Condition\":{\"DateLessThan\":{\"aws:TokenIssueTime\":\"$NOW\"}}}]}"</code></pre>
+    </section>
+
+    <section id="tools">
+      <div class="eyebrow">Toolbelt</div>
+      <h2>Open-source tools we love</h2>
+      <div class="callout warn"><strong class="ct">Authorization first</strong><p>Offensive tools are for accounts you own or are explicitly authorized to test. AWS's penetration-testing policy lists permitted services. Some activities, such as DoS testing, need prior approval.</p></div>
+      <div class="grid g2">
+        <div class="card tool"><span class="e">🌋</span><div><h3>Stratus Red Team</h3><p>Granular, self-cleaning attack-technique emulation for AWS, mapped to ATT&amp;CK. Used on Day 2.</p></div></div>
+        <div class="card tool"><span class="e">🦉</span><div><h3>Prowler</h3><p>Open-source posture assessment with hundreds of AWS checks and compliance frameworks.</p></div></div>
+        <div class="card tool"><span class="e">🗺️</span><div><h3>PMapper / CloudFox</h3><p>Graph IAM privilege-escalation paths and enumerate attack surface from an attacker's point of view.</p></div></div>
+        <div class="card tool"><span class="e">🧪</span><div><h3>iamlive</h3><p>Generate least-privilege policies by watching the API calls your tooling actually makes.</p></div></div>
+        <div class="card tool"><span class="e">📐</span><div><h3>cfn-guard / Checkov / tfsec</h3><p>Policy-as-code checks for infrastructure templates before they deploy.</p></div></div>
+        <div class="card tool"><span class="e">🔭</span><div><h3>Steampipe</h3><p>Query AWS APIs with SQL. Great for ad-hoc inventory during an incident.</p></div></div>
+        <div class="card tool"><span class="e">🧠</span><div><h3>AVML / LiME</h3><p>Linux memory acquisition for EC2 forensics. Used on Day 5.</p></div></div>
+        <div class="card tool"><span class="e">🌲</span><div><h3>Cedar CLI / cedarpy</h3><p>Write and test Cedar authorization policies locally, as used by Verified Permissions and AgentCore Policy.</p></div></div>
+      </div>
+    </section>
+
+    <section id="reading">
+      <div class="eyebrow">Go deeper</div>
+      <h2>Reading list</h2>
+      <div class="grid g2">
+        <div class="card"><h3>🏛 AWS architecture</h3><ul>
+          <li>AWS Security Reference Architecture (SRA)</li>
+          <li>Data perimeters on AWS (whitepaper and <code>aws-samples/data-perimeter-policy-examples</code>)</li>
+          <li>Organizing your AWS environment using multiple accounts</li>
+          <li>AWS Security Incident Response Technical Guide</li>
+        </ul></div>
+        <div class="card"><h3>⚔️ Threats &amp; frameworks</h3><ul>
+          <li>MITRE ATT&amp;CK: Cloud (IaaS) matrix</li>
+          <li>NIST SP 800-61 Rev. 3: Incident Response Recommendations (2025)</li>
+          <li>OWASP Top 10 for LLM Applications (2025)</li>
+          <li>OWASP Top 10 for Agentic Applications</li>
+        </ul></div>
+        <div class="card"><h3>🔐 Cryptography</h3><ul>
+          <li>FIPS 203 (ML-KEM) and FIPS 204 (ML-DSA)</li>
+          <li>AWS post-quantum cryptography migration guidance</li>
+          <li>AWS KMS cryptographic details whitepaper</li>
+        </ul></div>
+        <div class="card"><h3>📰 Stay current</h3><ul>
+          <li>AWS Security Blog: the monthly "ICYMI" roundups</li>
+          <li>AWS What's New feed, filtered to Security, Identity &amp; Compliance</li>
+          <li>re:Invent 2026 security sessions (Dec 3 is security day)</li>
+        </ul></div>
+      </div>
+    </section>
+
+    <section id="glossary">
+      <div class="eyebrow">Lexicon</div>
+      <h2>Glossary</h2>
+      <dl class="gloss">
+        <dt>ABAC</dt><dd>Attribute-based access control: permissions decided by matching tags on principals and resources.</dd>
+        <dt>Attack sequence</dt><dd>A GuardDuty Extended Threat Detection finding that correlates multiple signals over time into one critical-severity story.</dd>
+        <dt>Cedar</dt><dd>AWS's open-source authorization policy language. It is fast, analyzable and deterministic. Used by Verified Permissions and AgentCore Policy.</dd>
+        <dt>Confused deputy</dt><dd>A trusted service or third party that is tricked into using its privileges on an attacker's behalf. Countered with ExternalId and the <code>aws:Source*</code> keys.</dd>
+        <dt>Data perimeter</dt><dd>A set of preventive guardrails that ensure only <em>trusted identities</em> access <em>trusted resources</em> from <em>expected networks</em>.</dd>
+        <dt>Declarative policy</dt><dd>An Organizations policy that sets and locks a service's configuration across accounts, rather than authorizing API calls.</dd>
+        <dt>Encryption context</dt><dd>Non-secret key/value pairs bound to a KMS operation as additional authenticated data. They're logged in CloudTrail and can be enforced in key policies.</dd>
+        <dt>ML-KEM / ML-DSA</dt><dd>NIST post-quantum algorithms for key establishment (FIPS 203) and digital signatures (FIPS 204).</dd>
+        <dt>OCSF</dt><dd>Open Cybersecurity Schema Framework: the normalized schema used by Security Lake and Security Hub.</dd>
+        <dt>RCP</dt><dd>Resource control policy: an Organizations policy that sets the maximum permissions on resources, regardless of who is calling.</dd>
+        <dt>SSE-C</dt><dd>S3 server-side encryption with customer-provided keys. It is legitimate, but has been abused for ransomware because AWS never stores the key.</dd>
+      </dl>
+    </section>
+
+    <div class="pager"><a class="prev" href="gameday.html"><small>← Previous</small>GameDay</a><a class="next" href="index.html"><small>Back to →</small>Home</a></div>
+  </main>
+</div>
+
+<footer id="site-footer"></footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+<script src="assets/js/site.js"></script>
+</body>
+</html>

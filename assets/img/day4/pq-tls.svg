@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 640">
+  <title>Hybrid post-quantum TLS 1.3 key exchange: X25519 plus ML-KEM-768</title>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#090d24"/><stop offset="1" stop-color="#1a0f24"/></linearGradient>
+    <linearGradient id="mix" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#22d3ee"/><stop offset="1" stop-color="#fbbf24"/></linearGradient>
+    <marker id="ac" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#67e8f9"/></marker>
+    <marker id="ay" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#fbbf24"/></marker>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#fb7185"/></marker>
+    <style>
+      text { font-family: "Space Grotesk", Inter, sans-serif; fill: #e8ecff; }
+      .h { font-size: 22px; font-weight: 700; }
+      .t { font-size: 17px; font-weight: 600; }
+      .s { font-size: 14px; fill: #b7c0e6; }
+      .m { font-family: "JetBrains Mono", monospace; font-size: 13px; }
+    </style>
+  </defs>
+  <rect width="1200" height="640" fill="url(#bg)"/>
+  <text x="40" y="50" class="h" style="fill:#fbbf24">HYBRID POST-QUANTUM TLS 1.3</text>
+  <text x="40" y="78" class="s">Two key exchanges in one handshake. An attacker must break BOTH classical X25519 AND lattice-based ML-KEM-768.</text>
+
+  <!-- client / server columns -->
+  <rect x="40" y="110" width="250" height="440" rx="20" fill="#121a3d" stroke="#3a4680" stroke-width="2"/>
+  <text x="165" y="146" text-anchor="middle" class="t">Your client / SDK</text>
+  <text x="165" y="170" text-anchor="middle" class="s">must be updated to offer</text>
+  <text x="165" y="190" text-anchor="middle" class="m" style="fill:#86efac">X25519MLKEM768</text>
+
+  <rect x="910" y="110" width="250" height="440" rx="20" fill="#121a3d" stroke="#3a4680" stroke-width="2"/>
+  <text x="1035" y="146" text-anchor="middle" class="t">AWS endpoint</text>
+  <text x="1035" y="170" text-anchor="middle" class="s">kms · acm · secretsmanager</text>
+  <text x="1035" y="190" text-anchor="middle" class="s">… prefers PQ when offered</text>
+
+  <!-- ClientHello -->
+  <path d="M290 240 L906 240" stroke="#67e8f9" stroke-width="3" marker-end="url(#ac)"/>
+  <text x="600" y="226" text-anchor="middle" class="t" style="fill:#67e8f9">ClientHello · key_share</text>
+  <rect x="380" y="252" width="200" height="34" rx="8" fill="#0f2233" stroke="#22d3ee"/><text x="480" y="274" text-anchor="middle" class="m" style="fill:#a5f3fc">X25519 pub (32 B)</text>
+  <rect x="600" y="252" width="230" height="34" rx="8" fill="#2a1f10" stroke="#fbbf24"/><text x="715" y="274" text-anchor="middle" class="m" style="fill:#fde68a">ML-KEM encaps key (1184 B)</text>
+
+  <!-- ServerHello -->
+  <path d="M906 340 L294 340" stroke="#fbbf24" stroke-width="3" marker-end="url(#ay)"/>
+  <text x="600" y="326" text-anchor="middle" class="t" style="fill:#fbbf24">ServerHello · key_share</text>
+  <rect x="380" y="352" width="200" height="34" rx="8" fill="#0f2233" stroke="#22d3ee"/><text x="480" y="374" text-anchor="middle" class="m" style="fill:#a5f3fc">X25519 pub (32 B)</text>
+  <rect x="600" y="352" width="230" height="34" rx="8" fill="#2a1f10" stroke="#fbbf24"/><text x="715" y="374" text-anchor="middle" class="m" style="fill:#fde68a">ML-KEM ciphertext (1088 B)</text>
+
+  <!-- combine -->
+  <rect x="380" y="420" width="450" height="100" rx="16" fill="#151530" stroke="url(#mix)" stroke-width="3"/>
+  <text x="605" y="452" text-anchor="middle" class="t">shared secret = KDF( ss_ML-KEM ‖ ss_X25519 )</text>
+  <text x="605" y="478" text-anchor="middle" class="s">both sides derive identical traffic keys</text>
+  <text x="605" y="502" text-anchor="middle" class="s">secure if EITHER primitive survives</text>
+
+  <!-- HNDL attacker -->
+  <g transform="translate(40 580)">
+    <text x="0" y="0" class="t" style="fill:#fb7185">🐙 Harvest-now, decrypt-later:</text>
+    <text x="285" y="0" class="s">the Kraken records today's classical-only TLS, waits for a cryptographically relevant quantum computer,</text>
+    <text x="285" y="22" class="s">then recovers session keys. Hybrid PQ key exchange makes recorded traffic useless. Upgrade clients first.</text>
+  </g>
+  <path d="M600 200 Q600 140 760 130" stroke="#fb7185" stroke-width="2" fill="none" stroke-dasharray="5 5" marker-end="url(#ar)"/>
+  <text x="770" y="134" class="s" style="fill:#fb7185">recorded ciphertext</text>
+</svg>

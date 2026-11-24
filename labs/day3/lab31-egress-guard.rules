@@ -1,0 +1,17 @@
+# Operation Skyfortress - Lab 3.1 - custom Suricata rule group "sky-egress-guard"
+# Loaded as a STRICT_ORDER stateful rule group at priority 10 (before the domain allow-list at 20).
+# $HOME_NET defaults to the inspection VPC CIDR (10.66.0.0/16) when not overridden.
+
+# 1. Nobody talks to internet DNS directly. Everything goes through the VPC resolver,
+#    where Route 53 Resolver DNS Firewall can see and block it.
+drop udp $HOME_NET any -> $EXTERNAL_NET 53 (msg:"SKY rogue DNS resolver (udp/53)"; sid:3100001; rev:1;)
+drop tcp $HOME_NET any -> $EXTERNAL_NET 53 (msg:"SKY rogue DNS resolver (tcp/53)"; flow:to_server; sid:3100002; rev:1;)
+drop tcp $HOME_NET any -> $EXTERNAL_NET 853 (msg:"SKY DNS-over-TLS attempt"; flow:to_server; sid:3100003; rev:1;)
+
+# 2. Tripwire: alert (do not drop here - the allow-list will) on the implant's user-agent,
+#    so the SOC gets a named signal instead of an anonymous default-drop.
+alert http $HOME_NET any -> $EXTERNAL_NET any (msg:"SKY kraken implant user-agent"; flow:to_server,established; http.user_agent; content:"kraken-implant"; nocase; sid:3100010; rev:1;)
+
+# 3. Known DoH resolvers by SNI (belt and braces - the allow-list already drops these).
+drop tls $HOME_NET any -> $EXTERNAL_NET any (msg:"SKY DoH resolver SNI"; flow:to_server,established; tls.sni; content:"dns.google"; nocase; endswith; sid:3100011; rev:1;)
+drop tls $HOME_NET any -> $EXTERNAL_NET any (msg:"SKY DoH resolver SNI"; flow:to_server,established; tls.sni; content:"cloudflare-dns.com"; nocase; endswith; sid:3100012; rev:1;)

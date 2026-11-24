@@ -1,0 +1,98 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 680">
+  <title>Amazon Bedrock AgentCore: Identity, Gateway and Policy enforcing Cedar decisions on every tool call</title>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#090e25"/><stop offset="1" stop-color="#1a1222"/></linearGradient>
+    <linearGradient id="gate" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fde68a"/><stop offset="1" stop-color="#d97706"/></linearGradient>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#b7c0e6"/></marker>
+    <marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#34d399"/></marker>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#fb7185"/></marker>
+    <filter id="gl"><feGaussianBlur stdDeviation="7" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <style>
+      text { font-family: "Space Grotesk", Inter, sans-serif; fill: #e8ecff; }
+      .h { font-size: 22px; font-weight: 700; }
+      .t { font-size: 17px; font-weight: 600; }
+      .s { font-size: 14px; fill: #b7c0e6; }
+      .m { font-family: "JetBrains Mono", monospace; font-size: 13px; }
+    </style>
+  </defs>
+  <rect width="1200" height="680" fill="url(#bg)"/>
+  <text x="40" y="50" class="h" style="fill:#fbbf24">LEASH THE AGENT — POLICY OUTSIDE THE MODEL</text>
+  <text x="40" y="78" class="s">The model proposes. The Gateway disposes. Cedar decisions are deterministic, auditable, and can't be talked out of a "no".</text>
+
+  <!-- user -->
+  <g transform="translate(40 140)">
+    <rect width="190" height="110" rx="16" fill="#1a2350" stroke="#60a5fa" stroke-width="2"/>
+    <text x="20" y="36" class="t">👩‍🚀 alice</text>
+    <text x="20" y="62" class="s">signs in via IdP</text>
+    <text x="20" y="84" class="m" style="fill:#93c5fd">OAuth token</text>
+  </g>
+  <!-- identity -->
+  <g transform="translate(40 300)">
+    <rect width="190" height="120" rx="16" fill="#132238" stroke="#22d3ee" stroke-width="2"/>
+    <text x="20" y="34" class="t" style="fill:#67e8f9">AgentCore</text>
+    <text x="20" y="56" class="t" style="fill:#67e8f9">Identity</text>
+    <text x="20" y="82" class="s">inbound auth +</text>
+    <text x="20" y="102" class="s">outbound token vault</text>
+  </g>
+  <!-- runtime agent -->
+  <g transform="translate(290 140)">
+    <rect width="230" height="280" rx="18" fill="#0f1534" stroke="#3a4680" stroke-width="2"/>
+    <text x="115" y="36" text-anchor="middle" class="t">AgentCore Runtime</text>
+    <circle cx="115" cy="120" r="52" fill="#1e3a8a" stroke="#67e8f9" stroke-width="2" filter="url(#gl)"/>
+    <text x="115" y="126" text-anchor="middle" class="t">🤖 agent</text>
+    <text x="115" y="206" text-anchor="middle" class="s">LLM decides it wants:</text>
+    <text x="115" y="232" text-anchor="middle" class="m" style="fill:#fda4af">process_refund(</text>
+    <text x="115" y="252" text-anchor="middle" class="m" style="fill:#fda4af"> amount=9999 )</text>
+  </g>
+  <path d="M230 195 L286 195" stroke="#b7c0e6" stroke-width="2.5" marker-end="url(#a)"/>
+  <path d="M135 250 L135 296" stroke="#b7c0e6" stroke-width="2.5" marker-end="url(#a)"/>
+
+  <!-- gateway -->
+  <g transform="translate(590 110)">
+    <rect width="250" height="340" rx="22" fill="#2a1d0c" stroke="url(#gate)" stroke-width="4"/>
+    <text x="125" y="38" text-anchor="middle" class="t" style="fill:#fbbf24">AgentCore Gateway</text>
+    <text x="125" y="60" text-anchor="middle" class="s">MCP endpoint for all tools</text>
+    <rect x="20" y="84" width="210" height="150" rx="14" fill="#140f2e" stroke="#fbbf24" stroke-width="2"/>
+    <text x="125" y="110" text-anchor="middle" class="t" style="fill:#fde68a">Policy engine</text>
+    <text x="34" y="138" class="m" style="fill:#f0abfc">permit</text><text x="88" y="138" class="m" style="fill:#a5b4fc">(… refund)</text>
+    <text x="34" y="160" class="m" style="fill:#a5b4fc">when {</text>
+    <text x="48" y="182" class="m" style="fill:#93c5fd">input.amount <tspan fill="#a5b4fc">&lt;=</tspan> <tspan fill="#fdba74">500</tspan></text>
+    <text x="34" y="204" class="m" style="fill:#a5b4fc">};</text>
+    <text x="125" y="226" text-anchor="middle" class="s" style="font-size:12px">Cedar · default deny · forbid wins</text>
+    <rect x="20" y="250" width="210" height="70" rx="14" fill="#1a1530" stroke="#a78bfa" stroke-width="2"/>
+    <text x="125" y="278" text-anchor="middle" class="t" style="fill:#c4b5fd;font-size:15px">+ Bedrock Guardrails</text>
+    <text x="125" y="302" text-anchor="middle" class="s" style="font-size:12px">in policy (June 2026)</text>
+  </g>
+  <path d="M520 280 L586 280" stroke="#b7c0e6" stroke-width="2.5" marker-end="url(#a)"/>
+  <text x="553" y="268" text-anchor="middle" class="m" style="font-size:11px;fill:#b7c0e6">tools/call</text>
+
+  <!-- tools -->
+  <g transform="translate(910 110)">
+    <rect width="250" height="90" rx="16" fill="#0f2a22" stroke="#34d399" stroke-width="2"/>
+    <text x="20" y="34" class="t" style="fill:#34d399">✓ get_order</text>
+    <text x="20" y="62" class="s">own account → ALLOW</text>
+  </g>
+  <g transform="translate(910 220)">
+    <rect width="250" height="90" rx="16" fill="#2a0f1c" stroke="#fb7185" stroke-width="2"/>
+    <text x="20" y="34" class="t" style="fill:#fb7185">✗ process_refund</text>
+    <text x="20" y="62" class="s">9999 &gt; 500 → DENY</text>
+  </g>
+  <g transform="translate(910 330)">
+    <rect width="250" height="90" rx="16" fill="#2a0f1c" stroke="#fb7185" stroke-width="2"/>
+    <text x="20" y="34" class="t" style="fill:#fb7185">✗ export_data</text>
+    <text x="20" y="62" class="s">forbid → DENY, always</text>
+  </g>
+  <path d="M840 190 L906 155" stroke="#34d399" stroke-width="2.5" marker-end="url(#ag)"/>
+  <path d="M840 265 L906 265" stroke="#fb7185" stroke-width="2.5" marker-end="url(#ar)"/>
+  <path d="M840 340 L906 375" stroke="#fb7185" stroke-width="2.5" marker-end="url(#ar)"/>
+
+  <!-- observability -->
+  <rect x="290" y="480" width="870" height="70" rx="16" fill="#101630" stroke="#3a4680" stroke-width="2"/>
+  <text x="314" y="512" class="t">📈 AgentCore Observability + CloudWatch</text>
+  <text x="314" y="536" class="s">every decision logged: principal · tool · input · policy · ALLOW/DENY → detect injection attempts as spikes of DENY</text>
+
+  <!-- MCP risks -->
+  <rect x="40" y="580" width="1120" height="80" rx="16" fill="#1a1530" stroke="#fbbf24" stroke-width="2"/>
+  <text x="64" y="610" class="t" style="fill:#fbbf24">MCP threats to design for</text>
+  <text x="64" y="638" class="s">tool poisoning (malicious tool descriptions) · rug-pull tool updates · confused deputy via shared tokens · over-broad OAuth scopes · cross-server shadowing</text>
+</svg>

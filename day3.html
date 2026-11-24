@@ -1,0 +1,1307 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Day 3 · Walls &amp; Moats — Operation Skyfortress</title>
+  <meta name="description" content="Day 3 of Operation Skyfortress: network perimeter, edge protection, zero trust, Kubernetes and software supply-chain security on AWS — with four hands-on labs and a DNS-tunneling boss fight.">
+  <link rel="icon" href="assets/img/logo.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/site.css">
+  <style>
+    /* Day 3 only: a one-line "what you should see" marker at the end of a step */
+    .expect { margin: 12px 0 0; padding: 8px 12px; border-left: 3px solid var(--green); background: color-mix(in srgb, var(--green) 6%, transparent); border-radius: 0 8px 8px 0; font-size: .92rem; }
+    .expect::before { content: "✔ EXPECT · "; font-family: var(--mono); font-size: .72rem; letter-spacing: .14em; color: var(--green); }
+    .boss-cover { width: 100%; aspect-ratio: 16 / 5; object-fit: cover; border-radius: 18px; border: 1px solid rgba(251,113,133,.45); margin: 0 0 22px; display: block; }
+  </style>
+</head>
+<body class="day-3">
+<header id="site-nav"></header>
+
+<!-- ============ DAY HERO ============ -->
+<section class="day-hero">
+  <div class="container">
+    <div class="reveal">
+      <div class="day-num">03</div>
+      <div class="eyebrow">Day 3 · Wednesday</div>
+      <h1>Walls <span class="grad">&amp; Moats</span></h1>
+      <p class="lead">Network perimeter, edge protection, zero trust, Kubernetes and the software supply chain. Today the Kraken stops trying to log in and starts trying to <em>get out</em>, and we build the walls and moats that cut off every route.</p>
+      <div class="chips">
+        <span class="chip accent">4 labs + boss</span><span class="chip">~4.5 hrs hands-on</span><span class="chip">💸 ≈ $6–8 if torn down on time</span><span class="chip new">2026 NEW</span>
+      </div>
+      <div class="pill-row" style="margin-top:22px">
+        <a class="btn" href="#lab-3-1">Jump to the labs ⚗</a>
+        <a class="btn ghost" href="#preflight">09:00 preflight</a>
+      </div>
+    </div>
+    <div class="banner reveal"><img src="assets/img/day3/banner.svg" alt="A glowing teal fortress on a floating island under an energy-shield dome, ringed by moats of light, with crimson Kraken tentacles sparking against the shield"></div>
+  </div>
+</section>
+
+<div class="container day-layout">
+  <nav class="toc" data-auto></nav>
+  <main class="day-content">
+
+    <!-- ============ BRIEFING ============ -->
+    <section id="briefing">
+      <div class="eyebrow">Mission briefing</div>
+      <h2>The Kraken is phoning home</h2>
+      <div class="story reveal">
+        <img class="avatar" src="assets/img/owlsley.svg" alt="Owlsley">
+        <div>
+          <div class="who">OWLSLEY · CISO-in-residence, Nimbus Interstellar · 08:47 station time</div>
+          <p>Good morning, operators. Yesterday's hunt paid off: we found an implant on <code>nimbus-cargo-box-07</code>, a "temporary" box in a private subnet that somebody gave a NAT route "just for package updates". It beacons every sixty seconds. We could just kill the box, but then we learn nothing, and the next box gets popped the same way.</p>
+          <p>So today we build the walls. We'll put <strong>egress inspection</strong> in front of every private subnet, a <strong>WAF shield</strong> over the cargo portal, <strong>zero-trust gates</strong> instead of bastions, a <strong>Kubernetes citadel</strong> where a stolen pod is worth nothing, and a <strong>supply-chain gate</strong> that only admits signed ships. By sundown, every tentacle should be hitting a wall.</p>
+        </div>
+      </div>
+      <div class="story villain reveal">
+        <img class="avatar" src="assets/img/kraken.svg" alt="The Kraken">
+        <div>
+          <div class="who">INTERCEPTED · DNS TXT record · origin unknown</div>
+          <p>Cute. You found <em>one</em> beacon. You think walls stop water? I've got eight arms: rogue resolvers, DNS tunnels, a scraper swarm, a pod that thinks it's a node, and a "hotfix" image your CI will happily ship. Block one, I use another. 🐙</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ OBJECTIVES + SCHEDULE ============ -->
+    <section id="objectives">
+      <div class="eyebrow">Outcomes</div>
+      <h2>By the end of today you will…</h2>
+      <ul class="objectives">
+        <li>Design <strong>egress inspection</strong> with symmetric routing through AWS Network Firewall, and explain why <code>drop_established</code> is what makes domain allow-lists work.</li>
+        <li>Close the DNS side door with <strong>Route 53 Resolver DNS Firewall</strong>: sinkholes, managed threat lists, and advanced tunneling/DGA protection.</li>
+        <li>Build a <strong>WAF web ACL</strong> on purpose: rule ordering, labels, rate limits, Bot Control, custom responses, and WCU budgeting.</li>
+        <li>Replace bastions and VPNs with <strong>Verified Access</strong> and Session Manager, and enforce IMDSv2 across a fleet.</li>
+        <li>Harden EKS: <strong>access entries</strong>, <strong>Pod Identity</strong>, IMDS hop limits, default-deny NetworkPolicies, GuardDuty runtime.</li>
+        <li>Gate the supply chain: <strong>Inspector</strong> scanning and SBOMs, <strong>cosign/KMS</strong> or AWS Signer signatures, and Kyverno admission enforcement.</li>
+      </ul>
+
+      <h3 id="preflight" style="margin-top:40px">⏰ 09:00 preflight: start the EKS cluster <em>now</em></h3>
+      <p>The Lab 3.3 cluster takes 15–20 minutes to build, so it has to be running before you need it. Pick one of two start times:</p>
+      <div class="grid g2" style="margin:18px 0">
+        <div class="card" style="padding:18px 20px"><p><b>⏰ Option A · 09:00 (recommended).</b> Start it in a second CloudShell tab before Module 3.1. You'll be typing in tab 1 all morning, which keeps the CloudShell session alive while <code>eksctl</code> works. The cluster idles about 5 hours before Lab 3.3, which costs roughly $1.50.</p></div>
+        <div class="card" style="padding:18px 20px"><p><b>🍜 Option B · 11:50, pre-deploy at lunch.</b> This saves about $1. Start it before the lunch break and <em>stay at the keyboard until the log reaches "creating managed nodegroup"</em>, about 12 minutes. CloudShell ends sessions after roughly 20–30 idle minutes, and a killed <code>eksctl</code> leaves a half-built cluster behind.</p></div>
+      </div>
+<pre data-title="CloudShell · tab 2"><code class="language-bash">cd ~/skyfortress/labs/day3
+# Pick the newest Kubernetes version that is still in STANDARD support (extended support costs ~6x)
+aws eks describe-cluster-versions --region us-east-1 \
+  --query 'clusterVersions[?status==`STANDARD_SUPPORT`].clusterVersion' --output text
+# edit metadata.version in lab33-cluster.yaml if needed, then:
+eksctl create cluster -f lab33-cluster.yaml</code></pre>
+      <div class="term" data-title="CloudShell · tab 2 · ~17 minutes later"><pre><span class="o">2026-11-25 09:01:12 [ℹ]  eksctl version 0.19x.0</span>
+<span class="o">2026-11-25 09:01:13 [ℹ]  using region us-east-1</span>
+<span class="o">2026-11-25 09:01:14 [ℹ]  building cluster stack "eksctl-citadel-cluster"</span>
+<span class="o">2026-11-25 09:10:47 [ℹ]  creating addon: eks-pod-identity-agent</span>
+<span class="o">2026-11-25 09:11:02 [ℹ]  building managed nodegroup stack "eksctl-citadel-nodegroup-citadel-ng"</span>
+<span class="o">2026-11-25 09:15:40 [ℹ]  waiting for the control plane to become ready</span>
+<span class="ok">2026-11-25 09:18:03 [✔]  EKS cluster "citadel" in "us-east-1" region is ready</span></pre></div>
+      <p class="term-caption">Expected tail of the <code>eksctl</code> log. Version numbers and timings will differ.</p>
+      <details class="hint"><summary>CloudShell timed out halfway through? Recover without starting over</summary>
+<pre data-title="CloudShell"><code class="language-bash">aws cloudformation list-stacks --stack-status-filter CREATE_COMPLETE CREATE_IN_PROGRESS ROLLBACK_COMPLETE   --query "StackSummaries[?starts_with(StackName,'eksctl-citadel')].[StackName,StackStatus]" --output table
+# control plane exists but no nodes? create only what's missing:
+eksctl create nodegroup -f lab33-cluster.yaml
+eksctl create addon     -f lab33-cluster.yaml
+aws eks update-kubeconfig --name citadel &amp;&amp; kubectl get nodes</code></pre>
+        <p>If the cluster stack shows <code>ROLLBACK_COMPLETE</code>, run <code>eksctl delete cluster -f lab33-cluster.yaml</code> and start again.</p></details>
+
+      <h3 style="margin-top:40px">Schedule</h3>
+      <div class="timeline">
+        <div class="slot"><div class="time">09:00</div><div class="what"><b>Preflight</b>: kick off <code>eksctl create cluster</code>, then debrief Day 2</div></div>
+        <div class="slot"><div class="time">09:10</div><div class="what"><b>Module 3.1</b>: The network perimeter in 2026 <span class="chip">50 min</span></div></div>
+        <div class="slot lab-slot"><div class="time">10:00</div><div class="what"><b>Lab 3.1</b>: Cut the Kraken's Line <span class="chip accent">75 min</span></div></div>
+        <div class="slot break-slot"><div class="time">11:15</div><div class="what">Break ☕</div></div>
+        <div class="slot"><div class="time">11:25</div><div class="what"><b>Module 3.2</b>: Edge protection <span class="chip">35 min</span></div></div>
+        <div class="slot break-slot"><div class="time">12:00</div><div class="what">Lunch 🍜</div></div>
+        <div class="slot lab-slot"><div class="time">12:45</div><div class="what"><b>Lab 3.2</b>: Shields Up <span class="chip accent">60 min</span></div></div>
+        <div class="slot"><div class="time">13:45</div><div class="what"><b>Modules 3.3 + 3.4</b>: Zero trust; containers &amp; Kubernetes <span class="chip">40 min</span></div></div>
+        <div class="slot lab-slot"><div class="time">14:25</div><div class="what"><b>Lab 3.3</b>: Kubernetes Citadel <span class="chip accent">60 min</span></div></div>
+        <div class="slot break-slot"><div class="time">15:25</div><div class="what">Break 🧃</div></div>
+        <div class="slot"><div class="time">15:35</div><div class="what"><b>Module 3.5</b>: Software supply chain <span class="chip">25 min</span></div></div>
+        <div class="slot lab-slot"><div class="time">16:00</div><div class="what"><b>Lab 3.4</b>: Poisoned Supply <span class="chip accent">45 min</span></div></div>
+        <div class="slot lab-slot"><div class="time">16:45</div><div class="what"><b>Boss</b>: DNS Tunnel Escape <span class="chip accent">30 min</span></div></div>
+        <div class="slot"><div class="time">17:15</div><div class="what"><b>Teardown + retro</b>: Network Firewall and EKS bill by the hour <span class="chip">15 min</span></div></div>
+      </div>
+      <div class="callout cost"><strong class="ct">Honest cost note</strong><p>Today is the most expensive day of the week, because some of these services bill by the hour whether or not traffic flows. Rough us-east-1 list prices: Network Firewall endpoint ≈ $0.395/hr + $0.065/GB; NAT gateway ≈ $0.045/hr (two today); EKS control plane $0.10/hr + 2× t3.medium; WAF ≈ $5/month per web ACL + $1/rule/month, prorated by the hour, plus Bot Control. If you tear down at 17:15 the day costs about <strong>$6–8</strong>. If you forget the firewall and the cluster over a weekend it costs about <strong>$40</strong>. Your $25 budget alarm from Lab 0 will email you before that happens.</p></div>
+    </section>
+
+    <!-- ============ MODULE 3.1 ============ -->
+    <section id="concepts">
+      <div class="eyebrow">Concepts</div>
+      <h2>Building the walls</h2>
+
+      <div class="module" id="m3-1">
+        <div class="module-num">MODULE 3.1</div>
+        <h3>The network perimeter in 2026: egress is the new ingress</h3>
+        <p>Most teams have inbound traffic under control: security groups default to deny, load balancers sit in public subnets, nothing has a public IP. <strong>Outbound</strong> is where breaches turn into headlines. That's the path for command-and-control, exfiltration, crypto-miners pulling pools, and malicious packages phoning home. A private subnet with a NAT route to <code>0.0.0.0/0</code> is "private" only in the sense that nobody can start a connection <em>to</em> it. Anything inside it can still talk to the whole internet.</p>
+
+        <figure class="figure reveal"><img src="assets/img/day3/egress-arch.svg" alt="Diagram: private subnet routes 0.0.0.0/0 to the Network Firewall endpoint, which routes to the NAT gateway and internet gateway; the public subnet routes the private CIDR back through the firewall endpoint; DNS goes to the Route 53 Resolver where DNS Firewall applies sinkhole and threat-list rules; all evidence flows to CloudWatch Logs"><figcaption><b>FIG 3.1</b> The egress pattern you'll build in Lab 3.1. Note the <em>return</em> route in the public subnet; forgetting it is the #1 Network Firewall bug.</figcaption></figure>
+
+        <h4>The four controls and what each one can see</h4>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Control</th><th>Layer</th><th>Sees</th><th>Blind to</th></tr></thead>
+          <tbody>
+            <tr><td><b>VPC Block Public Access</b></td><td>Account/Region switch</td><td>Any IGW path in or out (bidirectional) or just in (ingress-only), with explicit exclusions</td><td>Content. It's an on/off switch, not an inspector</td></tr>
+            <tr><td><b>Security groups / NACLs</b></td><td>L3/L4</td><td>IPs, ports, SG references</td><td>Domains. <code>example.com</code> and <code>s3.amazonaws.com</code> look the same on port 443</td></tr>
+            <tr><td><b>Route 53 Resolver DNS Firewall</b></td><td>DNS (at the VPC resolver)</td><td>Every query sent to VPC+2, before resolution</td><td>Anything that skips the VPC resolver: <code>@8.8.8.8</code>, DoH, hard-coded IPs</td></tr>
+            <tr><td><b>AWS Network Firewall</b></td><td>L3–L7, Suricata</td><td>5-tuple, TLS SNI, HTTP Host/UA, decrypted payload (with TLS inspection)</td><td>DNS recursion done by the resolver on your behalf (see the boss fight)</td></tr>
+          </tbody>
+        </table></div>
+        <p>Nothing on that list covers everything by itself. <strong>DNS Firewall + Network Firewall together</strong> is the minimum design: DNS Firewall handles anything that resolves through the VPC resolver, and Network Firewall drops everything that tries to skip it.</p>
+
+        <h4>VPC Block Public Access: the org-wide big red switch</h4>
+        <p>VPC BPA (2024) blocks internet-gateway traffic for every VPC in a Region of an account, in <code>block-bidirectional</code> or <code>block-ingress</code> mode. Ingress-only still lets NAT gateways and egress-only IGWs work. Teams that really need public ingress get <em>exclusions</em> per VPC or subnet, and those exclusions become your inventory of internet-facing surface. Through <strong>EC2 declarative policies</strong> in AWS Organizations you can set BPA (and IMDS defaults, AMI public-sharing blocks, serial console access) once at an OU and stop it drifting. Member accounts can't override it with an API call.</p>
+
+        <h4>AWS Network Firewall: the parts that matter</h4>
+        <ul>
+          <li><strong>Stateless engine first</strong>, which in almost every design forwards everything to the stateful engine (<code>aws:forward_to_sfe</code>).</li>
+          <li><strong>Stateful engine = Suricata.</strong> Use <code>STRICT_ORDER</code> so rule groups run in the priority you set, then pick a default action. <code>aws:drop_established</code> lets the TCP handshake finish and then drops anything nothing passed. That's the setting that makes domain allow-lists work: the engine can only read SNI or Host after the handshake, so <code>aws:drop_strict</code> would drop every packet before there was anything to read.</li>
+          <li><strong>Domain lists</strong> (<code>TLS_SNI</code>, <code>HTTP_HOST</code>; <code>ALLOWLIST</code> or <code>DENYLIST</code>) for the 80% case. Write custom Suricata for everything else.</li>
+          <li><strong>AWS-managed threat signature groups</strong> for known-bad C2, malware and exploit traffic, updated by AWS.</li>
+          <li><strong>TLS inspection</strong> decrypts outbound (or inbound) flows with a CA you control in ACM, so rules can match the URI and body, not just the SNI. That matters because SNI can be spoofed, and Encrypted Client Hello hides it.</li>
+          <li><strong>Centralized inspection</strong>: in multi-account designs, spoke VPCs route through a Transit Gateway into an inspection VPC. Turn on <strong>appliance mode</strong> on that TGW attachment, or cross-AZ flows come back asymmetric and get dropped.</li>
+        </ul>
+        <div class="callout gotcha"><strong class="ct">Gotcha: symmetric routing or bust</strong><p>A stateful firewall has to see both directions of a flow. If the private subnet sends traffic through the firewall but the NAT gateway's subnet sends replies straight back to the instance (no <code>10.66.2.0/24 → vpce-…</code> route), the engine sees half a conversation and drops it. What you'll see: TCP connects and then every TLS handshake hangs. Lab 3.1 makes you write the return route by hand so you remember it.</p></div>
+
+        <h4>Route 53 Resolver DNS Firewall</h4>
+        <p>Rule groups attach to VPCs and are evaluated in priority order for every query sent to the VPC resolver. The actions are <code>ALLOW</code>, <code>ALERT</code> and <code>BLOCK</code>; a block can answer <code>NODATA</code> or <code>NXDOMAIN</code>, or return an <code>OVERRIDE</code> CNAME to a sinkhole you control. Sinkholes are the most useful option for hunting, because every hit becomes a connection attempt to an IP you can watch. AWS-managed domain lists (for example <code>AWSManagedDomainsAggregateThreatList</code>, <code>AWSManagedDomainsMalwareDomainList</code>, <code>AWSManagedDomainsBotnetCommandandControl</code>) cover the known-bad. <strong>DNS Firewall Advanced</strong> (2024) adds rules that look for <em>behaviour</em>, namely DNS tunneling and domain generation algorithms (DGA), with a confidence threshold. You'll need those for the boss fight.</p>
+        <div class="callout tip"><strong class="ct">Pro tip: decide fail-open vs fail-closed on purpose</strong><p>The VPC-level DNS Firewall config has a fail-open setting (<code>FirewallFailOpen</code>). Fail-closed is safer for regulated workloads. Fail-open keeps production resolving if the firewall service is impaired. Neither is wrong, but leaving it at the default because nobody thought about it is.</p></div>
+        <div class="callout war"><strong class="ct">War story: Capital One, 2019</strong><p>An SSRF bug in a misconfigured WAF let an attacker make the server request <code>169.254.169.254</code>, read an IAM role's credentials from IMDSv1, and sync more than 100 million records out of S3. Four controls on today's agenda each break that chain: IMDSv2 (no token, no credentials), WAF rules against SSRF patterns, least-privilege roles, and egress or data-perimeter controls on S3 access. If you're asked why defense in depth is worth the effort, this is the incident to point to.</p></div>
+      </div>
+
+      <!-- ============ MODULE 3.2 ============ -->
+      <div class="module" id="m3-2">
+        <div class="module-num">MODULE 3.2</div>
+        <h3>Edge protection: WAF, bots, AI crawlers &amp; Shield</h3>
+        <p>In 2026 a large share of the traffic hitting a public app isn't human. Some of it is search crawlers, some is AI training crawlers, some is AI agents acting for real users, and some is a botnet doing credential stuffing from residential proxies. The edge has to tell these apart cheaply, before the request reaches compute you're paying for.</p>
+
+        <figure class="figure reveal"><img src="assets/img/day3/waf-order.svg" alt="Diagram: a request flows through the SkyShield web ACL rules in priority order: anti-spoof block, partner labelling count rules, partner allow, rate-based rules, IP reputation, core rule set, SQL injection, known bad inputs and Linux, Bot Control, then default allow; a capacity meter shows about 1,400 of the 1,500 included WCU"><figcaption><b>FIG 3.2</b> The web ACL you'll build in Lab 3.2. The order is a security <em>and</em> a cost decision.</figcaption></figure>
+
+        <h4>WAF mental model in six bullets</h4>
+        <ul>
+          <li><strong>Priority</strong>: the lowest number runs first. <em>Terminating</em> actions (Allow, Block, and CAPTCHA/Challenge when they fail) stop evaluation. Count doesn't.</li>
+          <li><strong>Labels</strong> are how rules talk to each other. A rule or managed group adds a label like <code>awswaf:managed:aws:bot-control:bot:category:http_library</code>, and a <code>LabelMatchStatement</code> later in the ACL can act on it. A rule can only see labels added by rules that ran <em>before</em> it.</li>
+          <li><strong>Managed rule groups</strong> (<code>AWSManagedRulesCommonRuleSet</code>, <code>…SQLiRuleSet</code>, <code>…KnownBadInputsRuleSet</code>, <code>…LinuxRuleSet</code>, <code>…AmazonIpReputationList</code>, <code>…AnonymousIpList</code>) give you a baseline. Tune them with <code>RuleActionOverrides</code>, not by deleting them.</li>
+          <li><strong>Rate-based rules</strong> aggregate by IP, forwarded IP, header, label or a custom key, over a 1/2/5/10-minute evaluation window. A scope-down statement points them at <code>/login</code> and similar paths.</li>
+          <li><strong>WCU</strong> (web ACL capacity units): the Core rule set costs about 700. The base price includes 1,500, and going over costs more. Check with <code>aws wafv2 check-capacity</code>.</li>
+          <li><strong>Custom responses</strong> (status, headers, a body from <code>CustomResponseBodies</code>) and <strong>custom request headers</strong> on Allow/Count, which arrive at your origin prefixed <code>x-amzn-waf-</code>.</li>
+        </ul>
+
+        <h4>Bots, AI crawlers and agents</h4>
+        <p><strong>Bot Control</strong> comes in two inspection levels. <em>Common</em> labels and blocks self-identifying bots by category (HTTP libraries, scrapers, search engines, and so on, including AI-related categories; read the current rule list in the console, because AWS adds categories) and recognizes <em>verified</em> bots. <em>Targeted</em> adds browser interrogation, fingerprinting and behavioural detection for bots that pretend to be Safari. Pair it with the <strong>Challenge</strong> action (a silent JavaScript proof-of-work that issues a token) and <strong>CAPTCHA</strong> for high-risk paths. <strong>ATP</strong> (account takeover prevention) and <strong>ACFP</strong> (account creation fraud prevention) are managed groups for your login and sign-up endpoints. They check submitted credentials against stolen-credential data and track how often each client is trying.</p>
+        <div class="callout new"><strong class="ct">New in 2026: agents are users too</strong><p>Your policy for AI traffic can't be "block everything with <code>bot</code> in the user-agent" anymore. Customers now send agents to book, buy and file tickets for them. Treat it as three decisions: <em>verified crawler</em> (allow or rate-limit), <em>unverified scraper</em> (block or challenge), and <em>agent acting for an authenticated user</em> (allow, but rate-limit per session and keep it away from account-changing endpoints). Labels make each of these one rule. Also: <strong>AWS Security Agent</strong> reached GA in March 2026 for on-demand penetration testing. Once your WAF is up, point it at a staging copy of the portal to see what gets past.</p></div>
+
+        <h4>Shield and the network security director</h4>
+        <p>Shield Standard (free, always on) absorbs common L3/L4 floods. <strong>Shield Advanced</strong> adds L7 DDoS detection with automatic WAF mitigations, the Shield Response Team, cost protection for scaling during an attack, and health-based detection. The <strong>network security director</strong> (preview, 2025) maps your network topology and flags configuration problems such as open security groups, unprotected internet-facing resources and missing WAF associations, then suggests fixes. Think of it as a "what's exposed?" report for your network.</p>
+        <div class="callout tip"><strong class="ct">Pro tip: cloak the origin</strong><p>A WAF on CloudFront is pointless if attackers can go straight to the ALB. Use <strong>CloudFront VPC origins</strong> (the ALB stays in a private subnet, 2024), or at minimum restrict the ALB security group to the <code>com.amazonaws.global.cloudfront.origin-facing</code> managed prefix list and check a secret origin header.</p></div>
+      </div>
+
+      <!-- ============ MODULE 3.3 ============ -->
+      <div class="module" id="m3-3">
+        <div class="module-num">MODULE 3.3</div>
+        <h3>Zero-trust access: kill the bastion, kill the VPN</h3>
+        <figure class="figure reveal"><img src="assets/img/day3/zero-trust.svg" alt="Diagram: an engineer with a compliant device and IAM Identity Center group membership passes AWS Verified Access's Cedar policy and reaches HTTPS and TCP applications; a stolen session from an unknown device is rejected; a separate panel lists Session Manager benefits over bastions"><figcaption><b>FIG 3.3</b> Verified Access decides on every request, using who you are <em>and</em> what device you're on.</figcaption></figure>
+        <p><strong>AWS Verified Access</strong> puts an identity-aware proxy in front of private applications. Trust providers (IAM Identity Center or any OIDC IdP for identity; CrowdStrike, Jamf, JumpCloud and others for device posture) supply claims, and a <strong>Cedar</strong> policy evaluates them on every request. It covers HTTP(S) apps and, since 2024–25, <strong>non-HTTP TCP</strong> endpoints like SSH, RDP and database ports, which removes the main reason people still run VPNs. For shell access to instances, <strong>Session Manager</strong> gives you IAM-authorized sessions with no inbound ports or SSH keys, full transcripts to S3/CloudWatch, and it works over VPC endpoints. EC2 Instance Connect Endpoint is the fallback when you really do need native SSH.</p>
+<pre data-title="Verified Access group policy (Cedar)"><code class="language-javascript">// Allow the cargo-ops team, only from compliant devices, only during an approved change window
+permit(principal, action, resource)
+when {
+  context.idc.groups has "c242c5b0-6081-1845-6fa8-6e0d9513c107" &amp;&amp;   // IdC group id: cargo-ops
+  context.crowdstrike.assessment.overall &gt; 50 &amp;&amp;                      // device posture score
+  context.http_request.http_method != "DELETE"
+};</code></pre>
+        <h4>IMDSv2, everywhere, enforced</h4>
+        <p>IMDSv2 requires a PUT to get a session token before any metadata GET, and that one change stops most SSRF-to-credential attacks. Layer the enforcement: set the <strong>account-level IMDS defaults</strong> for new launches (<code>aws ec2 modify-instance-metadata-defaults --http-tokens required --http-put-response-hop-limit 1</code>), add an SCP that denies <code>ec2:RunInstances</code> unless <code>ec2:MetadataHttpTokens</code> is <code>required</code>, and lock it in with an <strong>EC2 declarative policy</strong> at the OU. Hop limit 1 also protects container hosts: the token response can't make the extra network hop into a container's namespace.</p>
+      </div>
+
+      <!-- ============ MODULE 3.4 ============ -->
+      <div class="module" id="m3-4">
+        <div class="module-num">MODULE 3.4</div>
+        <h3>Containers &amp; Kubernetes: a stolen pod should be worth nothing</h3>
+        <figure class="figure reveal"><img src="assets/img/day3/eks-layers.svg" alt="Diagram: six concentric rings around a pod: account guardrails, cluster access entries, node IMDS hop limit, Pod Identity, NetworkPolicy and GuardDuty runtime; side panels show the IMDS credential theft path and how each ring closes it"><figcaption><b>FIG 3.4</b> Six rings around every pod. Lab 3.3 starts with rings ③ and ④ deliberately broken.</figcaption></figure>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Ring</th><th>Control</th><th>What "good" looks like</th></tr></thead>
+          <tbody>
+            <tr><td>② Cluster auth</td><td>EKS <b>access entries</b> (<code>authenticationMode: API</code>)</td><td>No <code>aws-auth</code> ConfigMap. Humans come through IdC permission sets mapped to access policies like <code>AmazonEKSClusterAdminPolicy</code> or narrower, scoped to namespaces. Every mapping shows up in CloudTrail and IaC.</td></tr>
+            <tr><td>③ Node</td><td>IMDSv2 + hop limit 1</td><td>Pods can't read node credentials. Bottlerocket or EKS Auto Mode nodes, with no SSH and immutable root.</td></tr>
+            <tr><td>④ Workload identity</td><td><b>EKS Pod Identity</b></td><td>One role per service account. No OIDC provider per cluster, no trust-policy edits per cluster. Session tags (<code>kubernetes-namespace</code>, <code>kubernetes-service-account</code>, <code>eks-cluster-name</code>) allow ABAC.</td></tr>
+            <tr><td>⑤ Network</td><td>NetworkPolicy via VPC CNI (eBPF)</td><td>Default-deny ingress <em>and</em> egress per namespace, with explicit allows for DNS, the Pod Identity agent (<code>169.254.170.23</code>) and the dependencies each service actually needs.</td></tr>
+            <tr><td>Admission</td><td>Pod Security Admission <code>restricted</code> + Kyverno/Gatekeeper</td><td>No privileged pods, no hostPath, signed images only (Lab 3.4).</td></tr>
+            <tr><td>⑥ Runtime</td><td>GuardDuty EKS audit-log monitoring + <b>Runtime Monitoring</b></td><td>Managed agent add-on. Findings like <code>Execution:Runtime/ReverseShell</code>, <code>CryptoCurrency:Runtime/BitcoinTool.B!DNS</code>, <code>Backdoor:Runtime/C&amp;CActivity.B!DNS</code>.</td></tr>
+          </tbody>
+        </table></div>
+        <div class="callout new"><strong class="ct">New in 2026</strong><ul>
+          <li><strong>GuardDuty Runtime Monitoring is included in the Security Hub Threat Analytics plan</strong> (October 2026). In accounts with Security Hub enabled, it no longer shows up as a separate GuardDuty charge.</li>
+          <li><strong>Extended Threat Detection added five indicators</strong> (May 2026) to attack sequences: <code>MALICIOUS_PACKAGE</code>, <code>MISCONFIGURATION</code>, <code>REACHABILITY</code>, <code>SENSITIVE_DATA</code>, <code>VULNERABILITY</code>. A runtime finding on a pod that is internet-reachable <em>and</em> running a vulnerable image now gets correlated into one critical sequence instead of three separate tickets.</li>
+          <li><strong>GuardDuty can be enforced through Organizations declarative policies</strong> (October 2026). Member accounts can't turn the baseline off from the console or the API.</li>
+        </ul></div>
+        <div class="callout info"><strong class="ct">Fargate vs EC2 isolation</strong><p>On EC2 nodes, every pod on a node shares one kernel, so a container escape exposes all the pods on that node. Fargate runs each pod in its own isolated compute environment, with no shared kernel, no node IMDS for a pod to steal from, and no node to SSH into. You give up DaemonSets and privileged pods. For workloads that are multi-tenant or run untrusted code, that trade is usually worth it.</p></div>
+      </div>
+
+      <!-- ============ MODULE 3.5 ============ -->
+      <div class="module" id="m3-5">
+        <div class="module-num">MODULE 3.5</div>
+        <h3>Software supply chain: only signed ships sail</h3>
+        <figure class="figure reveal"><img src="assets/img/day3/supply-chain.svg" alt="Diagram: seven stages from source, build, SBOM, push, sign, admit to run, each with the AWS or open-source control and the attack it defends against"><figcaption><b>FIG 3.5</b> Every link in the chain gets attacked. Most orgs scan, and few <em>verify at the gate</em>.</figcaption></figure>
+        <ul>
+          <li><strong>Amazon Inspector</strong> scans EC2 (agent or agentless), ECR images (on push and continuously as new CVEs land), Lambda (packages and code), and, since 2025, <strong>code repositories</strong> (SAST, secrets, IaC) through code security integrations. Org-wide enablement now works through Organizations policies (November 2025).</li>
+          <li><strong>SBOMs</strong>: export CycloneDX/SPDX for everything Inspector covers, or shift left with <code>inspector-sbomgen</code> and the <code>inspector-scan scan-sbom</code> API inside CI, before an image ever reaches ECR.</li>
+          <li><strong>Dependency confusion</strong>: if your build resolves <code>nimbus-telemetry</code> from a public index and from your private index, the attacker publishes version 99.0.0 publicly and wins. Fix it with <strong>CodeArtifact package origin controls</strong> (block upstream for internal names) and pinned hashes.</li>
+          <li><strong>Signing</strong>: <strong>AWS Signer + Notation</strong> (AWS-managed signing profiles and revocation, verified by Ratify or the Kyverno Notation AWS plugin) or <strong>cosign with a KMS key</strong> (portable, verified natively by Kyverno). Either way, <em>you sign a digest, not a tag</em>.</li>
+          <li><strong>Provenance (SLSA)</strong>: a signed statement of <em>how</em> an artifact was built. Signing proves who signed it. Provenance proves it came from your pipeline and not from someone's laptop.</li>
+        </ul>
+        <div class="callout war"><strong class="ct">War stories: xz-utils (2024) and self-replicating npm worms (2025)</strong><p>The xz-utils backdoor (CVE-2024-3094) was a multi-year social-engineering campaign against an overworked open-source maintainer, and it was caught almost by accident when a Microsoft engineer noticed SSH logins were 500 ms slower than usual. In 2025, worm-style npm compromises stole maintainer tokens and republished poisoned versions of popular packages automatically. Scanning for CVEs catches neither. What reduces the damage: pinned hashes, private mirrors with origin controls, runtime monitoring, and signatures checked at deploy.</p></div>
+        <div class="callout gotcha"><strong class="ct">Gotcha: "signed" ≠ "safe"</strong><p>A signature tells you <em>who</em> approved an artifact, not whether it's any good. Lab 3.4 signs an image that still contains a critical CVE, on purpose. Real gates combine both checks: <em>signed by our pipeline</em> AND <em>no unaccepted criticals</em> (the SBOM scan in CI).</p></div>
+      </div>
+    </section>
+
+    <!-- ============ LABS ============ -->
+    <section id="labs">
+      <div class="eyebrow">Hands-on</div>
+      <h2>Labs</h2>
+      <p>All labs run from <strong>AWS CloudShell in us-east-1</strong> in your <code>skyfortress-dev</code> account, using the course repo you cloned in Lab 0 (<code>~/skyfortress</code>). Every support file lives in <a href="labs/day3/index.html">labs/day3/</a>.</p>
+      <div class="callout warn"><strong class="ct">Sandbox only</strong><p>The "attack" tools in these labs are benign simulators. They only target resources you deploy, or reserved names like <code>*.example</code> and <code>example.com</code>, and <code>kraken-siege.py</code> refuses to run against anything except an <code>execute-api</code> URL. Never point them at systems you don't own.</p></div>
+
+      <!-- ===================== LAB 3.1 ===================== -->
+      <article class="lab" id="lab-3-1" data-toc="Lab 3.1 · Cut the Kraken's Line">
+        <img class="lab-cover" src="assets/img/day3/lab1-cover.svg" alt="Lab 3.1 cover: an implant's crimson line severed by a glowing green firewall wall while allowed AWS traffic flows past">
+        <div class="lab-head">
+          <div class="lab-num">Lab 3.1</div>
+          <h3>Cut the Kraken's Line</h3>
+          <div class="chips"><span class="chip hard">Advanced</span><span class="chip">⏱ 75 min</span><span class="chip">💸 ~$0.45/hr while up</span><span class="chip">Network Firewall · DNS Firewall · VPC BPA</span></div>
+        </div>
+        <div class="lab-body">
+          <p><b>Goal:</b> An implant on <code>nimbus-cargo-box-07</code> uses four channels: C2 lookups through the VPC resolver, lookups through a rogue resolver (8.8.8.8), HTTP and HTTPS. Cut all four without cutting the business traffic the box legitimately needs (AWS APIs, OS package repos). When the implant reports every channel severed, it gives you the flag.</p>
+          <div class="callout cost"><strong class="ct">The meter is running</strong><p>The lab's NAT gateway (≈ $0.045 per hour) starts billing at step 1, and the Network Firewall endpoint (≈ $0.395 per hour) at step 8. Both bill from the moment they exist until you delete them, whether or not traffic flows. Keep the VPC for the boss fight, then run the cleanup block at 17:15. <code>labs/setup/nuke-check.sh</code> lists anything you forgot.</p></div>
+          <div class="paths">
+            <div class="path guided"><p>Follow the 13 steps below. Every command is given, and each step ends with what you should see.</p><p><b>Time:</b> about 75 min. <b>Stuck for 15 minutes?</b> Open the hint. <b>Stuck for 25?</b> <code>lab31-solution.sh</code> does steps 4–10, and reading it counts as learning.</p></div>
+            <div class="path challenge"><p><b>Goal:</b> the implant prints <em>"All channels severed"</em> and <code>AWS APIs … REACHABLE</code>.<br><b>Constraints:</b> don't touch the instance or its security group. Use only DNS Firewall, Network Firewall and route tables. Allow-list only <code>.amazonaws.com</code> and <code>.amazonlinux.com</code>.<br><b>Acceptance:</b> named alerts for sid 3100001 and 3100010 appear in <code>/skyfortress/nfw/alert</code>, and VPC BPA is in <code>block-ingress</code>.</p></div>
+          </div>
+          <figure class="figure"><img src="assets/img/day3/egress-arch.svg" alt="Lab 3.1 target architecture"><figcaption><b>TARGET</b> What your VPC should look like at the end of this lab.</figcaption></figure>
+          <h4>Prerequisites</h4>
+          <ul><li>Lab 0 complete (CloudShell, repo cloned, budget alarm). An admin role in <code>skyfortress-dev</code>.</li><li>Files: <a href="labs/day3/lab31-egress-vpc.yaml">lab31-egress-vpc.yaml</a>, <a href="labs/day3/lab31-egress-guard.rules">lab31-egress-guard.rules</a> (break-glass: <a href="labs/day3/lab31-solution.sh">lab31-solution.sh</a>)</li></ul>
+          <h4>Steps</h4>
+          <ol class="steps" data-lab="d3-lab1">
+            <li><strong>Deploy the vulnerable VPC</strong>
+              <p>The stack builds a public subnet with the NAT gateway, an empty firewall subnet, and a private subnet with the infected box. Right now the private route table sends <code>0.0.0.0/0</code> straight to NAT.</p>
+<pre data-title="CloudShell"><code class="language-bash">cd ~/skyfortress/labs/day3
+export AWS_REGION=us-east-1
+aws cloudformation deploy --stack-name sky-lab31 --template-file lab31-egress-vpc.yaml \
+  --capabilities CAPABILITY_NAMED_IAM
+
+# Load every stack output into an env var (VpcId -&gt; $VpcId, etc.)
+eval $(aws cloudformation describe-stacks --stack-name sky-lab31 \
+  --query 'Stacks[0].Outputs[].[OutputKey,OutputValue]' --output text | awk '{print "export "$1"="$2}')
+echo "VPC=$VpcId  box=$InstanceId  privRT=$PrivateRouteTableId"</code></pre>
+            </li>
+            <li><strong>Meet the implant</strong>
+              <p>Define a helper that runs a command on the box through SSM (no SSH, no inbound ports; that's Module 3.3 in practice), then ask the implant for its status.</p>
+<pre data-title="CloudShell"><code class="language-bash">kx() {  # run a shell command on the cargo box via SSM and print the output
+  local id; id=$(aws ssm send-command --instance-ids "$InstanceId" --document-name AWS-RunShellScript \
+    --parameters "commands=[\"$1\"]" --query Command.CommandId --output text)
+  aws ssm wait command-executed --command-id "$id" --instance-id "$InstanceId" 2&gt;/dev/null
+  aws ssm get-command-invocation --command-id "$id" --instance-id "$InstanceId" \
+    --query StandardOutputContent --output text
+}
+kx "sudo /opt/kraken/implant.sh status"</code></pre>
+<div class="term" data-title="CloudShell · sky-dev · kx status"><pre><span class="p">$</span> <span class="c">kx "sudo /opt/kraken/implant.sh status"</span>
+
+  KRAKEN IMPLANT STATUS
+  ---------------------
+  C2 via VPC resolver ........ <span class="err">OPEN</span>
+  C2 via rogue resolver 8.8.8.8 <span class="err">OPEN</span>
+  HTTP exfil (example.com) ... <span class="err">OPEN</span>
+  HTTPS exfil (example.com) .. <span class="err">OPEN</span>
+  AWS APIs (business traffic)  <span class="ok">REACHABLE</span>
+
+  <span class="warn">Kraken: hehehe. I can still hear the mothership.</span></pre></div>
+              <p class="term-caption">The baseline. Four open channels, plus the business traffic you must keep alive.</p>
+              <div class="predict"><p>Of the four channels, which do you expect DNS Firewall alone to close? Write your answer down before step 6.</p><details><summary>Reveal</summary><p>Only <b>C2 via VPC resolver</b>. The rogue-resolver channel asks 8.8.8.8 directly and never touches the VPC resolver. The HTTP(S) channels connect to an IP and need no lookup from your resolver at all. DNS Firewall only filters what passes through Route 53 Resolver.</p></details></div>
+            </li>
+            <li><strong>Turn on the lights: Resolver query logging</strong>
+              <p>You can't defend what you can't see. Send every DNS query in the VPC to CloudWatch Logs. The boss fight depends on this data, so don't skip it.</p>
+<pre data-title="CloudShell"><code class="language-bash">QLC=$(aws route53resolver create-resolver-query-log-config --name sky-qlog \
+  --destination-arn "${DnsQueryLogGroupArn%:*}" --creator-request-id "q-$(date +%s)" \
+  --query ResolverQueryLogConfig.Id --output text)
+aws route53resolver associate-resolver-query-log-config --resolver-query-log-config-id "$QLC" --resource-id "$VpcId"</code></pre>
+              <p>Wait two minutes, then open <b>CloudWatch → Logs Insights</b> on <code>/skyfortress/dns/query</code>:</p>
+<pre data-title="Logs Insights"><code class="language-sql">fields @timestamp, query_name, query_type, rcode, srcaddr
+| sort @timestamp desc
+| limit 50</code></pre>
+              <p>You'll see <code>beacon.kraken-c2.example</code> every minute. You may also notice some <em>other</em> odd-looking names. Note them for later. 👀</p>
+              <p class="expect">Logs Insights returns rows within 2–3 minutes, including <code>beacon.kraken-c2.example</code> with <code>rcode NOERROR</code>.</p>
+            </li>
+            <li><strong>DNS Firewall: sinkhole the C2 domain</strong>
+              <p>Create a domain list and a rule group, then add a <code>BLOCK</code> → <code>OVERRIDE</code> rule that answers with the sinkhole record in the lab's private zone. A sinkhole is better than NXDOMAIN for hunting, because every hit becomes a connection attempt to an IP you control.</p>
+<pre data-title="CloudShell"><code class="language-bash">DL=$(aws route53resolver create-firewall-domain-list --name kraken-c2 \
+  --creator-request-id "dl-$(date +%s)" --query FirewallDomainList.Id --output text)
+aws route53resolver update-firewall-domains --firewall-domain-list-id "$DL" --operation ADD \
+  --domains 'kraken-c2.example' '*.kraken-c2.example'
+
+RG=$(aws route53resolver create-firewall-rule-group --name sky-dns-guard \
+  --creator-request-id "rg-$(date +%s)" --query FirewallRuleGroup.Id --output text)
+
+aws route53resolver create-firewall-rule --name sinkhole-kraken-c2 --creator-request-id "r1-$(date +%s)" \
+  --firewall-rule-group-id "$RG" --firewall-domain-list-id "$DL" --priority 100 \
+  --action BLOCK --block-response OVERRIDE \
+  --block-override-domain sinkhole.skyfortress.lab --block-override-dns-type CNAME --block-override-ttl 60
+echo "list=$DL group=$RG"</code></pre>
+              <p class="expect">Both IDs print (<code>rslvr-fdl-…</code> and <code>rslvr-frg-…</code>). The rule exists but does nothing yet, because the group isn't associated with any VPC.</p>
+            </li>
+            <li><strong>Add AWS threat intel and attach the group to the VPC</strong>
+<pre data-title="CloudShell"><code class="language-bash"># AWS-managed threat intel (curated, updated by AWS)
+aws route53resolver list-firewall-domain-lists \
+  --query "FirewallDomainLists[?ManagedOwnerName=='Route 53 Resolver DNS Firewall'].[Name,Id]" --output table
+MAL=$(aws route53resolver list-firewall-domain-lists \
+  --query "FirewallDomainLists[?Name=='AWSManagedDomainsAggregateThreatList'].Id" --output text)
+aws route53resolver create-firewall-rule --name aws-aggregate-threats --creator-request-id "r2-$(date +%s)" \
+  --firewall-rule-group-id "$RG" --firewall-domain-list-id "$MAL" --priority 200 \
+  --action BLOCK --block-response NXDOMAIN
+
+aws route53resolver associate-firewall-rule-group --name sky-dns-guard-assoc \
+  --creator-request-id "a-$(date +%s)" --firewall-rule-group-id "$RG" --vpc-id "$VpcId" --priority 101</code></pre>
+              <figure class="shot" data-url="console.aws.amazon.com/vpcconsole/home?region=us-east-1#DNSFirewallRuleGroup:id=rslvr-frg-…">
+                <img src="assets/img/day3/shot-dns-firewall.svg" alt="Illustrative mock-up of the sky-dns-guard rule group: rules at priority 100, 150, 200 and 300 with BLOCK actions, one VPC association, and matched-query counts">
+                <figcaption><b>SCREEN 3.1a</b> Where you'll be by the end of the boss fight: four rules and one association. Right now you have priorities 100 and 200. Illustrative mock-up; the live console layout may differ.</figcaption>
+              </figure>
+              <p class="expect"><code>list-firewall-rule-group-associations</code> shows <code>Status: COMPLETE</code> for <code>sky-dns-guard-assoc</code>. It takes about 30–60 seconds.</p>
+            </li>
+            <li><strong>Verify, and get humbled</strong>
+<pre data-title="CloudShell"><code class="language-bash">kx "dig +short beacon.kraken-c2.example; echo ---; sudo /opt/kraken/implant.sh status"</code></pre>
+<div class="term" data-title="CloudShell · sky-dev · kx"><pre><span class="o">sinkhole.skyfortress.lab.</span>
+<span class="o">10.66.255.254</span>
+<span class="o">---</span>
+  KRAKEN IMPLANT STATUS
+  ---------------------
+  C2 via VPC resolver ........ <span class="ok">SEVERED</span>
+  C2 via rogue resolver 8.8.8.8 <span class="err">OPEN</span>
+  HTTP exfil (example.com) ... <span class="err">OPEN</span>
+  HTTPS exfil (example.com) .. <span class="err">OPEN</span>
+  AWS APIs (business traffic)  <span class="ok">REACHABLE</span>
+
+  <span class="warn">Kraken: hehehe. I can still hear the mothership.</span></pre></div>
+              <p class="term-caption">One down, three to go. The sinkhole answer is the CNAME you configured.</p>
+              <p>The resolver now answers <code>sinkhole.skyfortress.lab.</code> → <code>10.66.255.254</code>, so one channel is closed. The other three are still <span style="color:var(--red)">OPEN</span>, because <code>dig @8.8.8.8</code> never asks the VPC resolver, and HTTP(S) to a raw IP needs no DNS at all. DNS Firewall can only filter queries that go through it.</p>
+            </li>
+            <li><strong>Build the Network Firewall rule groups</strong>
+              <p>There are two stateful groups, both <code>STRICT_ORDER</code>. Priority 10 is your custom Suricata guard: drop rogue DNS and DoT, alert on the implant's user-agent, drop known DoH SNIs. Read <a href="labs/day3/lab31-egress-guard.rules">the rules file</a> before loading it. Priority 20 is the domain allow-list: only <code>.amazonaws.com</code> and <code>.amazonlinux.com</code>, matched on TLS SNI and HTTP Host.</p>
+<pre data-title="CloudShell"><code class="language-bash">jq -Rs '{RulesSource:{RulesString:.},StatefulRuleOptions:{RuleOrder:"STRICT_ORDER"}}' \
+  lab31-egress-guard.rules &gt; /tmp/guard.json
+GUARD=$(aws network-firewall create-rule-group --rule-group-name sky-egress-guard --type STATEFUL \
+  --capacity 100 --rule-group file:///tmp/guard.json --query RuleGroupResponse.RuleGroupArn --output text)
+
+ALLOW=$(aws network-firewall create-rule-group --rule-group-name sky-egress-allowlist --type STATEFUL \
+  --capacity 100 --query RuleGroupResponse.RuleGroupArn --output text --rule-group '{
+    "RulesSource": {"RulesSourceList": {
+      "Targets": [".amazonaws.com", ".amazonlinux.com"],
+      "TargetTypes": ["TLS_SNI", "HTTP_HOST"],
+      "GeneratedRulesType": "ALLOWLIST"}},
+    "StatefulRuleOptions": {"RuleOrder": "STRICT_ORDER"}}')</code></pre>
+              <div class="callout gotcha"><strong class="ct">Gotcha: the leading dot</strong><p><code>.amazonaws.com</code> matches <code>ssm.us-east-1.amazonaws.com</code> <em>and</em> <code>amazonaws.com</code>. Without the dot it matches only that exact name. And remember who the "business traffic" includes: SSM, the CloudWatch agent, package repos, and the SDKs your app calls. Leave any of them off the list and you've caused your own outage.</p></div>
+            </li>
+            <li><strong>Create the policy and the firewall</strong>
+              <p>The default actions are the key decision: <code>aws:drop_established</code> + <code>aws:alert_established</code>. Creating the firewall takes 3–6 minutes, so read the TLS inspection section of Module 3.1 again while you wait.</p>
+<pre data-title="CloudShell"><code class="language-bash">POL=$(aws network-firewall create-firewall-policy --firewall-policy-name sky-egress-policy \
+  --query FirewallPolicyResponse.FirewallPolicyArn --output text --firewall-policy "{
+    \"StatelessDefaultActions\": [\"aws:forward_to_sfe\"],
+    \"StatelessFragmentDefaultActions\": [\"aws:forward_to_sfe\"],
+    \"StatefulEngineOptions\": {\"RuleOrder\": \"STRICT_ORDER\"},
+    \"StatefulDefaultActions\": [\"aws:drop_established\", \"aws:alert_established\"],
+    \"StatefulRuleGroupReferences\": [
+      {\"ResourceArn\": \"$GUARD\", \"Priority\": 10},
+      {\"ResourceArn\": \"$ALLOW\", \"Priority\": 20}]}")
+
+aws network-firewall create-firewall --firewall-name sky-egress-fw --firewall-policy-arn "$POL" \
+  --vpc-id "$VpcId" --subnet-mappings SubnetId="$FirewallSubnetId"
+
+until [ "$(aws network-firewall describe-firewall --firewall-name sky-egress-fw \
+  --query FirewallStatus.Status --output text)" = READY ]; do sleep 20; printf '.'; done; echo READY
+EP=$(aws network-firewall describe-firewall --firewall-name sky-egress-fw \
+  --query 'FirewallStatus.SyncStates.*.Attachment.EndpointId' --output text); echo "$EP"</code></pre>
+              <figure class="shot" data-url="console.aws.amazon.com/vpcconsole/home?region=us-east-1#NetworkFirewallPolicyDetails:arn=…/sky-egress-policy">
+                <img src="assets/img/day3/shot-nfw-policy.svg" alt="Illustrative mock-up of the sky-egress-policy page: strict rule order, drop-established and alert-established default actions, two stateful rule groups at priority 10 and 20, and the firewall in READY state">
+                <figcaption><b>SCREEN 3.1b</b> Check three things here: <em>Strict order</em>, the two default actions, and the priority of each group. Illustrative mock-up; the live console layout may differ.</figcaption>
+              </figure>
+              <p class="expect">After 3–6 minutes of dots the loop prints <code>READY</code>, then a single endpoint ID such as <code>vpce-0f1e2d3c4b5a69788</code>.</p>
+            </li>
+            <li><strong>Turn on firewall logging</strong>
+<pre data-title="CloudShell"><code class="language-bash">aws network-firewall update-logging-configuration --firewall-name sky-egress-fw --logging-configuration \
+ '{"LogDestinationConfigs":[{"LogType":"ALERT","LogDestinationType":"CloudWatchLogs","LogDestination":{"logGroup":"/skyfortress/nfw/alert"}}]}'
+# Logging destinations are added one at a time - describe, then add FLOW as a second call:
+aws network-firewall update-logging-configuration --firewall-name sky-egress-fw --logging-configuration \
+ '{"LogDestinationConfigs":[
+   {"LogType":"ALERT","LogDestinationType":"CloudWatchLogs","LogDestination":{"logGroup":"/skyfortress/nfw/alert"}},
+   {"LogType":"FLOW","LogDestinationType":"CloudWatchLogs","LogDestination":{"logGroup":"/skyfortress/nfw/flow"}}]}'</code></pre>
+            </li>
+            <li><strong>Re-route: put the firewall in the path, both directions</strong>
+              <div class="predict"><p>If you change only the private route table, what happens to <code>https://ssm.us-east-1.amazonaws.com</code>? Try it with only the first command, run <code>status</code>, and then add the second.</p><details><summary>Reveal</summary><p>It breaks. <code>AWS APIs</code> flips to <code>DOWN</code>, and you lose the SSM session you use to run <code>kx</code> until the second route goes in. The replies take the asymmetric path NAT → instance, so the stateful engine never sees an established flow and <code>drop_established</code> has nothing to pass. If <code>kx</code> hangs, add the return route from CloudShell. It doesn't need the instance.</p></details></div>
+<pre data-title="CloudShell"><code class="language-bash"># Outbound: private subnet -&gt; firewall endpoint (instead of NAT)
+aws ec2 replace-route --route-table-id "$PrivateRouteTableId" \
+  --destination-cidr-block 0.0.0.0/0 --vpc-endpoint-id "$EP"
+
+# Return: NAT's subnet must send replies for the private CIDR back THROUGH the firewall
+aws ec2 create-route --route-table-id "$PublicRouteTableId" \
+  --destination-cidr-block 10.66.2.0/24 --vpc-endpoint-id "$EP"</code></pre>
+              <details class="hint"><summary>Hint: what the one-route version looks like</summary><p>With only the outbound route, packets go box → firewall → NAT → internet, but the replies go NAT → box directly. The stateful engine never sees the SYN-ACK, so the flow never counts as established, and your allow-list never gets a chance to pass it. TLS hangs, <code>aws=DOWN</code>, and Owlsley tells you that you cut the power, not the line.</p></details>
+            </li>
+            <li><strong>Moment of truth</strong>
+<pre data-title="CloudShell"><code class="language-bash">kx "sudo /opt/kraken/implant.sh status"</code></pre>
+              <div class="term" data-title="CloudShell · sky-dev · kx status"><pre>  KRAKEN IMPLANT STATUS
+  ---------------------
+  C2 via VPC resolver ........ <span class="ok">SEVERED</span>
+  C2 via rogue resolver 8.8.8.8 <span class="ok">SEVERED</span>
+  HTTP exfil (example.com) ... <span class="ok">SEVERED</span>
+  HTTPS exfil (example.com) .. <span class="ok">SEVERED</span>
+  AWS APIs (business traffic)  <span class="ok">REACHABLE</span>
+
+  <span class="warn">Kraken: ...the line is cut. All channels severed. Fine. FINE.</span>
+  &gt;&gt; <span class="hl">SKY{████████████████████}</span></pre></div>
+              <p class="term-caption">Expected output, with the flag redacted. Yours prints in full. If the first run shows HTTPS still OPEN, wait 30 seconds and re-run, because route changes take a moment to settle.</p>
+            </li>
+            <li><strong>Read the evidence</strong>
+              <p>Alerts are what you'll show the incident commander. Query the alert log for the implant's user-agent tripwire and the default-drop alerts:</p>
+<pre data-title="Logs Insights · /skyfortress/nfw/alert"><code class="language-sql">fields @timestamp, event.alert.action as action, event.alert.signature as sig,
+       event.src_ip as src, event.dest_ip as dst, event.dest_port as port,
+       event.tls.sni as sni, event.http.hostname as host
+| sort @timestamp desc
+| limit 100</code></pre>
+              <p>Find the <code>SKY kraken implant user-agent</code> alerts (sid 3100010), the rogue-DNS drops (sid 3100001), and the default-action alerts carrying <code>sni = example.com</code>. One raw record looks like this:</p>
+              <div class="term" data-title="/skyfortress/nfw/alert · one record (Suricata EVE JSON)"><pre>{
+  <span class="k">"firewall_name"</span>: <span class="s">"sky-egress-fw"</span>,
+  <span class="k">"availability_zone"</span>: <span class="s">"us-east-1a"</span>,
+  <span class="k">"event_timestamp"</span>: <span class="s">"1764081734"</span>,
+  <span class="k">"event"</span>: {
+    <span class="k">"event_type"</span>: <span class="s">"alert"</span>,
+    <span class="k">"src_ip"</span>: <span class="s">"10.66.2.37"</span>, <span class="k">"src_port"</span>: 48812,
+    <span class="k">"dest_ip"</span>: <span class="s">"203.0.113.80"</span>, <span class="k">"dest_port"</span>: 80,
+    <span class="k">"proto"</span>: <span class="s">"TCP"</span>, <span class="k">"app_proto"</span>: <span class="s">"http"</span>,
+    <span class="k">"alert"</span>: {
+      <span class="k">"action"</span>: <span class="s">"allowed"</span>,      <span class="o">&lt;- alert-only rule; the default action drops the flow</span>
+      <span class="k">"signature_id"</span>: <span class="hl">3100010</span>, <span class="k">"rev"</span>: 1,
+      <span class="k">"signature"</span>: <span class="s">"SKY kraken implant user-agent"</span>
+    },
+    <span class="k">"http"</span>: { <span class="k">"hostname"</span>: <span class="s">"example.com"</span>, <span class="k">"url"</span>: <span class="s">"/"</span>,
+              <span class="k">"http_user_agent"</span>: <span class="s">"kraken-implant/2.6 (+tentacle)"</span> }
+  }
+}</pre></div>
+              <p class="term-caption">An illustrative record. IPs and timestamps will differ, and <code>dest_ip</code> is whatever example.com resolves to. A <code>drop</code> rule logs <code>"action": "blocked"</code>.</p>
+              <div class="callout gotcha"><strong class="ct">Gotcha: field names depend on the protocol</strong><p>Alert records follow Suricata's EVE JSON format. <code>event.alert.signature_id</code> and <code>event.tls.sni</code> are stable. HTTP metadata appears under <code>event.http</code> for HTTP/1.x flows (<code>hostname</code>, <code>url</code>, <code>http_user_agent</code>), but HTTP/2 records carry the host in the request headers instead. If a Logs Insights column comes back empty, open one raw record and adjust the field path.</p></div>
+            </li>
+            <li><strong>Flip the big red switch: VPC Block Public Access</strong>
+              <p>Set ingress-only BPA for the Region. NAT egress keeps working, and any inbound IGW path anyone opens later is dead on arrival.</p>
+<pre data-title="CloudShell"><code class="language-bash">aws ec2 modify-vpc-block-public-access-options --internet-gateway-block-mode block-ingress
+aws ec2 describe-vpc-block-public-access-options
+kx "sudo /opt/kraken/implant.sh status | tail -3"     # still SEVERED, AWS still REACHABLE</code></pre>
+              <div class="callout warn"><strong class="ct">Account-wide setting</strong><p>BPA applies to every VPC in this Region of <code>skyfortress-dev</code>. It doesn't affect the EKS cluster's NAT egress or API Gateway in Lab 3.2. Turn it back off in cleanup unless your instructor says otherwise.</p></div>
+            </li>
+          </ol>
+          <div class="checkpoint"><p>You've completed the lab when the implant prints <em>"All channels severed"</em> while <code>AWS APIs</code> still shows <code>REACHABLE</code>, and the alert log shows named alerts (sids 3100001/3100010) as well as default-action drops.</p></div>
+          <h4>Troubleshooting</h4>
+          <div class="table-wrap"><table>
+            <thead><tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr></thead>
+            <tbody>
+              <tr><td><code>kx</code> hangs or returns nothing</td><td>SSM can't reach its endpoints because you cut business traffic</td><td>Check the return route (step 10). From CloudShell, run <code>aws ssm describe-instance-information</code> and make sure <code>PingStatus</code> is <code>Online</code>.</td></tr>
+              <tr><td><code>AWS APIs … DOWN</code></td><td>Asymmetric routing, or the allow-list is missing <code>.amazonaws.com</code></td><td>Add the <code>10.66.2.0/24 → vpce</code> route in the public route table, and check the leading dot in the allow-list targets.</td></tr>
+              <tr><td>HTTPS stays <code>OPEN</code></td><td>The default action is <code>drop_strict</code>, or the policy isn't <code>STRICT_ORDER</code></td><td>Run <code>describe-firewall-policy</code>. You need <code>aws:drop_established</code> and strict ordering in both the policy and the rule groups.</td></tr>
+              <tr><td>Rogue resolver stays <code>OPEN</code></td><td>The guard group wasn't loaded, or it sits below the allow-list</td><td>The guard group must be priority 10. Check that <code>/tmp/guard.json</code> has the rules string.</td></tr>
+              <tr><td>No sinkhole answer</td><td>The association isn't <code>COMPLETE</code> yet, or there's a typo in the domain list</td><td>Wait 60 seconds. Then run <code>list-firewall-domains --firewall-domain-list-id $DL</code>.</td></tr>
+              <tr><td>The alert log group is empty</td><td>Logging was configured before the firewall was <code>READY</code></td><td>Run step 9 again. Then run <code>describe-logging-configuration</code>.</td></tr>
+              <tr><td><code>create-firewall</code> fails with a subnet error</td><td>Wrong subnet: it must be the dedicated firewall subnet</td><td>Use <code>$FirewallSubnetId</code> from the stack outputs, not the private subnet.</td></tr>
+            </tbody>
+          </table></div>
+          <details class="hint solution"><summary>Solution: stuck? break glass</summary><p>Run <code>./lab31-solution.sh</code> from <code>labs/day3</code>. It does steps 4–10 for a stack named <code>sky-lab31</code>. Then go back to step 11. Reading the script line by line counts as learning too.</p></details>
+          <form class="flag" data-id="d3-flag1" data-hash="d13e563818efe15bb72b24a5402c41b9c6b5a9a6b98fc35145556b2dac2fb817" data-xp="200" data-label="Flag 3.1 · the line is cut"></form>
+          <div class="stretch"><p><b>TLS inspection.</b> The allow-list trusts the SNI, and a client can put <code>ssm.us-east-1.amazonaws.com</code> in its SNI and still connect to an IP the Kraken controls. Design (and if you have time, build) a TLS inspection configuration with a private CA in ACM. Which flows would you <em>exempt</em> from decryption, and why? Hint: certificate-pinned clients, health data, and the AWS APIs themselves.</p></div>
+          <div class="cleanup"><p>Keep the VPC for the <a href="#boss">boss fight</a>. At 17:15, tear down in this order (the firewall endpoint can't be deleted while routes point at it):</p>
+<pre><code class="language-bash">aws ec2 replace-route --route-table-id "$PrivateRouteTableId" --destination-cidr-block 0.0.0.0/0 --nat-gateway-id "$NatGatewayId"
+aws ec2 delete-route  --route-table-id "$PublicRouteTableId" --destination-cidr-block 10.66.2.0/24
+aws network-firewall delete-firewall --firewall-name sky-egress-fw     # wait until gone (~5 min)
+aws network-firewall delete-firewall-policy --firewall-policy-name sky-egress-policy
+aws network-firewall delete-rule-group --rule-group-name sky-egress-guard --type STATEFUL
+aws network-firewall delete-rule-group --rule-group-name sky-egress-allowlist --type STATEFUL
+aws route53resolver disassociate-firewall-rule-group --firewall-rule-group-association-id \
+  $(aws route53resolver list-firewall-rule-group-associations --query "FirewallRuleGroupAssociations[?Name=='sky-dns-guard-assoc'].Id" --output text)
+aws route53resolver disassociate-resolver-query-log-config --resolver-query-log-config-id "$QLC" --resource-id "$VpcId"
+aws ec2 modify-vpc-block-public-access-options --internet-gateway-block-mode off
+aws cloudformation delete-stack --stack-name sky-lab31</code></pre></div>
+        </div>
+      </article>
+
+      <!-- ===================== LAB 3.2 ===================== -->
+      <article class="lab" id="lab-3-2" data-toc="Lab 3.2 · Shields Up">
+        <img class="lab-cover" src="assets/img/day3/lab2-cover.svg" alt="Lab 3.2 cover: a hexagonal energy shield over the cargo portal with a swarm of bots bouncing off in sparks of 403 and 429">
+        <div class="lab-head">
+          <div class="lab-num">Lab 3.2</div>
+          <h3>Shields Up</h3>
+          <div class="chips"><span class="chip med">Intermediate+</span><span class="chip">⏱ 60 min</span><span class="chip">💸 ~$0.20</span><span class="chip">AWS WAF · API Gateway · Bot Control</span></div>
+        </div>
+        <div class="lab-body">
+          <p><b>Goal:</b> The Nimbus cargo portal is under siege. Build a web ACL that holds against all five phases of <code>kraken-siege.py</code> while real customers still get through (the control check). Then use WAF labels to admit exactly one trusted partner to a hidden endpoint, without letting anyone else spoof their way in.</p>
+          <div class="paths">
+            <div class="path guided"><p>Follow the 12 steps. You'll build <code>my-rules.json</code> one rule at a time, starting from the starter file, and run the siege after each change.</p><p><b>Time:</b> about 60 min, of which about 12 is waiting on sieges. <b>Reference:</b> <code>lab32-webacl-solution.json</code> holds the complete, commented rule set. Diff yours against it when a phase won't hold.</p></div>
+            <div class="path challenge"><p><b>Goal:</b> all 5 siege phases <code>[HELD]</code> while Phase 0 (control) passes, and the partner gets the manifest.<br><b>Constraints:</b> one web ACL, at most 1,500 WCU, no changes to the Lambda. Partner access needs <em>both</em> the key and the IP.<br><b>Acceptance:</b> a spoofed <code>x-amzn-waf-partner</code> header gets 403, and every block is explained by a label or rule in the WAF logs.</p></div>
+          </div>
+          <figure class="figure"><img src="assets/img/day3/siege-arch.svg" alt="Lab 3.2 architecture: siege script and partner both pass through AWS WAF to API Gateway and Lambda"><figcaption><b>ARCH</b> Two clients, one gate. Only the partner's request comes out the other side carrying the edge-inserted header.</figcaption></figure>
+          <h4>Prerequisites</h4>
+          <ul><li>Files: <a href="labs/day3/lab32-portal.yaml">lab32-portal.yaml</a>, <a href="labs/day3/kraken-siege.py">kraken-siege.py</a>, <a href="labs/day3/lab32-webacl-starter.json">lab32-webacl-starter.json</a>, <a href="labs/day3/lab32-custom-bodies.json">lab32-custom-bodies.json</a> (reference: <a href="labs/day3/lab32-webacl-solution.json">lab32-webacl-solution.json</a>)</li></ul>
+          <h4>Steps</h4>
+          <ol class="steps" data-lab="d3-lab2">
+            <li><strong>Deploy the portal and poke it</strong>
+<pre data-title="CloudShell"><code class="language-bash">aws cloudformation deploy --stack-name sky-lab32 --template-file lab32-portal.yaml --capabilities CAPABILITY_IAM
+URL=$(aws cloudformation describe-stacks --stack-name sky-lab32 --query "Stacks[0].Outputs[?OutputKey=='PortalUrl'].OutputValue" --output text)
+STAGE_ARN=$(aws cloudformation describe-stacks --stack-name sky-lab32 --query "Stacks[0].Outputs[?OutputKey=='StageArn'].OutputValue" --output text)
+curl -s "$URL/" | head -3
+curl -s "$URL/partner/manifest"      # {"error": "partners only - verification must come from the edge"}</code></pre>
+              <div class="term" data-title="CloudShell · sky-dev"><pre><span class="p">$</span> <span class="c">curl -s "$URL/" | head -3</span>
+<span class="o">&lt;!doctype html&gt;&lt;title&gt;Nimbus Cargo Portal&lt;/title&gt;</span>
+<span class="o">&lt;body style="font-family:sans-serif;background:#060915;color:#e8ecff;padding:40px"&gt;</span>
+<span class="o">&lt;h1&gt;&amp;#128640; Nimbus Interstellar &amp;middot; Cargo Portal&lt;/h1&gt;</span>
+<span class="p">$</span> <span class="c">curl -s "$URL/partner/manifest"</span>
+{<span class="k">"error"</span>: <span class="s">"partners only - verification must come from the edge"</span>}</pre></div>
+              <p class="term-caption">The portal is up, and the partner endpoint refuses you.</p>
+            </li>
+            <li><strong>Baseline siege: no shields</strong>
+              <div class="predict"><p>With no WAF attached, how many of the five attack phases will be marked BREACHED? (The control should pass.)</p><details><summary>Reveal</summary><p>All five. Nothing between the internet and the Lambda returns 403 or 429, so every "want 403" check fails. Phase 4 and Phase 5 each run their full 120 seconds, so the baseline takes about 4 minutes.</p></details></div>
+<pre data-title="CloudShell"><code class="language-bash">python3 kraken-siege.py "$URL"</code></pre>
+              <div class="term" data-title="CloudShell · kraken-siege.py · no shields"><pre><span class="warn">== Phase 0 - control (a real customer must still get in) ==</span>
+  <span class="ok">[HELD]</span> control - GET / as a browser -&gt; 200 (want 200)
+<span class="warn">== Phase 1 - SQL injection ==</span>
+  <span class="err">[BREACHED]</span> sqli - codes [200, 200, 200, 200, 200] (want all 403)
+<span class="warn">== Phase 2 - path traversal / LFI ==</span>
+  <span class="err">[BREACHED]</span> traversal - codes [404, 404, 404, 404] (want all 403)
+<span class="warn">== Phase 3 - HTTP-library bots ==</span>
+  <span class="err">[BREACHED]</span> http-library - codes [200, 200, 200, 200, 200, 200, 200, 200, 200, 200] (want &gt;=8 x 403)
+<span class="warn">== Phase 4 - credential stuffing on /login (runs up to 120s) ==</span>
+  attempts=262 blocked=0 last=401
+  <span class="err">[BREACHED]</span> credential-stuffing - 0 of 262 attempts blocked
+<span class="warn">== Phase 5 - AI scraper swarm (runs up to 120s) ==</span>
+  requests=1428 http429=0 last=200
+  <span class="err">[BREACHED]</span> scraper-flood - 0 x 429 custom responses (want &gt;=30)
+<span class="warn">== Siege report ==</span>
+  Kraken: hehehe - 5 of 6 defences breached. Check WAF sampled requests and try again.</pre></div>
+              <p class="term-caption">The baseline. Attempt counts depend on latency, and the stub <code>/login</code> always answers 401.</p>
+              <p>Everything is breached: the Lambda happily returns <code>200</code> for SQL injection and <code>404</code> for traversal attempts. Your origin is doing the security work, and it isn't doing it.</p>
+            </li>
+            <li><strong>Price the shield before you build it</strong>
+<pre data-title="CloudShell"><code class="language-bash">aws wafv2 check-capacity --scope REGIONAL --rules file://lab32-webacl-starter.json
+aws wafv2 describe-managed-rule-group --scope REGIONAL --vendor-name AWS \
+  --name AWSManagedRulesCommonRuleSet --query '{wcu:Capacity,rules:Rules[].Name}'</code></pre>
+              <p>Write down the WCU of the starter set (IP reputation + CRS + SQLi + known bad inputs). You have 1,500 included.</p>
+              <p class="expect"><code>check-capacity</code> prints a single number in the 1,000s (CRS is about 700 of it), and <code>describe-managed-rule-group</code> lists rule names like <code>NoUserAgent_HEADER</code> and <code>SizeRestrictions_BODY</code>.</p>
+            </li>
+            <li><strong>Create the web ACL and attach it to the stage</strong>
+<pre data-title="CloudShell"><code class="language-bash">read ACL_ARN ACL_ID &lt;&lt;&lt;"$(aws wafv2 create-web-acl --name SkyShield --scope REGIONAL \
+  --default-action Allow={} \
+  --visibility-config SampledRequestsEnabled=true,CloudWatchMetricsEnabled=true,MetricName=SkyShield \
+  --rules file://lab32-webacl-starter.json \
+  --custom-response-bodies file://lab32-custom-bodies.json \
+  --query 'Summary.[ARN,Id]' --output text)"
+aws wafv2 associate-web-acl --web-acl-arn "$ACL_ARN" --resource-arn "$STAGE_ARN"</code></pre>
+              <p class="expect"><code>aws wafv2 get-web-acl-for-resource --resource-arn "$STAGE_ARN" --query WebACL.Name</code> returns <code>"SkyShield"</code>.</p>
+            </li>
+            <li><strong>Turn on WAF logging (mind the name)</strong>
+<pre data-title="CloudShell"><code class="language-bash"># WAF only logs to log groups whose name starts with aws-waf-logs-
+aws logs create-log-group --log-group-name aws-waf-logs-skyshield
+LG_ARN=$(aws logs describe-log-groups --log-group-name-prefix aws-waf-logs-skyshield --query 'logGroups[0].arn' --output text)
+aws wafv2 put-logging-configuration --logging-configuration ResourceArn="$ACL_ARN",LogDestinationConfigs="${LG_ARN%:*}"</code></pre>
+            </li>
+            <li><strong>Siege #2: managed rules only</strong>
+<pre data-title="CloudShell"><code class="language-bash">sleep 60; python3 kraken-siege.py "$URL"</code></pre>
+              <p>SQLi should now hold. Traversal will <em>probably</em> still be breached on one payload (look for codes like <code>[403, 403, 403, 404]</code>). Find out which one and which rule (didn't) fire:</p>
+<pre data-title="Logs Insights · aws-waf-logs-skyshield"><code class="language-sql">fields @timestamp, action, terminatingRuleId, httpRequest.uri, httpRequest.args,
+       labels.0.name as label0
+| filter httpRequest.uri like /files/
+| sort @timestamp desc</code></pre>
+              <details class="hint"><summary>Hint: which payload, and which group?</summary><p><code>path=/etc/passwd</code> has no <code>../</code> for the CRS LFI rules to match. It's an <em>absolute</em> path to a sensitive Linux file. <code>AWSManagedRulesLinuxRuleSet</code> (≈200 WCU) has LFI rules for exactly that. Check whether it still fits in your WCU budget.</p></details>
+            </li>
+            <li><strong>Update the ACL: the lock-token dance</strong>
+              <p><code>update-web-acl</code> replaces the <em>whole</em> rule list and needs the current <code>LockToken</code> (optimistic locking, so two engineers can't overwrite each other). Build your rules file incrementally: copy the starter to <code>my-rules.json</code>, add the Linux group at priority 45, and push:</p>
+<pre data-title="CloudShell"><code class="language-bash">cp lab32-webacl-starter.json my-rules.json   # then edit my-rules.json
+push() {
+  local tok; tok=$(aws wafv2 get-web-acl --name SkyShield --scope REGIONAL --id "$ACL_ID" --query LockToken --output text)
+  aws wafv2 update-web-acl --name SkyShield --scope REGIONAL --id "$ACL_ID" --lock-token "$tok" \
+    --default-action Allow={} --rules file://my-rules.json --custom-response-bodies file://lab32-custom-bodies.json \
+    --visibility-config SampledRequestsEnabled=true,CloudWatchMetricsEnabled=true,MetricName=SkyShield
+}
+push</code></pre>
+            </li>
+            <li><strong>Rate limits: one for logins, one for everyone</strong>
+              <p>Add two rate-based rules to <code>my-rules.json</code>. <code>login-rate</code> (priority 5): 10 requests / 60 s per IP, scoped down to URI paths starting with <code>/login</code>, action Block. <code>global-rate</code> (priority 6): 100 / 60 s per IP, action Block with a <b>custom 429 response</b> using body key <code>kraken-repelled</code>.</p>
+<pre data-title="my-rules.json (fragment)"><code class="language-json">{
+  "Name": "global-rate", "Priority": 6,
+  "Action": {"Block": {"CustomResponse": {"ResponseCode": 429, "CustomResponseBodyKey": "kraken-repelled"}}},
+  "Statement": {"RateBasedStatement": {"Limit": 100, "EvaluationWindowSec": 60, "AggregateKeyType": "IP"}},
+  "VisibilityConfig": {"SampledRequestsEnabled": true, "CloudWatchMetricsEnabled": true, "MetricName": "global-rate"}
+}</code></pre>
+              <div class="predict"><p>Why do the rate rules sit at priority 5–6, <em>before</em> the managed groups and Bot Control, instead of at the end? Give two reasons, one about cost and one about counting. (Check yourself against FIG 3.2.)</p><details><summary>Reveal</summary><p><b>Cost:</b> a flood that the rate rule blocks never reaches Bot Control, which is billed per request it inspects, so cheap rules go first. <b>Counting:</b> a rate rule only counts the requests that reach it. Put it after a terminating Block and the attacker's blocked requests never add to their rate, so the limit kicks in later than you think.</p></details></div>
+            </li>
+            <li><strong>Bot Control (Common) and your first false positive</strong>
+              <p>Add <code>AWSManagedRulesBotControlRuleSet</code> at priority 50 with <code>"ManagedRuleGroupConfigs":[{"AWSManagedRulesBotControlRuleSet":{"InspectionLevel":"COMMON"}}]</code>. <code>push</code>, wait a minute, and re-run the siege.</p>
+              <p>If <b>Phase 0 (control)</b> now returns 403, you've hit a real false positive: CloudShell runs on AWS IP space, and a Bot Control signal rule treats known data-center traffic as bot-like. Find the <code>terminatingRuleId</code> in the logs and override just that rule to Count:</p>
+<pre data-title="my-rules.json (inside the Bot Control statement)"><code class="language-json">"RuleActionOverrides": [
+  {"Name": "SignalKnownBotDataCenter", "ActionToUse": {"Count": {}}}
+]</code></pre>
+              <div class="callout tip"><strong class="ct">Pro tip: Count first, always</strong><p>In production, every new managed group goes in with <code>OverrideAction: {"Count":{}}</code> for a few days. Then you read the labels in the logs, tune, and only then flip it to <code>None</code> (enforce). Rolling a managed group straight to Block on Black Friday is a career-limiting move.</p></div>
+            </li>
+            <li><strong>Siege #3: hold the line</strong>
+<pre data-title="CloudShell"><code class="language-bash">python3 kraken-siege.py "$URL"</code></pre>
+              <p>If every phase shows <span style="color:var(--green)">[HELD]</span>, the Kraken concedes and prints a flag. If not, the siege report tells you which defence failed. Rate rules need ~30–60 s to kick in, and the script keeps going long enough to give them that time.</p>
+              <div class="term" data-title="CloudShell · kraken-siege.py · shields up"><pre><span class="warn">== Phase 0 - control (a real customer must still get in) ==</span>
+  <span class="ok">[HELD]</span> control - GET / as a browser -&gt; 200 (want 200)
+<span class="warn">== Phase 1 - SQL injection ==</span>
+  <span class="ok">[HELD]</span> sqli - codes [403, 403, 403, 403, 403] (want all 403)
+<span class="warn">== Phase 2 - path traversal / LFI ==</span>
+  <span class="ok">[HELD]</span> traversal - codes [403, 403, 403, 403] (want all 403)
+<span class="warn">== Phase 3 - HTTP-library bots ==</span>
+  <span class="ok">[HELD]</span> http-library - codes [403, 403, 403, 403, 403, 403, 403, 403, 403, 403] (want &gt;=8 x 403)
+<span class="warn">== Phase 4 - credential stuffing on /login (runs up to 120s) ==</span>
+  attempts=31 blocked=15 last=403
+  <span class="ok">[HELD]</span> credential-stuffing - 15 of 31 attempts blocked
+<span class="warn">== Phase 5 - AI scraper swarm (runs up to 120s) ==</span>
+  requests=168 http429=30 last=429
+  <span class="ok">[HELD]</span> scraper-flood - 30 x 429 custom responses (want &gt;=30)
+<span class="warn">== Siege report ==</span>
+  Kraken: ...the shields held. All of them. I'll be back with more tentacles.
+  &gt;&gt; <span class="hl">SKY{██████████████████}</span></pre></div>
+              <p class="term-caption">Expected output, with the flag redacted. Phases 4 and 5 stop early once enough requests are blocked, so your counts will differ.</p>
+              <figure class="shot" data-url="console.aws.amazon.com/wafv2/homev2/web-acl/SkyShield/…/overview?region=us-east-1">
+                <img src="assets/img/day3/shot-waf-acl.svg" alt="Illustrative mock-up of the SkyShield web ACL overview: requests by terminating rule over time, 1,355 of 1,500 WCU used, and sampled requests blocked by SQLi, Linux LFI, global-rate, Bot Control, plus one partner ALLOW">
+                <figcaption><b>SCREEN 3.2</b> The <em>Overview</em> tab after a siege. Sampled requests show the terminating rule <em>inside</em> each managed group, which is how you find the exact rule to override. Illustrative mock-up; the live console layout may differ.</figcaption>
+              </figure>
+              <form class="flag" data-id="d3-flag3" data-hash="6aad835eb4254184576dc3f53ae859ce5f411474e1607d85bbdaf57d5c8d96b4" data-xp="200" data-label="Flag 3.2a · the siege has failed"></form>
+            </li>
+            <li><strong>The trusted partner: labels as a policy language</strong>
+              <p>Orbital Freight calls <code>/partner/manifest</code> with header <code>x-partner-key: nimbus-orbital-7</code> from a known IP. Neither one on its own is enough. Build it with labels:</p>
+              <ul>
+                <li>P1 <code>partner-key</code>: ByteMatch on header <code>x-partner-key</code> EXACTLY → <b>Count</b> + label <code>partner:keyed</code></li>
+                <li>P2 <code>partner-trusted-ip</code>: IPSetReference → <b>Count</b> + label <code>partner:trusted-ip</code></li>
+                <li>P3 <code>partner-allow</code>: AND(both labels, URI starts with <code>/partner/</code>) → <b>Allow</b> + insert header <code>partner: verified</code> (arrives as <code>x-amzn-waf-partner</code>)</li>
+              </ul>
+<pre data-title="CloudShell"><code class="language-bash">MYIP=$(curl -s https://checkip.amazonaws.com)
+IPSET_ARN=$(aws wafv2 create-ip-set --name orbital-freight --scope REGIONAL --ip-address-version IPV4 \
+  --addresses "$MYIP/32" --query Summary.ARN --output text)
+# add the three rules (see FIG 3.2 and lab32-webacl-solution.json for syntax), then:
+push; sleep 45
+curl -s "$URL/partner/manifest"                                           # 403 - no key
+curl -s -H 'x-partner-key: nimbus-orbital-7' "$URL/partner/manifest"      # 200 + token 🚩</code></pre>
+              <div class="term" data-title="CloudShell · sky-dev"><pre><span class="p">$</span> <span class="c">curl -s "$URL/partner/manifest"</span>
+{<span class="k">"error"</span>: <span class="s">"partners only - verification must come from the edge"</span>}
+<span class="p">$</span> <span class="c">curl -s -H 'x-partner-key: nimbus-orbital-7' "$URL/partner/manifest"</span>
+{<span class="k">"manifest"</span>: <span class="s">"Q4 partner cargo manifest"</span>, <span class="k">"token"</span>: <span class="hl">"SKY{██████████████}"</span>}</pre></div>
+              <p class="term-caption">Without the key, WAF counts the request but adds no header, so the origin refuses it. With the key from the trusted IP, WAF inserts <code>x-amzn-waf-partner: verified</code>.</p>
+              <form class="flag" data-id="d3-flag2" data-hash="62103d222e183a32ae162cd4a778024fe446919e74752173d18a49f4afeff87a" data-xp="200" data-label="Flag 3.2b · trusted partner"></form>
+            </li>
+            <li><strong>Now attack your own design</strong>
+              <div class="predict"><p>What happens if the Kraken skips the key and sends <code>x-amzn-waf-partner: verified</code> itself? Try it before you read on.</p><details><summary>Reveal</summary><p><b>The spoof works, and the token leaks.</b> WAF overwrites a header with the same name only when it inserts one itself. The spoofed request doesn't match <code>partner-allow</code>, so WAF inserts nothing and the client's copy reaches the Lambda untouched. AWS's documentation recommends exactly the fix below: block requests that already carry an <code>x-amzn-waf-</code> header.</p></details></div>
+<pre data-title="CloudShell"><code class="language-bash">curl -s -H 'x-amzn-waf-partner: verified' "$URL/partner/manifest"</code></pre>
+              <div class="term" data-title="CloudShell · before and after the P0 rule"><pre><span class="p">$</span> <span class="c">curl -s -H 'x-amzn-waf-partner: verified' "$URL/partner/manifest"</span>
+{<span class="k">"manifest"</span>: <span class="s">"Q4 partner cargo manifest"</span>, <span class="k">"token"</span>: <span class="hl">"SKY{██████████████}"</span>}   <span class="err">&lt;- spoof succeeded</span>
+<span class="o"># ...add deny-spoofed-edge-header at priority 0, push, wait ~45 s...</span>
+<span class="p">$</span> <span class="c">curl -s -o /dev/null -w '%{http_code}\n' -H 'x-amzn-waf-partner: verified' "$URL/partner/manifest"</span>
+<span class="ok">403</span>
+<span class="p">$</span> <span class="c">curl -s -o /dev/null -w '%{http_code}\n' -H 'x-partner-key: nimbus-orbital-7' "$URL/partner/manifest"</span>
+<span class="ok">200</span></pre></div>
+              <p class="term-caption">The vulnerability, then the fix. The real partner still gets in, because WAF inserts its header <em>after</em> evaluation and P0 only ever sees the client's copy.</p>
+              <p>The rule: <strong>never let your origin trust a header a client could have sent</strong>. Add a P0 rule <code>deny-spoofed-edge-header</code>: a RegexMatch <code>.</code> on that header (or, more broadly, any header starting with <code>x-amzn-waf-</code>) → Block. WAF inserts custom headers only after it finishes inspecting a request, so the rule only ever sees a client-supplied copy. <code>push</code> and retest. For higher-value systems, add a signed token the origin can verify itself.</p>
+            </li>
+          </ol>
+          <div class="checkpoint"><p>All siege phases HELD with the control passing, the partner gets the token, the spoofed header is blocked, and <code>aws wafv2 check-capacity</code> on your final rules stays under 1,500 WCU.</p></div>
+          <h4>Troubleshooting</h4>
+          <div class="table-wrap"><table>
+            <thead><tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr></thead>
+            <tbody>
+              <tr><td><code>WAFOptimisticLockException</code></td><td>Stale <code>LockToken</code></td><td>Always fetch a fresh token right before <code>update-web-acl</code>. The <code>push</code> function does this for you.</td></tr>
+              <tr><td>Phase 0 (control) returns 403</td><td>A Bot Control data-center signal, or IP reputation flagging CloudShell's AWS IP</td><td>Find <code>terminatingRuleId</code> in the logs and override <em>only that rule</em> to Count with <code>RuleActionOverrides</code>.</td></tr>
+              <tr><td>Changes don't seem to apply</td><td>WAF propagation delay</td><td>Wait 30–60 seconds after <code>push</code> before you re-run the siege.</td></tr>
+              <tr><td><code>WAFLimitsExceededException</code> / capacity</td><td>Over 1,500 WCU (managed groups are expensive)</td><td>Run <code>check-capacity</code>. Remove the Anonymous IP list or scope down the Core rule set.</td></tr>
+              <tr><td>The log group gets no records</td><td>The name doesn't start with <code>aws-waf-logs-</code>, or the ARN ends in <code>:*</code></td><td>Recreate it with the right prefix. Pass the ARN <em>without</em> the trailing <code>:*</code> (the <code>${LG_ARN%:*}</code> trick).</td></tr>
+              <tr><td>The partner gets 403 even with the key</td><td>Your public IP changed, or the label namespace is wrong</td><td>Re-check <code>checkip.amazonaws.com</code>. Labels in <code>LabelMatchStatement</code> must match exactly (<code>partner:keyed</code>).</td></tr>
+              <tr><td>The rate rules never fire</td><td>The limit is too high for the siege's request rate, or the window is too long</td><td>Lower it to the 10 / 60 s and 100 / 60 s given in step 8, and keep the siege running for the full 120 seconds.</td></tr>
+            </tbody>
+          </table></div>
+          <div class="stretch"><p><b>ATP on /login.</b> Swap the crude <code>login-rate</code> rule for <code>AWSManagedRulesATPRuleSet</code> with a login path of <code>/login</code> and JSON username/password fields (<code>/username</code>, <code>/password</code>). Re-run phase 4 and compare the labels you get (for example <code>awswaf:managed:aws:atp:aggregate:volumetric:ip:high</code>). Then work out why response inspection, which reads login success or failure from the origin's reply, isn't available on a regional API Gateway.</p></div>
+          <div class="cleanup">
+<pre><code class="language-bash">aws wafv2 disassociate-web-acl --resource-arn "$STAGE_ARN"
+aws wafv2 delete-logging-configuration --resource-arn "$ACL_ARN"
+aws wafv2 delete-web-acl --name SkyShield --scope REGIONAL --id "$ACL_ID" \
+  --lock-token $(aws wafv2 get-web-acl --name SkyShield --scope REGIONAL --id "$ACL_ID" --query LockToken --output text)
+aws wafv2 delete-ip-set --name orbital-freight --scope REGIONAL --id "${IPSET_ARN##*/}" \
+  --lock-token $(aws wafv2 get-ip-set --name orbital-freight --scope REGIONAL --id "${IPSET_ARN##*/}" --query LockToken --output text)
+aws logs delete-log-group --log-group-name aws-waf-logs-skyshield
+aws cloudformation delete-stack --stack-name sky-lab32</code></pre></div>
+        </div>
+      </article>
+
+      <!-- ===================== LAB 3.3 ===================== -->
+      <article class="lab" id="lab-3-3" data-toc="Lab 3.3 · Kubernetes Citadel">
+        <img class="lab-cover" src="assets/img/day3/lab3-cover.svg" alt="Lab 3.3 cover: six glowing concentric rings around a pod, a Kraken tentacle stopped at the outer ring and the node metadata endpoint crossed out">
+        <div class="lab-head">
+          <div class="lab-num">Lab 3.3</div>
+          <h3>Kubernetes Citadel</h3>
+          <div class="chips"><span class="chip hard">Advanced</span><span class="chip">⏱ 60 min</span><span class="chip">💸 ~$0.35/hr while up</span><span class="chip">EKS · Pod Identity · NetworkPolicy · GuardDuty</span></div>
+        </div>
+        <div class="lab-body">
+          <p><b>Goal:</b> The <code>kraken</code> namespace has been compromised; picture a vulnerable third-party chart. First, act as the attacker and prove a single pod can steal the <em>node's</em> IAM role and read Nimbus's vault. Then close every ring in FIG 3.4 so the same pod gets nothing, while the legitimate <code>vault-app</code> keeps exactly the access it needs.</p>
+          <div class="callout cost"><strong class="ct">The meter has been running since the preflight</strong><p>The EKS control plane, two t3.medium nodes and a NAT gateway cost ≈ $0.35 per hour together. That's why the cluster exists for Labs 3.3 and 3.4 only, and why you delete it at 17:15. A cluster forgotten over a weekend costs about $25 on its own.</p></div>
+          <div class="paths">
+            <div class="path guided"><p>Follow the 13 steps: attack first (steps 3–5), then close one ring at a time and re-attack after each.</p><p><b>Time:</b> about 60 min, plus 5–15 min waiting on GuardDuty. <b>Fastest feedback:</b> run <code>./lab33-verify.sh "$VAULT"</code> after any step. Its BREACH lines tell you exactly which ring is still open.</p></div>
+            <div class="path challenge"><p><b>Goal:</b> <code>lab33-verify.sh</code> reports <code>held=9 breached=0</code>.<br><b>Constraints:</b> don't delete or modify the <code>kraken</code> workloads, and don't touch <code>vault-app</code>'s code. <code>vault-app</code> must keep reading its vault via Pod Identity with ABAC on the namespace tag.<br><b>Acceptance:</b> a GuardDuty runtime finding attributed to <code>kraken/kraken-probe</code>.</p></div>
+          </div>
+          <figure class="figure"><img src="assets/img/day3/eks-layers.svg" alt="Lab 3.3 rings diagram"><figcaption><b>MAP</b> You start with rings ③ (hop limit 2) and ④ (fat node role) broken.</figcaption></figure>
+          <h4>Prerequisites</h4>
+          <ul><li>Cluster <code>citadel</code> from the <a href="#preflight">09:00 preflight</a> (<a href="labs/day3/lab33-cluster.yaml">lab33-cluster.yaml</a>). GuardDuty detector enabled in this account (Day 2).</li><li>Files: <a href="labs/day3/lab33-plant-vault.sh">lab33-plant-vault.sh</a>, <a href="labs/day3/lab33-workloads.yaml">lab33-workloads.yaml</a>, <a href="labs/day3/lab33-netpol.yaml">lab33-netpol.yaml</a>, <a href="labs/day3/lab33-verify.sh">lab33-verify.sh</a></li></ul>
+          <h4>Steps</h4>
+          <ol class="steps" data-lab="d3-lab3">
+            <li><strong>Inspect the citadel's front door</strong>
+<pre data-title="CloudShell"><code class="language-bash">kubectl get nodes -o wide
+aws eks describe-cluster --name citadel --query 'cluster.accessConfig'          # authenticationMode: API
+aws eks list-access-entries --cluster-name citadel
+aws eks list-associated-access-policies --cluster-name citadel \
+  --principal-arn "$(aws eks list-access-entries --cluster-name citadel --query 'accessEntries[0]' --output text)"</code></pre>
+              <p>No <code>aws-auth</code> ConfigMap. Cluster admins are explicit <em>access policy associations</em>, and every grant and revocation shows up in CloudTrail.</p>
+            </li>
+            <li><strong>Plant the vault and deploy the workloads</strong>
+<pre data-title="CloudShell"><code class="language-bash">VAULT=$(./lab33-plant-vault.sh); echo "$VAULT"
+kubectl apply -f lab33-workloads.yaml
+kubectl get pods -A -l 'app in (vault-app,vault-web,kraken-shell,kraken-probe)' -w   # Ctrl-C when Running</code></pre>
+            </li>
+            <li><strong>Be the Kraken: who am I?</strong>
+              <div class="predict"><p>The <code>kraken-shell</code> pod has no service account role and nobody gave it AWS credentials. What will <code>aws sts get-caller-identity</code> print inside it?</p><details><summary>Reveal</summary><p>The <b>node's</b> instance role. With no environment credentials, no web identity and no Pod Identity, the SDK's last stop is IMDS, and with hop limit 2 the answer can make it back into the pod.</p></details></div>
+<pre data-title="CloudShell"><code class="language-bash">kubectl exec -n kraken kraken-shell -- aws sts get-caller-identity</code></pre>
+              <div class="term" data-title="CloudShell · kubectl exec -n kraken kraken-shell"><pre>{
+    <span class="k">"UserId"</span>: <span class="s">"AROAEXAMPLEID7NODE:i-0b5e2f8a1c3d4e6f7"</span>,
+    <span class="k">"Account"</span>: <span class="s">"111122223333"</span>,
+    <span class="k">"Arn"</span>: <span class="s">"arn:aws:sts::111122223333:assumed-role/<span class="hl">eksctl-citadel-nodegroup-citadel-NodeInstanceRole-7Hk2Q</span>/i-0b5e2f8a1c3d4e6f7"</span>
+}</pre></div>
+              <p class="term-caption">A pod wearing the node's identity. The role's suffix and instance ID will differ.</p>
+              <p>It prints <code>arn:aws:sts::…:assumed-role/eksctl-citadel-nodegroup-…-NodeInstanceRole-…/i-0…</code>. The AWS CLI walked the default credential chain, found nothing else, asked IMDS, and IMDS answered, because the hop limit is 2.</p>
+            </li>
+            <li><strong>Loot the vault</strong>
+<pre data-title="CloudShell"><code class="language-bash">kubectl exec -n kraken kraken-shell -- aws s3 ls
+kubectl exec -n kraken kraken-shell -- aws s3 cp "s3://$VAULT/manifest.txt" -</code></pre>
+              <p>The manifest's <code>auth:</code> line is a flag. Any pod on any node has this access, because <em>node roles are not pod roles</em>.</p>
+              <form class="flag" data-id="d3-flag4" data-hash="e8a7159620889368428149986e1d864075d05e791cf6f1c1151394e8b32190f7" data-xp="150" data-label="Flag 3.3a · the heist"></form>
+            </li>
+            <li><strong>See the mechanism with your own eyes</strong>
+<pre data-title="CloudShell"><code class="language-bash">kubectl exec -n kraken kraken-probe -- sh -c '
+  T=$(curl -s -X PUT -H "X-aws-ec2-metadata-token-ttl-seconds: 60" http://169.254.169.254/latest/api/token)
+  echo "token: ${T:0:16}..."
+  curl -s -H "X-aws-ec2-metadata-token: $T" http://169.254.169.254/latest/meta-data/iam/security-credentials/'
+aws ec2 describe-instances --filters Name=tag:eks:cluster-name,Values=citadel \
+  --query 'Reservations[].Instances[].[InstanceId,MetadataOptions.HttpTokens,MetadataOptions.HttpPutResponseHopLimit]' --output table</code></pre>
+              <p>IMDSv2 is <code>required</code> and it <em>still</em> doesn't help, because the token's response packet survives the extra hop into the pod's network namespace. IMDSv2 stops SSRF. Hop limit 1 is what stops pods.</p>
+            </li>
+            <li><strong>Give the legitimate app its own identity (Pod Identity)</strong>
+              <p>Create a role that only the Pod Identity service can assume, scope its S3 access to this bucket, and use the session tags so only the <code>nimbus</code> namespace can use it (ABAC).</p>
+<pre data-title="CloudShell"><code class="language-bash">cat &gt; /tmp/trust.json &lt;&lt;'EOF'
+{"Version":"2012-10-17","Statement":[{"Effect":"Allow",
+  "Principal":{"Service":"pods.eks.amazonaws.com"},
+  "Action":["sts:AssumeRole","sts:TagSession"]}]}
+EOF
+aws iam create-role --role-name sky-vault-reader --assume-role-policy-document file:///tmp/trust.json
+aws iam put-role-policy --role-name sky-vault-reader --policy-name vault-read --policy-document "{
+  \"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Action\":\"s3:GetObject\",
+  \"Resource\":\"arn:aws:s3:::$VAULT/*\",
+  \"Condition\":{\"StringEquals\":{\"aws:PrincipalTag/kubernetes-namespace\":\"nimbus\",
+                                   \"aws:PrincipalTag/eks-cluster-name\":\"citadel\"}}}]}"
+aws eks create-pod-identity-association --cluster-name citadel --namespace nimbus \
+  --service-account vault-reader --role-arn "arn:aws:iam::$(aws sts get-caller-identity --query Account --output text):role/sky-vault-reader"
+kubectl rollout restart -n nimbus deploy/vault-app &amp;&amp; kubectl rollout status -n nimbus deploy/vault-app
+kubectl exec -n nimbus deploy/vault-app -- aws sts get-caller-identity --query Arn</code></pre>
+              <details class="hint"><summary>Hint: Pod Identity vs IRSA</summary><p>IRSA needs an OIDC provider per cluster and a trust policy naming that cluster's OIDC URL, so every new cluster means editing roles. Pod Identity uses one service principal (<code>pods.eks.amazonaws.com</code>), the association lives in the EKS API, and the agent DaemonSet hands out credentials at <code>169.254.170.23</code>. The automatic session tags are what let one role be reused safely across clusters.</p></details>
+            </li>
+            <li><strong>Starve the node role</strong>
+<pre data-title="CloudShell"><code class="language-bash">NODE_ROLE=$(aws eks describe-nodegroup --cluster-name citadel --nodegroup-name citadel-ng \
+  --query nodegroup.nodeRole --output text | awk -F/ '{print $NF}')
+aws iam detach-role-policy --role-name "$NODE_ROLE" --policy-arn arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess</code></pre>
+            </li>
+            <li><strong>Hop limit 1 on every node</strong>
+<pre data-title="CloudShell"><code class="language-bash">for id in $(aws ec2 describe-instances --filters Name=tag:eks:cluster-name,Values=citadel Name=instance-state-name,Values=running \
+            --query 'Reservations[].Instances[].InstanceId' --output text); do
+  aws ec2 modify-instance-metadata-options --instance-id "$id" --http-tokens required --http-put-response-hop-limit 1 &gt;/dev/null &amp;&amp; echo "fixed $id"
+done
+# Make it the default for every future launch in this Region:
+aws ec2 modify-instance-metadata-defaults --http-tokens required --http-put-response-hop-limit 1</code></pre>
+              <div class="callout gotcha"><strong class="ct">Gotcha: managed node groups revert</strong><p>Changing a running instance doesn't change its launch template. The next node replacement brings hop limit 2 back. The durable fix is <code>disablePodIMDS: true</code> in eksctl, the launch template's metadata options, the account default you just set, and an EC2 declarative policy at the OU so nobody can undo it.</p></div>
+            </li>
+            <li><strong>Re-run the heist</strong>
+<pre data-title="CloudShell"><code class="language-bash">kubectl exec -n kraken kraken-shell -- aws sts get-caller-identity   # Unable to locate credentials
+kubectl exec -n nimbus deploy/vault-app -- aws s3 cp "s3://$VAULT/manifest.txt" - | head -2   # still works</code></pre>
+              <div class="term" data-title="CloudShell · the heist, re-run"><pre><span class="p">$</span> <span class="c">kubectl exec -n kraken kraken-shell -- aws sts get-caller-identity</span>
+<span class="err">Unable to locate credentials. You can configure credentials by running "aws configure".</span>
+<span class="err">command terminated with exit code 253</span>
+<span class="p">$</span> <span class="c">kubectl exec -n nimbus deploy/vault-app -- aws s3 cp "s3://$VAULT/manifest.txt" - | head -2</span>
+NIMBUS INTERSTELLAR - CITADEL VAULT - CLASSIFIED CARGO MANIFEST
+route: LEO-7 -&gt; Lagrange-2</pre></div>
+              <p class="term-caption">The attacker gets nothing, and the defender keeps working. That's the whole point of the lab, on one screen.</p>
+            </li>
+            <li><strong>Lateral movement, then default-deny</strong>
+              <div class="predict"><p>Can <code>kraken-probe</code> reach <code>vault-web.nimbus</code> right now? What about <code>https://aws.amazon.com</code>?</p><details><summary>Reveal</summary><p>Yes to both: you'll see <code>200</code> and <code>200</code>. Kubernetes networking is flat and allow-all until a NetworkPolicy selects a pod. The VPC CNI's network-policy agent is enabled in the cluster config, but it has nothing to enforce yet.</p></details></div>
+<pre data-title="CloudShell"><code class="language-bash">kubectl exec -n kraken kraken-probe -- curl -s -m 3 -o /dev/null -w '%{http_code}\n' http://vault-web.nimbus.svc.cluster.local
+kubectl apply -f lab33-netpol.yaml
+sleep 10
+kubectl exec -n kraken kraken-probe -- curl -s -m 3 -o /dev/null -w '%{http_code}\n' http://vault-web.nimbus.svc.cluster.local   # 000
+kubectl exec -n nimbus deploy/vault-app -- aws sts get-caller-identity --query Arn   # still works - why?</code></pre>
+              <p>Read <a href="labs/day3/lab33-netpol.yaml">lab33-netpol.yaml</a> carefully. The <code>nimbus</code> egress policy explicitly allows DNS, the Pod Identity agent at <code>169.254.170.23:80</code>, and 443 to anywhere <em>except</em> <code>169.254.169.254/32</code>. Delete the Pod Identity line, re-apply, and watch vault-app lose its credentials. Then put it back.</p>
+            </li>
+            <li><strong>Turn on the runtime eye: GuardDuty Runtime Monitoring</strong>
+<pre data-title="CloudShell"><code class="language-bash">DET=$(aws guardduty list-detectors --query 'DetectorIds[0]' --output text)
+aws guardduty update-detector --detector-id "$DET" --features \
+  '[{"Name":"RUNTIME_MONITORING","Status":"ENABLED","AdditionalConfiguration":[{"Name":"EKS_ADDON_MANAGEMENT","Status":"ENABLED"}]}]'
+# a few minutes later the managed agent add-on appears:
+aws eks describe-addon --cluster-name citadel --addon-name aws-guardduty-agent --query 'addon.status'</code></pre>
+            </li>
+            <li><strong>Trip the wire (benign)</strong>
+              <p><code>guarddutyc2activityb.com</code> is a test domain that AWS publishes so you can generate C&amp;C findings safely. The <code>kraken</code> namespace still allows DNS, so the lookup works and the runtime agent sees it.</p>
+<pre data-title="CloudShell"><code class="language-bash">kubectl exec -n kraken kraken-probe -- getent hosts guarddutyc2activityb.com
+# 5-15 minutes later:
+aws guardduty list-findings --detector-id "$DET" --finding-criteria \
+  '{"Criterion":{"type":{"Eq":["Backdoor:Runtime/C&amp;CActivity.B!DNS"]}}}' --query FindingIds
+aws guardduty get-findings --detector-id "$DET" --finding-ids &lt;id&gt; \
+  --query 'Findings[0].Resource.{ns:KubernetesDetails.KubernetesWorkloadDetails.Namespace,pod:KubernetesDetails.KubernetesWorkloadDetails.Name,cluster:EksClusterDetails.Name}'</code></pre>
+              <p>The finding tells you the cluster, namespace, workload and container image. That's an IR playbook's first five minutes done before anyone gets paged. On Day 5 you'll automate the response.</p>
+              <figure class="shot" data-url="console.aws.amazon.com/guardduty/home?region=us-east-1#/findings?fId=…">
+                <img src="assets/img/day3/shot-guardduty-runtime.svg" alt="Illustrative mock-up of a GuardDuty finding Backdoor:Runtime/C&amp;CActivity.B!DNS with severity High, cluster citadel, namespace kraken, pod kraken-probe, process getent and domain guarddutyc2activityb.com">
+                <figcaption><b>SCREEN 3.3</b> The runtime finding, attributed down to pod, process and executable. Illustrative mock-up; the live console layout may differ.</figcaption>
+              </figure>
+            </li>
+            <li><strong>Run the verifier</strong>
+<pre data-title="CloudShell"><code class="language-bash">./lab33-verify.sh "$VAULT"</code></pre>
+              <p>Nine checks, from both the attacker's and the defender's side. Pass them all and Owlsley hands you the flag.</p>
+              <div class="term" data-title="CloudShell · ./lab33-verify.sh"><pre>== node metadata options ==
+  <span class="ok">[HELD]</span> i-0b5e2f8a1c3d4e6f7 IMDSv2 required, hop limit 1
+  <span class="ok">[HELD]</span> i-07c1d9e3b5a2f4c68 IMDSv2 required, hop limit 1
+== node role ==
+  <span class="ok">[HELD]</span> node role no longer grants S3
+== attacker's view (namespace kraken) ==
+  <span class="ok">[HELD]</span> kraken-shell has no AWS credentials
+  <span class="ok">[HELD]</span> IMDS unreachable from pod
+  <span class="ok">[HELD]</span> internet egress blocked
+  <span class="ok">[HELD]</span> cannot reach nimbus/vault-web
+== defender's view (namespace nimbus) ==
+  <span class="ok">[HELD]</span> vault-app runs as arn:aws:sts::111122223333:assumed-role/sky-vault-reader/eks-citadel-vault-app-…
+  <span class="ok">[HELD]</span> vault-app can still read its vault
+
+  held=9 breached=0
+  Owlsley: The Citadel holds. &gt;&gt; <span class="hl">SKY{██████████████████}</span></pre></div>
+              <p class="term-caption">A clean run, with the flag redacted. One line per node, so a different node count changes the total.</p>
+              <form class="flag" data-id="d3-flag5" data-hash="28be83e3be6bd67368fc84aeb16d8234716bd56659fe965a194bced84ca01072" data-xp="200" data-label="Flag 3.3b · the walls hold"></form>
+            </li>
+          </ol>
+          <div class="checkpoint"><p><code>lab33-verify.sh</code> reports <code>held=9 breached=0</code>, and you have at least one <code>Backdoor:Runtime/C&amp;CActivity.B!DNS</code> finding attributed to <code>kraken/kraken-probe</code>.</p></div>
+          <h4>Troubleshooting</h4>
+          <div class="table-wrap"><table>
+            <thead><tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr></thead>
+            <tbody>
+              <tr><td><code>kubectl</code>: "You must be logged in" / 401</td><td>No access entry for your CloudShell principal, or a stale kubeconfig</td><td>Run <code>aws eks update-kubeconfig --name citadel</code>. Then check <code>list-access-entries</code> for your role ARN.</td></tr>
+              <tr><td>Pods stuck in <code>Pending</code></td><td>Nodes not ready yet, or the node group failed</td><td>Run <code>kubectl get nodes</code>, and look at <code>eksctl get nodegroup --cluster citadel</code> and its CloudFormation events.</td></tr>
+              <tr><td>vault-app still shows the node role</td><td>The pod started before the association existed</td><td><code>kubectl rollout restart -n nimbus deploy/vault-app</code></td></tr>
+              <tr><td><code>AccessDenied</code> for vault-app after Pod Identity</td><td>The ABAC tag key is wrong, or <code>sts:TagSession</code> is missing from the trust policy</td><td>The keys are <code>kubernetes-namespace</code> and <code>eks-cluster-name</code>. The trust policy needs both <code>sts:AssumeRole</code> and <code>sts:TagSession</code>.</td></tr>
+              <tr><td>NetworkPolicy has no effect</td><td>The VPC CNI's network policy agent isn't enabled</td><td>Run <code>kubectl get ds -n kube-system aws-node -o yaml | grep -i policy</code>. The cluster config sets <code>enableNetworkPolicy: "true"</code>.</td></tr>
+              <tr><td>No GuardDuty finding after 15 minutes</td><td>No detector, or the agent add-on isn't <code>ACTIVE</code></td><td>Run <code>describe-addon --addon-name aws-guardduty-agent</code>, and confirm Runtime Monitoring is enabled for EKS in the console.</td></tr>
+            </tbody>
+          </table></div>
+          <details class="hint solution"><summary>Solution: common BREACH lines and their fix</summary>
+            <ul>
+              <li><b>vault-app identity is 'assumed-role/…NodeInstanceRole…'</b>: the pod started before the association existed. <code>kubectl rollout restart</code> it.</li>
+              <li><b>vault-app lost access to its vault</b>: either the NetworkPolicy blocks <code>169.254.170.23</code>, or your role condition used the wrong tag key (it's <code>kubernetes-namespace</code>, not <code>k8s-namespace</code>).</li>
+              <li><b>tokens=required hop=2</b>: a node was replaced after step 8. Re-run the loop.</li>
+            </ul></details>
+          <div class="stretch"><p><b>Pod Security Admission + Fargate.</b> Label the <code>kraken</code> namespace <code>pod-security.kubernetes.io/enforce=restricted</code> and try to start a privileged pod. Then create a Fargate profile for a new namespace, schedule <code>kraken-probe</code> there, and repeat the IMDS PUT from step 5. Why does it fail on Fargate no matter what the hop limit is?</p></div>
+          <div class="cleanup"><p>Keep the cluster for Lab 3.4. Final teardown at 17:15:</p>
+<pre><code class="language-bash">eksctl delete cluster -f lab33-cluster.yaml --disable-nodegroup-eviction
+aws iam delete-role-policy --role-name sky-vault-reader --policy-name vault-read &amp;&amp; aws iam delete-role --role-name sky-vault-reader
+aws s3 rb "s3://$VAULT" --force</code></pre></div>
+        </div>
+      </article>
+
+      <!-- ===================== LAB 3.4 ===================== -->
+      <article class="lab" id="lab-3-4" data-toc="Lab 3.4 · Poisoned Supply">
+        <img class="lab-cover" src="assets/img/day3/lab4-cover.svg" alt="Lab 3.4 cover: a harbor gate of green light admits a signed container ship while an unsigned Kraken ship is stopped outside">
+        <div class="lab-head">
+          <div class="lab-num">Lab 3.4</div>
+          <h3>Poisoned Supply</h3>
+          <div class="chips"><span class="chip hard">Advanced</span><span class="chip">⏱ 45 min</span><span class="chip">💸 ~$0.15 (+ cluster)</span><span class="chip">ECR · Inspector · KMS · cosign · Kyverno</span></div>
+        </div>
+        <div class="lab-body">
+          <p><b>Goal:</b> Ship <code>nimbus/manifest-api</code> through a supply chain the Kraken can't poison. Scan it, read its SBOM, sign its <em>digest</em> with a KMS key, and enforce verification at the cluster gate, so the Kraken's unsigned "hotfix" is rejected even when someone with cluster access tries to run it.</p>
+          <div class="paths">
+            <div class="path guided"><p>Follow the 12 steps: repo and scanning, build, SBOM, KMS key, sign, attack, gate, verify.</p><p><b>Time:</b> about 45 min. <b>Long pole:</b> the first Inspector scan (2–5 min). Start step 4 while you wait, and come back for the flag.</p></div>
+            <div class="path challenge"><p><b>Goal:</b> <code>lab34-verify.sh</code> prints <code>[REJECTED]</code> for <code>kraken-hotfix</code> and <code>[ADMITTED]</code> for v1 rewritten to a digest.<br><b>Constraints:</b> the signing key lives only in KMS. Kyverno gets ECR access through its <em>own</em> Pod Identity role, never through the node role. Signatures cover digests, not tags.<br><b>Acceptance:</b> you can name the critical CVE and explain why the signed image still carries it.</p></div>
+          </div>
+          <figure class="figure"><img src="assets/img/day3/supply-chain.svg" alt="Supply chain pipeline diagram"><figcaption><b>PIPELINE</b> You'll build stages ③–⑥ by hand today. In real life they're four CI steps and one cluster policy.</figcaption></figure>
+          <h4>Prerequisites</h4>
+          <ul><li>Cluster <code>citadel</code> from Lab 3.3, with IMDS locked down. That matters in step 9.</li><li>Docker in CloudShell (available in us-east-1). Files: <a href="labs/day3/lab34-app/index.html">lab34-app/</a>, <a href="labs/day3/lab34-kyverno-policy.yaml">lab34-kyverno-policy.yaml</a>, <a href="labs/day3/lab34-verify.sh">lab34-verify.sh</a></li></ul>
+          <h4>Steps</h4>
+          <ol class="steps" data-lab="d3-lab4">
+            <li><strong>A repo that can't be overwritten, scanned continuously</strong>
+<pre data-title="CloudShell"><code class="language-bash">ACCT=$(aws sts get-caller-identity --query Account --output text)
+REG=$ACCT.dkr.ecr.us-east-1.amazonaws.com; REPO=$REG/nimbus/manifest-api
+aws ecr create-repository --repository-name nimbus/manifest-api --image-tag-mutability IMMUTABLE
+aws inspector2 enable --resource-types ECR
+aws ecr put-registry-scanning-configuration --scan-type ENHANCED \
+  --rules '[{"scanFrequency":"CONTINUOUS_SCAN","repositoryFilters":[{"filter":"nimbus/*","filterType":"WILDCARD"}]}]'</code></pre>
+            </li>
+            <li><strong>Build and push v1</strong>
+<pre data-title="CloudShell"><code class="language-bash">aws ecr get-login-password | docker login --username AWS --password-stdin "$REG"
+docker build -t manifest-api:local lab34-app
+docker tag manifest-api:local "$REPO:v1" &amp;&amp; docker push "$REPO:v1"
+DIGEST=$(aws ecr describe-images --repository-name nimbus/manifest-api --image-ids imageTag=v1 --query 'imageDetails[0].imageDigest' --output text); echo "$DIGEST"</code></pre>
+            </li>
+            <li><strong>Read the scanner's verdict</strong>
+              <p>Give Inspector 2–5 minutes, then pull the findings and filter for the YAML library <code>app.py</code> trusts with untrusted input:</p>
+<pre data-title="CloudShell"><code class="language-bash">aws inspector2 list-findings --filter-criteria \
+  '{"ecrImageRepositoryName":[{"comparison":"EQUALS","value":"nimbus/manifest-api"}]}' \
+  --query 'findings[].{sev:severity,id:packageVulnerabilityDetails.vulnerabilityId,pkg:packageVulnerabilityDetails.vulnerablePackages[0].name,ver:packageVulnerabilityDetails.vulnerablePackages[0].version}' \
+  --output json | jq -r '.[] | select(.pkg|ascii_downcase=="pyyaml") | "\(.sev)\t\(.id)\t\(.pkg) \(.ver)"'</code></pre>
+              <div class="term" data-title="CloudShell · inspector2 list-findings | jq"><pre><span class="err">CRITICAL</span>	<span class="hl">CVE-████-█████</span>	PyYAML 5.3.1</pre></div>
+              <p class="term-caption">The shape of the answer, with the ID redacted. The other findings (OS packages and friends) are filtered out by the <code>select</code>. Getting <code>[]</code>? The first scan can take 5 minutes or more. Run <code>aws inspector2 list-coverage</code> and check that the image shows <code>scanStatus: ACTIVE</code>.</p>
+              <figure class="shot" data-url="console.aws.amazon.com/inspector/v2/home?region=us-east-1#/findings/container-image">
+                <img src="assets/img/day3/shot-inspector-ecr.svg" alt="Illustrative mock-up of Inspector findings for nimbus/manifest-api:v1: severity tiles and a table of findings with vulnerability IDs redacted; the critical one is PyYAML 5.3.1, fixed in 5.4">
+                <figcaption><b>SCREEN 3.4</b> The same answer in the console, under <em>Findings → By container image</em>. <em>Export SBOMs</em> lives in the left nav. IDs are redacted here because finding the critical one is your flag. Illustrative mock-up; the live console layout may differ.</figcaption>
+              </figure>
+              <p>The flag is the <b>CRITICAL</b> CVE ID, lowercased with dashes as underscores, wrapped as <code>SKY{cve_yyyy_nnnnn}</code>.</p>
+              <form class="flag" data-id="d3-flag6" data-hash="04b574ab873d7d24116a1b77ce87fa89dfa416d81c0852db6d78dfb7e7a1e081" data-xp="100" data-label="Flag 3.4a · name the CVE"></form>
+            </li>
+            <li><strong>Shift left: SBOM + scan before push</strong>
+              <p>In CI you want the verdict <em>before</em> the image lands in ECR. Generate a CycloneDX SBOM with Inspector's SBOM generator and scan it with the Inspector Scan API:</p>
+<pre data-title="CloudShell"><code class="language-bash">curl -sSLo /tmp/sbomgen.zip https://amazon-inspector-sbomgen.s3.amazonaws.com/latest/linux/amd64/inspector-sbomgen.zip
+unzip -oq /tmp/sbomgen.zip -d /tmp/sbomgen &amp;&amp; SBOMGEN=$(find /tmp/sbomgen -name inspector-sbomgen -type f) &amp;&amp; chmod +x "$SBOMGEN"
+"$SBOMGEN" container --image manifest-api:local -o /tmp/sbom.json
+jq -r '.components[] | select(.name|test("yaml|flask";"i")) | "\(.name) \(.version)"' /tmp/sbom.json
+aws inspector-scan scan-sbom --sbom file:///tmp/sbom.json --output-format INSPECTOR &gt; /tmp/scan.json
+jq '.sbom.vulnerability_count // .' /tmp/scan.json | head -20
+# a CI gate is one line:
+jq -e '[.. | .severity? // empty | select(.=="critical" or .=="CRITICAL")] | length == 0' /tmp/scan.json \
+  || echo "🚫 CI GATE: critical vulnerabilities - build would fail here"</code></pre>
+            </li>
+            <li><strong>Mint a signing key in KMS</strong>
+<pre data-title="CloudShell"><code class="language-bash">KEY=$(aws kms create-key --key-spec ECC_NIST_P256 --key-usage SIGN_VERIFY \
+  --description "Skyfortress image signing" --query KeyMetadata.KeyId --output text)
+aws kms create-alias --alias-name alias/sky-cosign --target-key-id "$KEY"
+curl -sSLo /tmp/cosign https://github.com/sigstore/cosign/releases/download/v2.4.1/cosign-linux-amd64 &amp;&amp; chmod +x /tmp/cosign &amp;&amp; sudo mv /tmp/cosign /usr/local/bin/</code></pre>
+              <p>The private key never leaves KMS. Every signature is a <code>kms:Sign</code> call in CloudTrail, and an SCP or key policy decides which CI roles are allowed to sign.</p>
+            </li>
+            <li><strong>Sign the digest (never the tag)</strong>
+<pre data-title="CloudShell"><code class="language-bash">cosign sign --yes --tlog-upload=false --key awskms:///alias/sky-cosign "$REPO@$DIGEST"
+cosign verify --key awskms:///alias/sky-cosign --insecure-ignore-tlog=true "$REPO@$DIGEST" | jq '.[0].critical'</code></pre>
+              <div class="tabs">
+                <div class="tab-list"><button>Lab path: cosign + KMS</button><button>AWS-native: Signer + Notation</button></div>
+                <div class="tab-panel"><p>Portable and verified natively by Kyverno. <code>--tlog-upload=false</code> keeps a private image's signature out of the public Rekor transparency log. The trade-off is that you lose the public audit trail, which is fine for internal images. The signature is stored in ECR next to the image as an OCI artifact.</p></div>
+                <div class="tab-panel">
+<pre data-title="AWS Signer + Notation (reference)"><code class="language-bash">aws signer put-signing-profile --profile-name skyfortress_images --platform-id Notation-OCI-SHA384-ECDSA
+# install notation + the AWS Signer plugin, then:
+notation sign --plugin com.amazonaws.signer.notation.plugin \
+  --id "arn:aws:signer:us-east-1:$ACCT:/signing-profiles/skyfortress_images" "$REPO@$DIGEST"
+# enforce in-cluster with Ratify (Gatekeeper) or the Kyverno Notation AWS plugin.
+# Bonus: Signer gives you profile-level REVOCATION - one API call invalidates every signature from a leaked profile.</code></pre></div>
+              </div>
+            </li>
+            <li><strong>The Kraken's "hotfix"</strong>
+              <p>Someone with push access ships an "urgent fix" with an extra binary. Same app, different digest, no signature.</p>
+              <div class="predict"><p>The last line of the block below tries to push over <code>v1</code>. What happens, and which setting from step 1 decides it?</p><details><summary>Reveal</summary><p>It fails with <code>ImageTagAlreadyExistsException</code>, because the repository is <code>IMMUTABLE</code>. Without that, the Kraken could have re-pointed <code>v1</code> at the poisoned image, and every deployment that pins a tag would silently pull it. A digest pin prevents the same thing for consumers.</p></details></div>
+<pre data-title="CloudShell"><code class="language-bash">docker build -t kraken:hotfix -f lab34-app/Dockerfile.kraken lab34-app
+docker tag kraken:hotfix "$REPO:kraken-hotfix" &amp;&amp; docker push "$REPO:kraken-hotfix"
+docker push "$REPO:v1" 2&gt;&amp;1 | tail -1     # try to overwrite v1 too...  ImageTagAlreadyExistsException ✓</code></pre>
+            </li>
+            <li><strong>Install Kyverno</strong>
+<pre data-title="CloudShell"><code class="language-bash">command -v helm || curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+helm repo add kyverno https://kyverno.github.io/kyverno/ &amp;&amp; helm repo update
+helm install kyverno kyverno/kyverno -n kyverno --create-namespace --wait
+kubectl get pods -n kyverno</code></pre>
+            </li>
+            <li><strong>Plot twist: Kyverno can't read ECR anymore</strong>
+              <div class="predict"><p>Kyverno's <code>amazon</code> credential helper uses the AWS default credential chain. In Lab 3.3 you set hop limit 1 and removed S3 from the node role. Where will Kyverno's admission controller get ECR credentials from now?</p><details><summary>Reveal</summary><p>Nowhere. IMDS is out of reach from a pod with hop limit 1, so the chain comes up empty and signature checks fail with 401. That's the right outcome: a security control should have its <em>own</em> least-privilege identity rather than borrowing the node's.</p></details></div>
+              <p>Nowhere, which is exactly what you designed. Give Kyverno its own least-privilege identity through Pod Identity:</p>
+<pre data-title="CloudShell"><code class="language-bash">aws iam create-role --role-name sky-kyverno-ecr --assume-role-policy-document file:///tmp/trust.json
+aws iam attach-role-policy --role-name sky-kyverno-ecr --policy-arn arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
+aws eks create-pod-identity-association --cluster-name citadel --namespace kyverno \
+  --service-account kyverno-admission-controller --role-arn "arn:aws:iam::$ACCT:role/sky-kyverno-ecr"
+kubectl rollout restart -n kyverno deploy/kyverno-admission-controller
+kubectl rollout status -n kyverno deploy/kyverno-admission-controller</code></pre>
+            </li>
+            <li><strong>Write the gate</strong>
+<pre data-title="CloudShell"><code class="language-bash">cosign public-key --key awskms:///alias/sky-cosign &gt; /tmp/sky-cosign.pub
+python3 - &lt;&lt;'EOF'
+import os
+p = open("lab34-kyverno-policy.yaml").read().replace("ACCOUNT_ID", os.environ["ACCT"])
+key = open("/tmp/sky-cosign.pub").read().strip().replace("\n", "\n" + " " * 22)
+open("/tmp/policy.yaml", "w").write(p.replace("PASTE_OUTPUT_OF_cosign_public-key_HERE", key))
+EOF
+kubectl apply -f /tmp/policy.yaml
+kubectl get clusterpolicy require-signed-nimbus-images</code></pre>
+              <p>Read <a href="labs/day3/lab34-kyverno-policy.yaml">the policy</a>. <code>mutateDigest: true</code> rewrites <code>:v1</code> to <code>@sha256:…</code> at admission, so the thing that was verified is the thing that runs. Without it, a mutable tag could change between the check and the image pull (a TOCTOU gap).</p>
+            </li>
+            <li><strong>Try to sail the Kraken's ship</strong>
+              <div class="predict"><p>Which of the two <code>kubectl run</code> commands is admitted, and what will the admitted pod's <code>image</code> field look like?</p><details><summary>Reveal</summary><p><code>kraken-hotfix</code> is denied because it has no signature from the KMS key. <code>v1</code> is admitted, and because of <code>mutateDigest: true</code> its image is rewritten from <code>:v1</code> to <code>@sha256:…</code>, the exact digest you signed.</p></details></div>
+<pre data-title="CloudShell"><code class="language-bash">kubectl run kraken-hotfix -n nimbus --image="$REPO:kraken-hotfix" --restart=Never     # denied
+kubectl run manifest-api  -n nimbus --image="$REPO:v1" --restart=Never                # admitted
+kubectl get pod manifest-api -n nimbus -o jsonpath='{.spec.containers[0].image}{"\n"}'  # ...@sha256:</code></pre>
+              <div class="term" data-title="CloudShell · kubectl run"><pre><span class="p">$</span> <span class="c">kubectl run kraken-hotfix -n nimbus --image="$REPO:kraken-hotfix" --restart=Never</span>
+<span class="err">Error from server: admission webhook "mutate.kyverno.svc-fail" denied the request:</span>
+
+<span class="err">resource Pod/nimbus/kraken-hotfix was blocked due to the following policies</span>
+
+<span class="err">require-signed-nimbus-images:</span>
+<span class="err">  verify-cosign-kms-signature: 'failed to verify image 111122223333.dkr.ecr.us-east-1.amazonaws.com/nimbus/manifest-api:kraken-hotfix:</span>
+<span class="err">    .attestors[0].entries[0].keys: no signatures found'</span>
+<span class="p">$</span> <span class="c">kubectl run manifest-api -n nimbus --image="$REPO:v1" --restart=Never</span>
+pod/manifest-api created
+<span class="p">$</span> <span class="c">kubectl get pod manifest-api -n nimbus -o jsonpath='{.spec.containers[0].image}{"\n"}'</span>
+111122223333.dkr.ecr.us-east-1.amazonaws.com/nimbus/manifest-api@<span class="ok">sha256:9f2c…4be1</span></pre></div>
+              <p class="term-caption">The gate in action. Kyverno's exact wording varies between versions, but the policy and rule names will match yours.</p>
+            </li>
+            <li><strong>Run the verifier</strong>
+<pre data-title="CloudShell"><code class="language-bash">./lab34-verify.sh "$REPO"</code></pre>
+              <div class="term" data-title="CloudShell · ./lab34-verify.sh"><pre>== unsigned kraken image (tag kraken-hotfix) ==
+  <span class="ok">[REJECTED]</span> Error from server: admission webhook "mutate.kyverno.svc-fail" denied the request: resource Pod/nimbus/…
+== signed nimbus image (v1 @ sha256:9f2c…4be1) ==
+  <span class="ok">[ADMITTED]</span> image mutated to digest: 111122223333.dkr.ecr.us-east-1.amazonaws.com/nimbus/manifest-api@sha256:9f2c…4be1
+
+  Owlsley: Provenance enforced at the gate. &gt;&gt; <span class="hl">SKY{████████████████████}</span></pre></div>
+              <p class="term-caption">A clean run, with the flag redacted.</p>
+              <form class="flag" data-id="d3-flag7" data-hash="e8ef83fbdab969d0fa6e92e630dc586c991d9ac22873c84bbfc414e5e4d90591" data-xp="200" data-label="Flag 3.4b · only signed ships sail"></form>
+            </li>
+          </ol>
+          <div class="checkpoint"><p>The unsigned image is rejected with a Kyverno <code>verifyImages</code> error, the signed image is admitted and rewritten to its digest, and you can name the critical CVE <em>and</em> explain why a valid signature didn't stop it.</p></div>
+          <h4>Troubleshooting</h4>
+          <div class="table-wrap"><table>
+            <thead><tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr></thead>
+            <tbody>
+              <tr><td><code>docker: command not found</code> / daemon errors</td><td>The CloudShell environment doesn't offer Docker, or you're in a VPC environment</td><td>Use a regular (non-VPC) CloudShell in us-east-1. Fallback: build with CodeBuild, or on a small EC2 instance via SSM.</td></tr>
+              <tr><td><code>no basic auth credentials</code> on push</td><td>The ECR login expired (12 h) or targeted the wrong registry</td><td>Run step 2's <code>get-login-password | docker login</code> again against <code>$REG</code>.</td></tr>
+              <tr><td>Inspector returns <code>[]</code></td><td>The scan hasn't finished, or enhanced scanning isn't on for <code>nimbus/*</code></td><td>Run <code>aws inspector2 list-coverage</code> and <code>aws ecr get-registry-scanning-configuration</code>, then wait 5 minutes.</td></tr>
+              <tr><td><code>cosign</code>: AccessDeniedException on kms:Sign</td><td>Your role can't use the key, or the alias is wrong</td><td>Run <code>aws kms describe-key --key-id alias/sky-cosign</code>. In a sandbox the default key policy gives the account root (your admin role) access.</td></tr>
+              <tr><td>Both images admitted</td><td>The policy is in <code>Audit</code> mode, or the <code>imageReferences</code> pattern doesn't match <code>$REPO</code></td><td>Run <code>kubectl get clusterpolicy require-signed-nimbus-images -o yaml</code> and check for <code>validationFailureAction: Enforce</code> and the account ID substitution.</td></tr>
+              <tr><td>Both images rejected with 401</td><td>Kyverno has no ECR credentials (see the predict box above)</td><td>Check the Pod Identity association for <code>kyverno-admission-controller</code>, then restart the deployment.</td></tr>
+            </tbody>
+          </table></div>
+          <details class="hint solution"><summary>Solution: "failed to verify image … 401 / no credentials"</summary><p>That's Kyverno failing to authenticate to ECR. Check that the Pod Identity association names <code>kyverno-admission-controller</code> in namespace <code>kyverno</code>, that you restarted the deployment, and look at <code>kubectl -n kyverno logs deploy/kyverno-admission-controller | grep -i ecr</code>. If you skipped Lab 3.3's lockdown, Kyverno silently used the node role, which works, but for the wrong reason.</p></details>
+          <div class="stretch"><p><b>Fix it properly.</b> Upgrade PyYAML to a current release, change <code>yaml.load(…, FullLoader)</code> to <code>yaml.safe_load</code>, rebuild as <code>v2</code>, sign, deploy. Then add a second Kyverno rule that requires a <b>vulnerability-scan attestation</b> (<code>cosign attest --type vuln</code>) younger than 7 days, so an image has to be both signed and recently scanned clean.</p></div>
+          <div class="cleanup">
+<pre><code class="language-bash">kubectl delete pod -n nimbus manifest-api --ignore-not-found; helm uninstall kyverno -n kyverno
+aws ecr delete-repository --repository-name nimbus/manifest-api --force
+aws kms schedule-key-deletion --key-id "$KEY" --pending-window-in-days 7 &amp;&amp; aws kms delete-alias --alias-name alias/sky-cosign
+aws iam detach-role-policy --role-name sky-kyverno-ecr --policy-arn arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
+aws iam delete-role --role-name sky-kyverno-ecr
+# then delete the cluster (Lab 3.3 cleanup)</code></pre></div>
+        </div>
+      </article>
+    </section>
+
+    <!-- ============ BOSS ============ -->
+    <section id="boss">
+      <div class="eyebrow">Boss fight</div>
+      <h2>The last tentacle</h2>
+      <img class="boss-cover zoomable" src="assets/img/day3/boss-cover.svg" alt="Boss cover: a glowing tunnel of rings made of base32 DNS labels spiralling toward a Kraken eye">
+      <div class="paths">
+        <div class="path guided"><p>Open the hints one at a time: find the zone, reassemble the chunks, then use the full solution to decode and block.</p></div>
+        <div class="path challenge"><p><b>No hints.</b> Use only the Resolver query logs and the DNS Firewall APIs.<br><b>Acceptance:</b> the decoded flag, plus a Logs Insights result where tunnel queries show <code>firewall_rule_action = BLOCK</code>, with both a domain-list rule and an advanced rule in the group.</p></div>
+      </div>
+      <div class="boss" data-flag="d3-boss">
+        <div class="boss-grid">
+          <img src="assets/img/kraken.svg" alt="The Kraken">
+          <div>
+            <div class="eyebrow">Boss · 30 min · Lab 3.1 VPC</div>
+            <h3>DNS Tunnel Escape</h3>
+            <div class="hp"><i></i></div>
+            <p><b>Intel:</b> Your Network Firewall is airtight, the implant says all channels are severed, and yet the Kraken's mothership received a fresh payload from <code>nimbus-cargo-box-07</code> ten minutes ago. Owlsley's hunch: the implant has a fifth channel, one that never touches your firewall.</p>
+            <div class="predict"><p>Network Firewall drops every flow from the box that isn't on the allow-list. So how can a DNS tunnel get out of that subnet?</p><details><summary>Reveal</summary><p>The instance never talks to the attacker. It only talks to the VPC resolver (VPC+2), and that traffic is local to the VPC, so it never follows your <code>0.0.0.0/0 → firewall</code> route. The <em>resolver</em> then recurses to the attacker's authoritative nameserver from AWS's own infrastructure. Only DNS-layer controls can see or stop this: DNS Firewall, plus query logs to prove it.</p></details></div>
+            <p><b>Your mission:</b></p>
+            <ol>
+              <li>Hunt the exfil channel in the Resolver query logs (<code>/skyfortress/dns/query</code>) you turned on in Lab 3.1.</li>
+              <li>Reassemble and decode what was stolen. That's the flag.</li>
+              <li>Shut the channel down with DNS Firewall, using a behavioural rule <em>and</em> a domain-list rule, and prove it in the logs (<code>firewall_rule_action = BLOCK</code>).</li>
+            </ol>
+          </div>
+        </div>
+        <figure class="figure" style="margin-top:26px"><img src="assets/img/day3/dns-tunnel.svg" alt="Anatomy of a DNS tunneling query: sequence number, base32 payload chunk, channel label and attacker zone; flow from instance to Route 53 Resolver to attacker nameserver; detection signals and the win condition"><figcaption><b>BOSS</b> Why the firewall never saw it: the <em>resolver</em> does the recursion, not your instance.</figcaption></figure>
+        <details class="hint"><summary>Hint 1: finding the zone</summary>
+<pre data-title="Logs Insights"><code class="language-sql">fields query_name, strlen(query_name) as len
+| filter len &gt; 40
+| stats count(*) as hits, count_distinct(query_name) as uniq by srcaddr
+| sort hits desc</code></pre>
+          <p>Real tunnels produce thousands of unique, high-entropy names under one parent zone. This one is a polite training tunnel that repeats itself, so look at <em>length</em> and <em>shape</em> as well as uniqueness.</p>
+          <figure class="shot" data-url="console.aws.amazon.com/cloudwatch/home?region=us-east-1#logsV2:logs-insights">
+            <img src="assets/img/day3/shot-logs-tunnel.svg" alt="Illustrative mock-up of CloudWatch Logs Insights over the Resolver query log group, listing long base32-looking query names under kraken-tunnel.example from 10.66.2.37 (chunks scrambled)">
+            <figcaption><b>SCREEN 3.B</b> What the hunt looks like: long labels, one source address, one parent zone, regular bursts in the histogram. The chunks here are scrambled. Illustrative mock-up; the live console layout may differ.</figcaption>
+          </figure></details>
+        <details class="hint"><summary>Hint 2: reassembly</summary>
+<pre data-title="Logs Insights"><code class="language-sql">fields query_name
+| filter query_name like /kraken-tunnel/
+| parse query_name /^(?&lt;seq&gt;\d+)-(?&lt;chunk&gt;[a-z2-7]+)\./
+| stats latest(chunk) as chunk by seq
+| sort seq asc</code></pre>
+          <p>The alphabet is <code>a–z</code> plus <code>2–7</code>, which means base32. DNS is case-insensitive, so the encoder used lowercase and dropped the <code>=</code> padding.</p></details>
+        <details class="hint solution"><summary>Solution: decode + block</summary>
+<pre data-title="CloudShell"><code class="language-bash">python3 -c "import base64,sys; s=''.join(sys.argv[1:]).upper(); print(base64.b32decode(s + '='*(-len(s)%8)).decode())" CHUNK00 CHUNK01 CHUNK02
+
+DT=$(aws route53resolver create-firewall-domain-list --name kraken-tunnel --creator-request-id "dt-$(date +%s)" --query FirewallDomainList.Id --output text)
+aws route53resolver update-firewall-domains --firewall-domain-list-id "$DT" --operation ADD --domains '*.kraken-tunnel.example'
+aws route53resolver create-firewall-rule --name block-kraken-tunnel --creator-request-id "bt-$(date +%s)" \
+  --firewall-rule-group-id "$RG" --firewall-domain-list-id "$DT" --priority 150 --action BLOCK --block-response NXDOMAIN
+
+# Behavioural: catches the NEXT zone the Kraken registers, not just this one
+aws route53resolver create-firewall-rule --name advanced-tunneling --creator-request-id "at-$(date +%s)" \
+  --firewall-rule-group-id "$RG" --priority 300 --action BLOCK --block-response NXDOMAIN \
+  --dns-threat-protection DNS_TUNNELING --confidence-threshold HIGH</code></pre>
+          <div class="term" data-title="CloudShell · decode + verify"><pre><span class="p">$</span> <span class="c">python3 -c "import base64,sys; …" &lt;chunk00&gt; &lt;chunk01&gt; &lt;chunk02&gt;</span>
+<span class="hl">SKY{████████████████████████}</span>
+<span class="o"># Logs Insights, 5 minutes after the rules go in:</span>
+<span class="o">firewall_rule_action   count(*)</span>
+<span class="o">(empty)                31</span>     <span class="o">&lt;- before the block</span>
+<span class="ok">BLOCK                  9</span>      <span class="o">&lt;- after: the tunnel answers NXDOMAIN</span></pre></div>
+          <p class="term-caption">The decode prints the flag (redacted here), and the stats show the channel going from allowed to blocked.</p>
+          <p>Verify with <code>filter query_name like /kraken-tunnel/ | stats count(*) by firewall_rule_action</code>. Hits should move from empty to <code>BLOCK</code>. Be honest in the debrief: a toy tunnel that repeats the same three queries may not cross the advanced rule's confidence threshold. That's why you still deploy the domain-list rule for zones you already know, and why query logs are worth paying for.</p></details>
+        <form class="flag" data-id="d3-boss" data-hash="fe07afc2d9b57497a68c0152b5ba03514e963988e2d6fb43b3131c621216ba43" data-xp="400" data-badge="day3" data-label="Boss flag · what did the tunnel carry?"></form>
+        <details class="hint"><summary>Troubleshooting the boss</summary>
+          <div class="table-wrap"><table>
+            <thead><tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr></thead>
+            <tbody>
+              <tr><td>No tunnel queries in the logs</td><td>Query logging isn't associated, or the tunnel timer hasn't fired yet</td><td>Run <code>list-resolver-query-log-config-associations</code>, then <code>kx "systemctl list-timers | grep kraken"</code>.</td></tr>
+              <tr><td><code>binascii.Error: Incorrect padding</code></td><td>Chunks out of order, a missing chunk, or the wrong pad length</td><td>Sort by sequence number, deduplicate, and pad to a multiple of 8 with <code>=</code>.</td></tr>
+              <tr><td><code>create-firewall-rule</code> rejects <code>--dns-threat-protection</code></td><td>An old AWS CLI</td><td>Update the CLI. The options are <code>--dns-threat-protection DNS_TUNNELING</code> and <code>--confidence-threshold LOW|MEDIUM|HIGH</code>.</td></tr>
+              <tr><td>Still no <code>BLOCK</code> rows</td><td>The advanced rule didn't trigger on the toy tunnel</td><td>Expected. The domain-list rule at priority 150 is what blocks this specific zone.</td></tr>
+            </tbody>
+          </table></div></details>
+      </div>
+    </section>
+
+    <!-- ============ QUIZ ============ -->
+    <section id="quiz">
+      <div class="eyebrow">Knowledge check</div>
+      <h2>Quiz <span class="quiz-score" style="font-size:1rem"></span></h2>
+      <div class="quiz" data-id="d3-quiz">
+        <div class="q" data-answer="c">
+          <p>Your Network Firewall policy uses a domain allow-list on <code>TLS_SNI</code> and the default action <code>aws:drop_strict</code>. Every HTTPS request, including to allowed domains, times out. Why?</p>
+          <div class="opts">
+            <button data-k="a">Domain lists only work with stateless rule groups</button>
+            <button data-k="b">The allow-list is missing a leading dot on each domain</button>
+            <button data-k="c">drop_strict drops packets before the TCP handshake completes, so the engine never sees a ClientHello to read the SNI from</button>
+            <button data-k="d">TLS_SNI matching requires TLS inspection to be configured</button>
+          </div>
+          <div class="explain"><code>aws:drop_established</code> lets the handshake through, then drops established flows that no rule passed. The ClientHello (and its SNI) only arrives after the handshake, so with <code>drop_strict</code> the allow-list never gets a chance to match. SNI matching doesn't need TLS inspection, since the SNI is plaintext in TLS 1.2/1.3 unless ECH is used.</div>
+        </div>
+        <div class="q" data-answer="b">
+          <p>DNS Firewall blocks <code>*.kraken-c2.example</code>, yet the instance still resolves it with <code>dig @8.8.8.8</code>. Which control closes that gap?</p>
+          <div class="opts">
+            <button data-k="a">A second DNS Firewall rule group with a higher priority</button>
+            <button data-k="b">A Network Firewall (or SG/NACL) rule dropping outbound port 53/853 to anything except the VPC resolver path</button>
+            <button data-k="c">Turning on DNSSEC validation for the VPC</button>
+            <button data-k="d">Setting DNS Firewall to fail-closed</button>
+          </div>
+          <div class="explain">DNS Firewall only sees queries sent to the Route 53 Resolver (VPC+2). Queries straight to an internet resolver are ordinary UDP/TCP packets leaving through your egress path, so you drop them there. DoH needs SNI or allow-list controls on top.</div>
+        </div>
+        <div class="q" data-answer="a">
+          <p>You add <code>0.0.0.0/0 → vpce-fw</code> to the private route table but forget the public subnet's return route. What do you see?</p>
+          <div class="opts">
+            <button data-k="a">TCP connects, then TLS/HTTP hangs: replies bypass the firewall, the stateful engine sees half a flow, and drop_established kills it</button>
+            <button data-k="b">Everything works, just without inspection</button>
+            <button data-k="c">The firewall endpoint enters a FAILED state</button>
+            <button data-k="d">The NAT gateway drops all traffic it didn't originate</button>
+          </div>
+          <div class="explain">Asymmetric routing. The engine needs both directions to track state. In multi-AZ Transit Gateway designs the same symptom comes from forgetting <em>appliance mode</em> on the inspection VPC attachment.</div>
+        </div>
+        <div class="q" data-answer="d">
+          <p>A rule at priority 3 matches <code>LabelMatchStatement</code> key <code>bot:category:http_library</code>, but never fires. Bot Control is at priority 50. Why?</p>
+          <div class="opts">
+            <button data-k="a">Label keys must always be fully qualified</button>
+            <button data-k="b">Bot Control labels are only visible in logs</button>
+            <button data-k="c">Label matching only works inside rule groups</button>
+            <button data-k="d">Labels are visible only to rules evaluated after the rule that added them, and priority 3 runs before 50</button>
+          </div>
+          <div class="explain">Evaluation runs in priority order, and labels are added as rules run. To act on Bot Control labels, put the consuming rule after Bot Control, or use Bot Control's own rule action overrides.</div>
+        </div>
+        <div class="q" data-answer="b">
+          <p>Why put rate-based rules <em>before</em> Bot Control and the big managed groups?</p>
+          <div class="opts">
+            <button data-k="a">Rate-based rules can't be placed after managed groups</button>
+            <button data-k="b">Floods get blocked before reaching per-request-priced inspection, and a rate rule only counts requests that are actually evaluated by it</button>
+            <button data-k="c">Rate rules consume no WCU when placed first</button>
+            <button data-k="d">Managed groups reset rate counters</button>
+          </div>
+          <div class="explain">Cost and correctness. Bot Control, ATP and ACFP charge per request inspected, and a request blocked earlier never reaches the rate rule, so it never counts toward the threshold.</div>
+        </div>
+        <div class="q" data-answer="c">
+          <p>Nodes have IMDSv2 <code>required</code> and hop limit 2. A compromised pod with <code>curl</code> can…</p>
+          <div class="opts">
+            <button data-k="a">…do nothing, because IMDSv2 blocks containers</button>
+            <button data-k="b">…read metadata, but not credentials</button>
+            <button data-k="c">…PUT for a token, receive it (the reply survives the extra hop), and read the node role's credentials</button>
+            <button data-k="d">…only reach IMDS if it runs with hostNetwork: true</button>
+          </div>
+          <div class="explain">IMDSv2 defeats SSRF that can't send PUT requests or custom headers. A shell in a pod can send both. Hop limit 1 is what stops the token reply from reaching a pod's network namespace. Pods with <code>hostNetwork: true</code> can still reach IMDS, which is one more reason to block them at admission.</div>
+        </div>
+        <div class="q" data-answer="a">
+          <p>After applying a default-deny <em>egress</em> NetworkPolicy in <code>nimbus</code>, <code>vault-app</code> reports "Unable to locate credentials" even though its Pod Identity association is correct. Most likely fix?</p>
+          <div class="opts">
+            <button data-k="a">Allow egress to the Pod Identity agent at 169.254.170.23 (TCP 80) and to kube-dns</button>
+            <button data-k="b">Re-create the Pod Identity association</button>
+            <button data-k="c">Raise the node hop limit back to 2</button>
+            <button data-k="d">Add sts:TagSession to the node role</button>
+          </div>
+          <div class="explain">Pod Identity credentials come from a link-local agent on the node. Default-deny egress blocks it (and DNS) unless you allow them explicitly. Raising the hop limit would "fix" it by handing the pod the node role, which is the exact problem you just solved.</div>
+        </div>
+        <div class="q" data-answer="d">
+          <p>The repo is MUTABLE. The Kraken pushes a malicious image to the already-signed tag <code>:v1</code>. Kyverno verifies cosign signatures with <code>mutateDigest: true</code>. What happens on deploy?</p>
+          <div class="opts">
+            <button data-k="a">Admitted: the tag <code>v1</code> was signed</button>
+            <button data-k="b">Admitted, but GuardDuty raises a finding</button>
+            <button data-k="c">Rejected only if Inspector finds a critical CVE</button>
+            <button data-k="d">Rejected: <code>:v1</code> now resolves to a new digest that has no signature</button>
+          </div>
+          <div class="explain">Signatures bind to digests. Kyverno resolves the tag, finds no valid signature for the new digest, and denies the pod. Immutable tags are still worth having for humans and audit trails.</div>
+        </div>
+        <div class="q" data-answer="b">
+          <p>Which statement about AWS Verified Access is correct?</p>
+          <div class="opts">
+            <button data-k="a">It's a managed client VPN that adds MFA</button>
+            <button data-k="b">It evaluates a Cedar policy on each request, using identity and device-posture claims, for HTTP(S) and non-HTTP TCP endpoints</button>
+            <button data-k="c">It only works for applications behind CloudFront</button>
+            <button data-k="d">It replaces security groups on the target application</button>
+          </div>
+          <div class="explain">Verified Access is a per-request zero-trust proxy. Trust providers supply identity (IdC/OIDC) and device claims, and Cedar policies decide. TCP support covers SSH, RDP and database access without a VPN.</div>
+        </div>
+        <div class="q" data-answer="c">
+          <p>An instance exfiltrates data through queries like <code>01-mfrg….x.kraken-tunnel.example</code>. Your Network Firewall drops all outbound DNS. Why does the exfil still work, and where do you see it?</p>
+          <div class="opts">
+            <button data-k="a">UDP isn't inspected by Network Firewall; VPC Flow Logs</button>
+            <button data-k="b">The queries use DoH; ALB access logs</button>
+            <button data-k="c">The instance asks the VPC resolver, and the Route 53 Resolver does the recursion to the attacker's nameserver outside your egress path; Resolver query logs</button>
+            <button data-k="d">The NAT gateway forwards DNS without inspection; NAT gateway metrics</button>
+          </div>
+          <div class="explain">Recursive resolution is the resolver's own egress, which is why every firewall "allows" DNS. Visibility comes from Resolver query logs. Prevention comes from DNS Firewall, using domain lists for known zones and advanced DNS_TUNNELING/DGA rules for new ones.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ RECAP ============ -->
+    <section id="recap">
+      <div class="eyebrow">Debrief</div>
+      <h2>What we built today</h2>
+      <div class="grid g3">
+        <div class="card lift"><h3>🧱 Walls</h3><p>Egress through Network Firewall with symmetric routing, a domain allow-list on <code>drop_established</code>, rogue resolvers dropped, VPC BPA on.</p></div>
+        <div class="card lift"><h3>🌊 Moats</h3><p>DNS Firewall sinkholes, AWS threat lists, advanced tunneling detection, and query logs as your hunting ground.</p></div>
+        <div class="card lift"><h3>🛡 Shields</h3><p>A WAF ACL ordered on purpose: labels, rate limits, Bot Control, custom 429s, and an edge-verified partner path that can't be spoofed.</p></div>
+        <div class="card lift"><h3>🏰 Citadel</h3><p>Access entries, Pod Identity with ABAC, hop limit 1, default-deny NetworkPolicy, and GuardDuty runtime watching.</p></div>
+        <div class="card lift"><h3>⚓ Harbor gate</h3><p>Immutable repos, continuous Inspector scanning, SBOMs in CI, KMS-backed signatures, Kyverno digest enforcement.</p></div>
+        <div class="card lift"><h3>👀 Next week's horizon</h3><p>re:Invent 2026 (Nov 30 – Dec 4) has absorbed re:Inforce, with a security day on Dec 3. Watch for network, agent-isolation and GuardDuty news, and come back to update these labs.</p></div>
+      </div>
+      <div class="callout warn" style="margin-top:30px"><strong class="ct">Before you leave: teardown checklist</strong><ul>
+        <li>Lab 3.1: routes restored → firewall deleted → policy and rule groups deleted → DNS Firewall disassociated → query logging disassociated → VPC BPA <code>off</code> → stack deleted</li>
+        <li>Lab 3.2: web ACL disassociated and deleted, IP set deleted, stack deleted</li>
+        <li>Labs 3.3/3.4: <code>eksctl delete cluster</code>, ECR repo, KMS key scheduled for deletion, IAM roles, vault bucket</li>
+        <li>Check: <code>aws network-firewall list-firewalls</code> and <code>aws eks list-clusters</code> both come back empty</li>
+      </ul></div>
+    </section>
+
+    <div class="pager"><a class="prev" href="day2.html"><small>← Previous</small>Day 2 · Eyes in the Sky</a><a class="next" href="day4.html"><small>Next →</small>Day 4 · Vaults &amp; Thinking Machines</a></div>
+  </main>
+</div>
+
+<footer id="site-footer"></footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+<script src="assets/js/site.js"></script>
+</body>
+</html>

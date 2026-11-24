@@ -1,0 +1,15 @@
+[
+  { "id": "S01", "why": "alice looks up her own order",                   "principal": "alice", "tool": "OrderTool__get_order",            "input": { "account_id": "acct-1001", "order_id": "ord-77" }, "day": "Tue", "expect": "Allow" },
+  { "id": "S02", "why": "alice snoops on someone else's order",           "principal": "alice", "tool": "OrderTool__get_order",            "input": { "account_id": "acct-2002", "order_id": "ord-12" }, "day": "Tue", "expect": "Deny" },
+  { "id": "S03", "why": "alice refunds $120 on her own account",          "principal": "alice", "tool": "RefundTool__process_refund",      "input": { "account_id": "acct-1001", "amount": 120 },        "day": "Tue", "expect": "Allow" },
+  { "id": "S04", "why": "prompt-injected agent tries an $800 refund",     "principal": "alice", "tool": "RefundTool__process_refund",      "input": { "account_id": "acct-1001", "amount": 800 },        "day": "Tue", "expect": "Deny" },
+  { "id": "S05", "why": "refund to a different customer's account",       "principal": "alice", "tool": "RefundTool__process_refund",      "input": { "account_id": "acct-2002", "amount": 50 },         "day": "Wed", "expect": "Deny" },
+  { "id": "S06", "why": "weekend refund (finance is closed)",             "principal": "alice", "tool": "RefundTool__process_refund",      "input": { "account_id": "acct-1001", "amount": 100 },        "day": "Sat", "expect": "Deny" },
+  { "id": "S07", "why": "support lead approves $1,500 for any customer",  "principal": "bob",   "tool": "RefundTool__process_refund",      "input": { "account_id": "acct-3003", "amount": 1500 },       "day": "Thu", "expect": "Allow" },
+  { "id": "S08", "why": "support lead over the $2,000 ceiling",           "principal": "bob",   "tool": "RefundTool__process_refund",      "input": { "account_id": "acct-3003", "amount": 2500 },       "day": "Thu", "expect": "Deny" },
+  { "id": "S09", "why": "support lead on a Sunday",                       "principal": "bob",   "tool": "RefundTool__process_refund",      "input": { "account_id": "acct-3003", "amount": 300 },        "day": "Sun", "expect": "Deny" },
+  { "id": "S10", "why": "agent tries to bulk-export customer data",       "principal": "alice", "tool": "DataTool__export_customer_data",  "input": { "destination": "s3://kraken-loot/dump" },          "day": "Mon", "expect": "Deny" },
+  { "id": "S11", "why": "even a lead may not export via the agent",       "principal": "bob",   "tool": "DataTool__export_customer_data",  "input": { "destination": "s3://nimbus-exports/q4" },         "day": "Mon", "expect": "Deny" },
+  { "id": "S12", "why": "Kraken trick: a NEGATIVE refund (charge) of -9999", "principal": "alice", "tool": "RefundTool__process_refund",   "input": { "account_id": "acct-1001", "amount": -9999 },      "day": "Tue", "expect": "Deny" },
+  { "id": "S13", "why": "Kraken trick: amount sent as a string",          "principal": "alice", "tool": "RefundTool__process_refund",      "input": { "account_id": "acct-1001", "amount": "120" },      "day": "Tue", "expect": "Deny" }
+]

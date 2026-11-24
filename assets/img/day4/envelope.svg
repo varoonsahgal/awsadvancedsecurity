@@ -1,0 +1,87 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 700">
+  <title>KMS envelope encryption with encryption context</title>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0b0f26"/><stop offset="1" stop-color="#140d22"/></linearGradient>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fde68a"/><stop offset="1" stop-color="#f59e0b"/></linearGradient>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#fbbf24"/></marker>
+    <marker id="ac" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#67e8f9"/></marker>
+    <filter id="gl"><feGaussianBlur stdDeviation="6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <style>
+      text { font-family: "Space Grotesk", Inter, sans-serif; fill: #e8ecff; }
+      .h { font-size: 22px; font-weight: 700; }
+      .s { font-size: 15px; fill: #b7c0e6; }
+      .m { font-family: "JetBrains Mono", monospace; font-size: 14px; }
+      .box { fill: #121a3d; stroke: #3a4680; stroke-width: 2; rx: 16; }
+    </style>
+  </defs>
+  <rect width="1200" height="700" fill="url(#bg)"/>
+  <text x="40" y="52" class="h" fill="#fbbf24" style="fill:#fbbf24">ENVELOPE ENCRYPTION</text>
+  <text x="40" y="80" class="s">KMS never sees your data. It only wraps a data key — and binds the encryption context (EC) to it as AAD.</text>
+
+  <!-- KMS HSM boundary -->
+  <rect x="440" y="120" width="320" height="230" rx="22" fill="#1d1430" stroke="url(#g)" stroke-width="3" stroke-dasharray="8 6"/>
+  <text x="600" y="152" text-anchor="middle" class="h" style="font-size:18px;fill:#fbbf24">AWS KMS (FIPS 140-3 HSMs)</text>
+  <g transform="translate(600 228)" filter="url(#gl)">
+    <circle r="44" fill="#3b2410" stroke="#fbbf24" stroke-width="3"/>
+    <text text-anchor="middle" y="-4" class="m" style="fill:#fde68a">KMS key</text>
+    <text text-anchor="middle" y="16" class="m" style="fill:#fde68a;font-size:10px">never leaves</text>
+  </g>
+  <text x="600" y="310" text-anchor="middle" class="s">GenerateDataKey(KeyId, AES_256, EC)</text>
+  <text x="600" y="332" text-anchor="middle" class="s">Decrypt(wrapped key, EC)</text>
+
+  <!-- App -->
+  <rect x="40" y="140" width="300" height="190" class="box" rx="16"/>
+  <text x="62" y="176" class="h" style="font-size:19px">Your app (CloudShell)</text>
+  <text x="62" y="206" class="m" style="fill:#93c5fd">EC = {</text>
+  <text x="80" y="228" class="m" style="fill:#86efac">"project": "skyfortress",</text>
+  <text x="80" y="250" class="m" style="fill:#86efac">"vault": "cargo-bay-7"</text>
+  <text x="62" y="272" class="m" style="fill:#93c5fd">}</text>
+  <text x="62" y="306" class="s">not secret · logged · must match</text>
+
+  <path d="M340 200 L436 200" stroke="#fbbf24" stroke-width="3" marker-end="url(#a)"/>
+  <text x="388" y="190" text-anchor="middle" class="m" style="font-size:12px;fill:#fbbf24">① request</text>
+  <path d="M440 280 L344 280" stroke="#fbbf24" stroke-width="3" marker-end="url(#a)"/>
+  <text x="392" y="300" text-anchor="middle" class="m" style="font-size:12px;fill:#fbbf24">② 2 copies</text>
+
+  <!-- outputs -->
+  <rect x="40" y="390" width="250" height="90" class="box" rx="14" style="stroke:#67e8f9"/>
+  <text x="60" y="424" class="h" style="font-size:17px;fill:#67e8f9">plaintext data key</text>
+  <text x="60" y="452" class="s">used in memory, then discarded</text>
+  <rect x="320" y="390" width="250" height="90" class="box" rx="14" style="stroke:#fbbf24"/>
+  <text x="340" y="424" class="h" style="font-size:17px;fill:#fbbf24">wrapped data key</text>
+  <text x="340" y="452" class="s">KMS ciphertext · EC bound as AAD</text>
+
+  <path d="M165 334 L165 386" stroke="#67e8f9" stroke-width="2.5" marker-end="url(#ac)"/>
+  <path d="M260 334 Q330 360 430 386" stroke="#fbbf24" stroke-width="2.5" fill="none" marker-end="url(#a)"/>
+
+  <!-- local AES-GCM -->
+  <rect x="40" y="530" width="530" height="120" rx="16" fill="#0f2233" stroke="#67e8f9" stroke-width="2"/>
+  <text x="60" y="564" class="h" style="font-size:18px;fill:#67e8f9">③ local AES-256-GCM</text>
+  <text x="60" y="592" class="m">ciphertext = GCM(dataKey, nonce, plaintext, aad=EC)</text>
+  <text x="60" y="620" class="s">Fast, unlimited size, no KMS call per byte. Tamper = auth tag failure.</text>
+  <path d="M165 480 L165 526" stroke="#67e8f9" stroke-width="2.5" marker-end="url(#ac)"/>
+
+  <!-- stored envelope -->
+  <g transform="translate(660 430)">
+    <rect width="500" height="220" rx="20" fill="#1a1530" stroke="url(#g)" stroke-width="3"/>
+    <text x="24" y="40" class="h" style="font-size:19px;fill:#fbbf24">④ stored envelope (sealed.env.json)</text>
+    <rect x="24" y="62" width="452" height="38" rx="8" fill="#2a1f10"/><text x="40" y="87" class="m" style="fill:#fde68a">wrapped_key  · AQIDAHh...  (≈ 184 bytes)</text>
+    <rect x="24" y="108" width="452" height="38" rx="8" fill="#10222e"/><text x="40" y="133" class="m" style="fill:#a5f3fc">nonce · ciphertext · GCM tag</text>
+    <rect x="24" y="154" width="452" height="38" rx="8" fill="#1a1b2e"/><text x="40" y="179" class="m" style="fill:#b7c0e6">ec_keys ["project","vault"]  (values NOT stored)</text>
+  </g>
+  <path d="M574 590 L656 560" stroke="#fbbf24" stroke-width="2.5" marker-end="url(#a)"/>
+  <path d="M574 436 L656 480" stroke="#fbbf24" stroke-width="2.5" marker-end="url(#a)"/>
+
+  <!-- side panel: why EC -->
+  <g transform="translate(800 120)">
+    <rect width="360" height="270" rx="18" fill="#101630" stroke="#3a4680" stroke-width="2"/>
+    <text x="22" y="38" class="h" style="font-size:18px">Why encryption context?</text>
+    <text x="22" y="72" class="s">✓ Integrity: wrong EC → InvalidCiphertext</text>
+    <text x="22" y="102" class="s">✓ Audit: EC appears in every CloudTrail</text>
+    <text x="40" y="124" class="s">   KMS event (who decrypted WHICH vault)</text>
+    <text x="22" y="154" class="s">✓ Authorization: key policy conditions on</text>
+    <text x="40" y="176" class="m" style="fill:#86efac;font-size:13px">kms:EncryptionContext:project</text>
+    <text x="22" y="206" class="s">✓ Grants: EncryptionContextSubset</text>
+    <text x="22" y="240" class="s" style="fill:#fb7185">✗ Never put secrets in EC — it's logged!</text>
+  </g>
+</svg>

@@ -1,0 +1,8 @@
+# Instructor answer keys — never publish to GitHub Pages. Share privately.
+instructor/
+.DS_Store
+*.tfstate
+*.tfstate.*
+.terraform/
+*.zip
+__pycache__/

@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 720" role="img" aria-label="Illustrative mock-up: S3 object details for the memory image with SHA-256 checksum, GOVERNANCE retention and a failed delete of the locked version">
+<title>Illustrative mock-up: S3 object details for the memory image with SHA-256 checksum, GOVERNANCE retention and a failed delete of the locked version</title>
+<defs><filter id="gl" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+<rect width="1200" height="720" fill="#0d1226"/>
+<rect width="1200" height="52" fill="#151b36"/>
+<rect x="18" y="14" width="24" height="24" rx="5" fill="none" stroke="#9aa6d1" stroke-width="2"/>
+<text x="56" y="33" font-family="Inter, Space Grotesk, sans-serif" font-size="17" font-weight="700" fill="#fff" text-anchor="start" >Console</text>
+<rect x="150" y="12" width="420" height="28" rx="6" fill="#0d1226" stroke="#2a3466"/>
+<text x="166" y="32" font-family="Inter, Space Grotesk, sans-serif" font-size="14" font-weight="400" fill="#6b76a8" text-anchor="start" >Search services, features, docs</text>
+<text x="660" y="33" font-family="Inter, Space Grotesk, sans-serif" font-size="15" font-weight="400" fill="#cfd6ff" text-anchor="start" >us-east-1 ▾</text>
+<text x="1182" y="33" font-family="JetBrains Mono, ui-monospace, monospace" font-size="13" font-weight="400" fill="#9aa6d1" text-anchor="end" >OrganizationAccountAccessRole/you @ 1111-2222-3333</text>
+<rect x="0" y="52" width="220" height="668" fill="#111733"/>
+<text x="24" y="86" font-family="Inter, Space Grotesk, sans-serif" font-size="18" font-weight="700" fill="#ff9900" text-anchor="start" >S3</text>
+<rect x="10" y="104" width="200" height="34" rx="6" fill="#23305e"/><rect x="10" y="104" width="4" height="34" fill="#ff9900"/><text x="28" y="128" font-family="Inter, Space Grotesk, sans-serif" font-size="16" font-weight="600" fill="#fff" text-anchor="start" >General purpose buckets</text><text x="28" y="166" font-family="Inter, Space Grotesk, sans-serif" font-size="16" font-weight="400" fill="#9aa6d1" text-anchor="start" >Directory buckets</text><text x="28" y="204" font-family="Inter, Space Grotesk, sans-serif" font-size="16" font-weight="400" fill="#9aa6d1" text-anchor="start" >Access Points</text><text x="28" y="242" font-family="Inter, Space Grotesk, sans-serif" font-size="16" font-weight="400" fill="#9aa6d1" text-anchor="start" >Storage Lens</text><text x="28" y="280" font-family="Inter, Space Grotesk, sans-serif" font-size="16" font-weight="400" fill="#9aa6d1" text-anchor="start" >Block Public Access</text>
+<line x1="220" y1="52" x2="220" y2="720" stroke="#222b55"/>
+<text x="248" y="86" font-family="Inter, Space Grotesk, sans-serif" font-size="14" font-weight="400" fill="#7f8bc0" text-anchor="start" >S3 › skyfortress-d5-evidence-… › IR-2026-1204-007/ › nimbus-web-07.lime</text>
+<text x="248" y="124" font-family="Inter, Space Grotesk, sans-serif" font-size="26" font-weight="700" fill="#fff" text-anchor="start" >nimbus-web-07.lime</text>
+
+<text x="248" y="166" font-family="JetBrains Mono, ui-monospace, monospace" font-size="14" font-weight="400" fill="#9aa6d1" text-anchor="start" >s3://skyfortress-d5-evidence-111122223333/IR-2026-1204-007/nimbus-web-07.lime</text>
+<rect x="248" y="186" width="440" height="230" rx="10" fill="#111733" stroke="#222b55"/>
+<text x="266" y="216" font-family="Inter, Space Grotesk, sans-serif" font-size="16" font-weight="700" fill="#fff" text-anchor="start" >Object overview</text>
+<text x="266" y="250" font-family="Inter, Space Grotesk, sans-serif" font-size="13" font-weight="400" fill="#7f8bc0" text-anchor="start" >Size</text><text x="420" y="250" font-family="JetBrains Mono, ui-monospace, monospace" font-size="14" font-weight="400" fill="#e8ecff" text-anchor="start" >1.9 GiB</text>
+<text x="266" y="280" font-family="Inter, Space Grotesk, sans-serif" font-size="13" font-weight="400" fill="#7f8bc0" text-anchor="start" >Server-side encryption</text><text x="420" y="280" font-family="JetBrains Mono, ui-monospace, monospace" font-size="14" font-weight="400" fill="#e8ecff" text-anchor="start" >SSE-KMS</text>
+<text x="266" y="310" font-family="Inter, Space Grotesk, sans-serif" font-size="13" font-weight="400" fill="#7f8bc0" text-anchor="start" >Checksum (SHA-256)</text><text x="420" y="310" font-family="JetBrains Mono, ui-monospace, monospace" font-size="14" font-weight="400" fill="#34d399" text-anchor="start" >9f2c…41ab (matches notes)</text>
+<text x="266" y="340" font-family="Inter, Space Grotesk, sans-serif" font-size="13" font-weight="400" fill="#7f8bc0" text-anchor="start" >Version ID</text><text x="420" y="340" font-family="JetBrains Mono, ui-monospace, monospace" font-size="13" font-weight="400" fill="#e8ecff" text-anchor="start" >3HL4kqtJlcpXroDTDmJ+rmSpXd3dIbrHY</text>
+<text x="266" y="370" font-family="Inter, Space Grotesk, sans-serif" font-size="13" font-weight="400" fill="#7f8bc0" text-anchor="start" >Uploaded by</text><text x="420" y="370" font-family="JetBrains Mono, ui-monospace, monospace" font-size="13" font-weight="400" fill="#e8ecff" text-anchor="start" >role/skyfortress-forensic-ws</text>
+<rect x="712" y="186" width="456" height="230" rx="10" fill="#111733" stroke="#fbbf24" stroke-opacity=".7"/>
+<text x="730" y="216" font-family="Inter, Space Grotesk, sans-serif" font-size="16" font-weight="700" fill="#fbbf24" text-anchor="start" >Object Lock</text>
+<text x="730" y="250" font-family="Inter, Space Grotesk, sans-serif" font-size="13" font-weight="400" fill="#7f8bc0" text-anchor="start" >Retention mode</text><text x="900" y="250" font-family="JetBrains Mono, ui-monospace, monospace" font-size="15" font-weight="700" fill="#fbbf24" text-anchor="start" >GOVERNANCE</text>
+<text x="730" y="280" font-family="Inter, Space Grotesk, sans-serif" font-size="13" font-weight="400" fill="#7f8bc0" text-anchor="start" >Retain until</text><text x="900" y="280" font-family="JetBrains Mono, ui-monospace, monospace" font-size="14" font-weight="400" fill="#e8ecff" text-anchor="start" >2027-03-04T03:58:00Z</text>
+<text x="730" y="310" font-family="Inter, Space Grotesk, sans-serif" font-size="13" font-weight="400" fill="#7f8bc0" text-anchor="start" >Legal hold</text><text x="900" y="310" font-family="JetBrains Mono, ui-monospace, monospace" font-size="14" font-weight="400" fill="#e8ecff" text-anchor="start" >Off</text>
+<text x="730" y="348" font-family="Inter, Space Grotesk, sans-serif" font-size="13" font-weight="400" fill="#9aa6d1" text-anchor="start" >Deleting this version requires</text>
+<text x="730" y="370" font-family="JetBrains Mono, ui-monospace, monospace" font-size="13" font-weight="400" fill="#9aa6d1" text-anchor="start" >s3:BypassGovernanceRetention.</text>
+<text x="730" y="396" font-family="Inter, Space Grotesk, sans-serif" font-size="13" font-weight="400" fill="#fb7185" text-anchor="start" >COMPLIANCE mode: nobody, not even root.</text>
+<rect x="248" y="440" width="920" height="110" rx="10" fill="#2a1033" stroke="#fb7185" stroke-opacity=".6"/>
+<text x="268" y="474" font-family="Inter, Space Grotesk, sans-serif" font-size="16" font-weight="700" fill="#fb7185" text-anchor="start" >✖  Failed to delete object version</text>
+<text x="268" y="504" font-family="Inter, Space Grotesk, sans-serif" font-size="14" font-weight="400" fill="#e8ecff" text-anchor="start" >Access Denied: the object version is protected by Object Lock retention settings.</text>
+<text x="268" y="530" font-family="Inter, Space Grotesk, sans-serif" font-size="13" font-weight="400" fill="#9aa6d1" text-anchor="start" >(A plain delete only added a delete marker. The locked version is still there.)</text>
+<text x="248" y="600" font-family="Inter, Space Grotesk, sans-serif" font-size="14" font-weight="400" fill="#9aa6d1" text-anchor="start" >Chain of custody: chain-of-custody.json (same prefix, same retention)</text>
+
+<rect x="1010" y="684" width="176" height="24" rx="12" fill="#2a1033" stroke="#fb7185" stroke-opacity=".6"/>
+<text x="1098" y="701" font-family="JetBrains Mono, ui-monospace, monospace" font-size="12" font-weight="600" fill="#fb7185" text-anchor="middle" >illustrative mock-up</text>
+</svg>

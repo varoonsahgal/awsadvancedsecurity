@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 520">
+  <title>The Skyfortress learning loop: Learn, Build, Break, Defend</title>
+  <defs>
+    <linearGradient id="la" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#a78bfa"/><stop offset="1" stop-color="#f472b6"/></linearGradient>
+    <linearGradient id="lb" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#22d3ee"/><stop offset="1" stop-color="#60a5fa"/></linearGradient>
+    <linearGradient id="lc" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fb7185"/><stop offset="1" stop-color="#f97316"/></linearGradient>
+    <linearGradient id="ld" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#34d399"/><stop offset="1" stop-color="#22d3ee"/></linearGradient>
+    <filter id="lg" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="10" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <marker id="arr" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#c7d2fe"/></marker>
+  </defs>
+  <circle cx="320" cy="260" r="170" fill="none" stroke="#c7d2fe" stroke-opacity=".25" stroke-width="2" stroke-dasharray="6 10"/>
+  <g fill="none" stroke="#c7d2fe" stroke-width="3" marker-end="url(#arr)" opacity=".8">
+    <path d="M392 120 A170 170 0 0 1 470 190"/>
+    <path d="M472 340 A170 170 0 0 1 398 404"/>
+    <path d="M246 404 A170 170 0 0 1 170 340"/>
+    <path d="M170 182 A170 170 0 0 1 246 116"/>
+  </g>
+  <!-- center -->
+  <circle cx="320" cy="260" r="70" fill="#0b1028" stroke="#ff9900" stroke-width="3" filter="url(#lg)"/>
+  <text x="320" y="252" text-anchor="middle" font-family="Space Grotesk, Inter, sans-serif" font-size="20" font-weight="700" fill="#fff">EARN</text>
+  <text x="320" y="278" text-anchor="middle" font-family="Space Grotesk, Inter, sans-serif" font-size="20" font-weight="700" fill="#ff9900">XP + FLAGS</text>
+  <!-- nodes -->
+  <g font-family="Space Grotesk, Inter, sans-serif" text-anchor="middle">
+    <g transform="translate(320 90)"><circle r="62" fill="url(#la)"/><text y="-6" font-size="30">📖</text><text y="26" font-size="19" font-weight="700" fill="#0b1028">LEARN</text></g>
+    <g transform="translate(490 260)"><circle r="62" fill="url(#lb)"/><text y="-6" font-size="30">🛠️</text><text y="26" font-size="19" font-weight="700" fill="#0b1028">BUILD</text></g>
+    <g transform="translate(320 430)"><circle r="62" fill="url(#lc)"/><text y="-6" font-size="30">💥</text><text y="26" font-size="19" font-weight="700" fill="#0b1028">BREAK</text></g>
+    <g transform="translate(150 260)"><circle r="62" fill="url(#ld)"/><text y="-6" font-size="30">🛡️</text><text y="26" font-size="19" font-weight="700" fill="#0b1028">DEFEND</text></g>
+  </g>
+  <g font-family="Inter, sans-serif" font-size="14" fill="#b7c0e6" text-anchor="middle">
+    <text x="320" y="16">concept modules + diagrams</text>
+    <text x="590" y="350">guardrails as code</text>
+    <text x="320" y="512">attack sims in your sandbox</text>
+    <text x="60" y="350">fix, detect, verify</text>
+  </g>
+</svg>

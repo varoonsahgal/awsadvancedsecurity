@@ -1,0 +1,165 @@
+<!doctype html>
+<!-- AUTHORING TEMPLATE — copy this for day pages. Not linked from the site. -->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Day N · Title — Operation Skyfortress</title>
+  <meta name="description" content="One-sentence summary of the day.">
+  <link rel="icon" href="assets/img/logo.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/site.css">
+</head>
+<body class="day-1">
+<header id="site-nav"></header>
+
+<!-- ============ DAY HERO ============ -->
+<section class="day-hero">
+  <div class="container">
+    <div class="reveal">
+      <div class="day-num">01</div>
+      <div class="eyebrow">Day 1 · Monday</div>
+      <h1>Title <span class="grad">Highlight</span></h1>
+      <p class="lead">Tagline.</p>
+      <div class="chips"><span class="chip accent">4 labs</span><span class="chip">~6.5 hrs hands-on</span><span class="chip new">2026 NEW</span></div>
+    </div>
+    <div class="banner reveal"><img src="assets/img/day1/banner.svg" alt="Illustration description"></div>
+  </div>
+</section>
+
+<div class="container day-layout">
+  <nav class="toc" data-auto></nav>
+  <main class="day-content">
+
+    <!-- ============ BRIEFING ============ -->
+    <section id="briefing">
+      <div class="eyebrow">Mission briefing</div>
+      <h2>Briefing title</h2>
+      <div class="story reveal">
+        <img class="avatar" src="assets/img/owlsley.svg" alt="Owlsley">
+        <div><div class="who">OWLSLEY · CISO-in-residence, Nimbus Interstellar</div><p>Story text…</p></div>
+      </div>
+      <div class="story villain reveal">
+        <img class="avatar" src="assets/img/kraken.svg" alt="The Kraken">
+        <div><div class="who">INTERCEPTED · The Kraken Collective</div><p>Villain taunt…</p></div>
+      </div>
+    </section>
+
+    <!-- ============ OBJECTIVES + SCHEDULE ============ -->
+    <section id="objectives">
+      <div class="eyebrow">Outcomes</div>
+      <h2>By the end of today you will…</h2>
+      <ul class="objectives"><li>…</li><li>…</li></ul>
+      <h3 style="margin-top:40px">Schedule</h3>
+      <div class="timeline">
+        <div class="slot"><div class="time">09:00</div><div class="what"><b>Module 1.1</b> — …</div></div>
+        <div class="slot lab-slot"><div class="time">10:00</div><div class="what"><b>Lab 1.1</b> — … <span class="chip accent">75 min</span></div></div>
+        <div class="slot break-slot"><div class="time">12:00</div><div class="what">Lunch</div></div>
+      </div>
+    </section>
+
+    <!-- ============ MODULE ============ -->
+    <section id="concepts">
+      <div class="eyebrow">Concepts</div>
+      <h2>Section heading</h2>
+      <div class="module" id="m1-1">
+        <div class="module-num">MODULE 1.1</div>
+        <h3>Module title</h3>
+        <p>Explanation…</p>
+        <figure class="figure reveal"><img src="assets/img/day1/diagram.svg" alt="…"><figcaption><b>FIG 1.1</b> Caption.</figcaption></figure>
+        <div class="callout new"><strong class="ct">New in 2026</strong><p>…</p></div>
+        <div class="callout tip"><strong class="ct">Pro tip</strong><p>…</p></div>
+        <div class="callout gotcha"><strong class="ct">Gotcha</strong><p>…</p></div>
+        <div class="callout war"><strong class="ct">War story</strong><p>…</p></div>
+      </div>
+    </section>
+
+    <!-- ============ LABS ============ -->
+    <section id="labs">
+      <div class="eyebrow">Hands-on</div>
+      <h2>Labs</h2>
+      <article class="lab" id="lab-1-1">
+        <img class="lab-cover" src="assets/img/day1/lab1-cover.svg" alt="Lab 1.1 cover art">
+        <div class="lab-head">
+          <div class="lab-num">Lab 1.1</div>
+          <h3>Lab title</h3>
+          <div class="chips"><span class="chip med">Intermediate</span><span class="chip">⏱ 75 min</span><span class="chip">💸 ~$0.10</span><span class="chip">IAM · Organizations</span></div>
+        </div>
+        <div class="lab-body">
+          <p><b>Goal:</b> …</p>
+          <h4>Steps</h4>
+          <ol class="steps" data-lab="d1-lab1">
+            <li><strong>Step title</strong><p>Do this…</p>
+<pre data-title="CloudShell"><code class="language-bash">aws sts get-caller-identity</code></pre>
+            </li>
+          </ol>
+          <div class="paths">
+            <div class="path guided"><p>Follow the numbered steps below.</p></div>
+            <div class="path challenge"><p>Only the goal + constraints; solve it without the steps, then compare.</p></div>
+          </div>
+          <div class="predict"><p>What will this call return, and which policy decides it?</p><details><summary>Reveal</summary><p>…</p></details></div>
+          <!-- terminal "screenshot" of expected output (no copy button) -->
+          <div class="term" data-title="CloudShell · us-east-1 · sky-dev"><pre><span class="p">$</span> <span class="c">aws sts get-caller-identity</span>
+<span class="o">{</span>
+    <span class="k">"Account"</span>: <span class="s">"111122223333"</span>,
+    <span class="k">"Arn"</span>: <span class="s">"arn:aws:sts::111122223333:assumed-role/OrganizationAccountAccessRole/botocore-session"</span>
+<span class="o">}</span>
+<span class="p">$</span> <span class="c">aws s3 cp s3://sky-vault/flag.txt -</span>
+<span class="err">An error occurred (AccessDenied) when calling the GetObject operation: ... with an explicit deny in a resource control policy</span></pre></div>
+          <p class="term-caption">Expected output. Your account IDs and ARNs will differ.</p>
+          <!-- browser-framed console mock-up (SVG you draw; label it illustrative) -->
+          <figure class="shot" data-url="console.aws.amazon.com/guardduty/home?region=us-east-1#/findings">
+            <img src="assets/img/day1/shot-example.svg" alt="Illustrative mock-up of …">
+            <figcaption><b>SCREEN 1.1</b> Illustrative mock-up; the live console layout may differ.</figcaption>
+          </figure>
+          <div class="table-wrap"><table><thead><tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr></thead><tbody><tr><td>…</td><td>…</td><td>…</td></tr></tbody></table></div>
+          <div class="checkpoint"><p>You should see…</p></div>
+          <details class="hint"><summary>Hint</summary><p>…</p></details>
+          <form class="flag" data-id="d1-flag1" data-hash="SHA256_OF_FLAG" data-xp="150" data-label="Flag 1.1"></form>
+          <div class="stretch"><p>…</p></div>
+          <div class="cleanup"><pre><code class="language-bash">…</code></pre></div>
+        </div>
+      </article>
+    </section>
+
+    <!-- ============ BOSS ============ -->
+    <section id="boss">
+      <div class="boss" data-flag="d1-boss">
+        <div class="boss-grid">
+          <img src="assets/img/kraken.svg" alt="">
+          <div>
+            <div class="eyebrow">Boss fight</div>
+            <h3>Boss name</h3>
+            <div class="hp"><i></i></div>
+            <p>Scenario…</p>
+            <form class="flag" data-id="d1-boss" data-hash="…" data-xp="400" data-badge="day1" data-label="Boss flag"></form>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ QUIZ ============ -->
+    <section id="quiz">
+      <div class="eyebrow">Knowledge check</div>
+      <h2>Quiz <span class="quiz-score" style="font-size:1rem"></span></h2>
+      <div class="quiz" data-id="d1-quiz">
+        <div class="q" data-answer="b">
+          <p>Question?</p>
+          <div class="opts"><button data-k="a">A</button><button data-k="b">B</button><button data-k="c">C</button><button data-k="d">D</button></div>
+          <div class="explain">Why…</div>
+        </div>
+      </div>
+    </section>
+
+    <div class="pager"><a class="prev" href="setup.html"><small>← Previous</small>Lab 0</a><a class="next" href="day2.html"><small>Next →</small>Day 2</a></div>
+  </main>
+</div>
+
+<footer id="site-footer"></footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+<script src="assets/js/site.js"></script>
+</body>
+</html>

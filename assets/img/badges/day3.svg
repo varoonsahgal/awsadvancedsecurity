@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <title>WARDEN badge</title>
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#34d399"/><stop offset="1" stop-color="#22d3ee"/></linearGradient>
+    <radialGradient id="i" cx=".5" cy=".35" r=".7"><stop offset="0" stop-color="#2a2f6b"/><stop offset="1" stop-color="#0b1028"/></radialGradient>
+    <filter id="f" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+  <g filter="url(#f)"><path d="M100 8 L180 54 V146 L100 192 L20 146 V54 Z" fill="url(#g)"/></g>
+  <path d="M100 22 L168 61 V139 L100 178 L32 139 V61 Z" fill="url(#i)"/>
+  <path d="M100 22 L168 61 V139 L100 178 L32 139 V61 Z" fill="none" stroke="url(#g)" stroke-width="2" opacity=".7"/>
+  <g transform="translate(0 -6)"><path d="M60 140 V92 h14 v-14 h14 v14 h24 v-14 h14 v14 h14 v48 Z" fill="#fff"/><path d="M92 140 v-22 a8 8 0 0 1 16 0 v22 Z" fill="#0b1028"/><path d="M40 150 Q100 125 160 150" stroke="#fff" stroke-width="6" fill="none" stroke-linecap="round"/></g>
+  <path d="M18 146 H182 L170 164 L182 182 H18 L30 164 Z" fill="url(#g)"/>
+  <text x="100" y="170" text-anchor="middle" font-family="Space Grotesk, Inter, sans-serif" font-weight="700" font-size="15" letter-spacing="2" fill="#0b1028">WARDEN</text>
+  <g fill="#fff"><circle cx="40" cy="40" r="2"/><circle cx="168" cy="30" r="1.6"/><circle cx="178" cy="100" r="1.4"/></g>
+</svg>

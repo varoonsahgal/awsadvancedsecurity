@@ -1,0 +1,14 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "TrustTheVendorOnlyOnOurBehalf",
+      "Effect": "Allow",
+      "Principal": { "AWS": "VENDOR_SCANNER_ROLE_ARN" },
+      "Action": "sts:AssumeRole",
+      "Condition": {
+        "StringEquals": { "sts:ExternalId": "oi-tenant-7f3c9a41-nimbus" }
+      }
+    }
+  ]
+}

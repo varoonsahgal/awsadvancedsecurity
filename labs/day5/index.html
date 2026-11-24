@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en" data-root="../../">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Day 5 lab files — Operation Skyfortress</title>
+  <meta name="description" content="Support files for the Day 5 incident response labs.">
+  <link rel="icon" href="../../assets/img/logo.svg" type="image/svg+xml">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/site.css">
+</head>
+<body class="day-5">
+<header id="site-nav"></header>
+<main class="container section">
+  <div class="eyebrow">Day 5 · lab files</div>
+  <h1>Kraken Rising <span class="grad">toolkit</span></h1>
+  <p class="lead">Everything the <a href="../../day5.html">Day 5</a> labs use. Get the whole folder into CloudShell with <code>git clone</code>, then <code>cd labs/day5 &amp;&amp; chmod +x */*.sh</code>. Every lab has its own <code>cleanup.sh</code>.</p>
+  <div class="callout warn"><strong class="ct">Sandbox only</strong><p>These scripts deliberately create vulnerable IAM principals and simulate attacker activity. Run them only in the course sandbox accounts from <a href="../../setup.html">Lab 0</a>.</p></div>
+<h2 id="lab1" style="margin-top:40px">Lab 5.1 · Burned Keys</h2>
+<div class="table-wrap"><table><thead><tr><th>File</th><th>What it does</th></tr></thead><tbody>
+<tr><td><a href="lab1-burned-keys/setup.sh"><code>lab1-burned-keys/setup.sh</code></a></td><td>Creates the over-trusted build bot, deploy role, loot bucket and the leaked .env</td></tr>
+<tr><td><a href="lab1-burned-keys/attacker.sh"><code>lab1-burned-keys/attacker.sh</code></a></td><td>Simulated Kraken: recon, payroll theft, 12h AssumeRole pivot, SSM persistence</td></tr>
+<tr><td><a href="lab1-burned-keys/kraken-retry.sh"><code>lab1-burned-keys/kraken-retry.sh</code></a></td><td>Replays the stolen AKIA and ASIA credentials to test your containment</td></tr>
+<tr><td><a href="lab1-burned-keys/revoke-older-sessions.json"><code>lab1-burned-keys/revoke-older-sessions.json</code></a></td><td>The AWSRevokeOlderSessions policy template (aws:TokenIssueTime)</td></tr>
+<tr><td><a href="lab1-burned-keys/cleanup.sh"><code>lab1-burned-keys/cleanup.sh</code></a></td><td>Removes everything</td></tr>
+</tbody></table></div>
+<h2 id="lab2" style="margin-top:40px">Lab 5.2 · Digital Autopsy</h2>
+<div class="table-wrap"><table><thead><tr><th>File</th><th>What it does</th></tr></thead><tbody>
+<tr><td><a href="lab2-digital-autopsy/autopsy.yaml"><code>lab2-digital-autopsy/autopsy.yaml</code></a></td><td>CloudFormation: victim, forensic workstation, isolated subnet, SSM endpoints, SGs, Object Lock bucket</td></tr>
+<tr><td><a href="lab2-digital-autopsy/deploy.sh"><code>lab2-digital-autopsy/deploy.sh</code></a></td><td>Deploys the stack and writes ~/skyfortress-d5-lab2.env</td></tr>
+<tr><td><a href="lab2-digital-autopsy/ssm-run.sh"><code>lab2-digital-autopsy/ssm-run.sh</code></a></td><td>Run a command on an instance via SSM and print the output</td></tr>
+<tr><td><a href="lab2-digital-autopsy/forensic-mount.sh"><code>lab2-digital-autopsy/forensic-mount.sh</code></a></td><td>Read-only mount of evidence volumes (XFS ro,norecovery,nouuid) + quick triage</td></tr>
+<tr><td><a href="lab2-digital-autopsy/procmem-grep.py"><code>lab2-digital-autopsy/procmem-grep.py</code></a></td><td>Fallback live-response scan of a process&#x27;s memory via /proc/&lt;pid&gt;/mem</td></tr>
+<tr><td><a href="lab2-digital-autopsy/chain-of-custody.json"><code>lab2-digital-autopsy/chain-of-custody.json</code></a></td><td>Chain-of-custody template</td></tr>
+<tr><td><a href="lab2-digital-autopsy/cleanup.sh"><code>lab2-digital-autopsy/cleanup.sh</code></a></td><td>Deletes volumes, snapshots, evidence (bypassing governance retention) and the stack</td></tr>
+</tbody></table></div>
+<h2 id="lab3" style="margin-top:40px">Lab 5.3 · Autopilot Defense</h2>
+<div class="table-wrap"><table><thead><tr><th>File</th><th>What it does</th></tr></thead><tbody>
+<tr><td><a href="lab3-autopilot/autopilot.yaml"><code>lab3-autopilot/autopilot.yaml</code></a></td><td>CloudFormation: EventBridge rule, Step Functions playbook, Lambdas, SNS, decoy instance</td></tr>
+<tr><td><a href="lab3-autopilot/playbook.asl.json"><code>lab3-autopilot/playbook.asl.json</code></a></td><td>Readable copy of the state machine definition</td></tr>
+<tr><td><a href="lab3-autopilot/fire.sh"><code>lab3-autopilot/fire.sh</code></a></td><td>Sends a GuardDuty-shaped test event (source skyfortress.test)</td></tr>
+<tr><td><a href="lab3-autopilot/approve.sh"><code>lab3-autopilot/approve.sh</code></a></td><td>The human in the loop: send-task-success yes/no</td></tr>
+<tr><td><a href="lab3-autopilot/launch-decoy.sh"><code>lab3-autopilot/launch-decoy.sh</code></a></td><td>Launches another decoy instance for re-runs</td></tr>
+<tr><td><a href="lab3-autopilot/cleanup.sh"><code>lab3-autopilot/cleanup.sh</code></a></td><td>Stops waiting executions, deletes snapshots and the stack</td></tr>
+</tbody></table></div>
+<h2 id="boss" style="margin-top:40px">Boss · The Kraken&#x27;s Last Stand</h2>
+<div class="table-wrap"><table><thead><tr><th>File</th><th>What it does</th></tr></thead><tbody>
+<tr><td><a href="boss/setup.sh"><code>boss/setup.sh</code></a></td><td>Builds the arena in the dev member account and runs the five-call attack</td></tr>
+<tr><td><a href="boss/protect-security-tooling.scp.json"><code>boss/protect-security-tooling.scp.json</code></a></td><td>Guardrail SCP protecting detection + audit tooling</td></tr>
+<tr><td><a href="boss/verify.py"><code>boss/verify.py</code></a></td><td>Checks all six victory conditions and reveals the flag</td></tr>
+<tr><td><a href="boss/cleanup.sh"><code>boss/cleanup.sh</code></a></td><td>Tears down the arena</td></tr>
+</tbody></table></div>
+<h2 id="runbooks" style="margin-top:40px">Take-home runbooks</h2>
+<div class="table-wrap"><table><thead><tr><th>File</th><th>What it does</th></tr></thead><tbody>
+<tr><td><a href="runbooks/credential-compromise.md"><code>runbooks/credential-compromise.md</code></a></td><td>Compromised AWS credentials, end to end</td></tr>
+<tr><td><a href="runbooks/ec2-compromise.md"><code>runbooks/ec2-compromise.md</code></a></td><td>Compromised EC2 instance: preserve, isolate, collect, analyze</td></tr>
+</tbody></table></div>
+
+  <div class="pager"><a class="prev" href="../../day5.html"><small>← Back</small>Day 5 · Kraken Rising</a><a class="next" href="../../gameday.html"><small>Next →</small>GameDay</a></div>
+</main>
+<footer id="site-footer"></footer>
+<script src="../../assets/js/site.js"></script>
+</body>
+</html>

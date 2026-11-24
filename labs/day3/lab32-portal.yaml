@@ -1,0 +1,105 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  Operation Skyfortress - Day 3 / Lab 3.2 "Shields Up".
+  Nimbus Interstellar cargo portal: API Gateway (REST, regional) -> Lambda.
+  Students attach an AWS WAF web ACL to the "prod" stage. Cost: pennies (pay per request).
+
+Resources:
+  PortalRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement: [{ Effect: Allow, Principal: { Service: lambda.amazonaws.com }, Action: sts:AssumeRole }]
+      ManagedPolicyArns: [arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole]
+
+  PortalFn:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: nimbus-cargo-portal
+      Runtime: python3.12
+      Handler: index.handler
+      Role: !GetAtt PortalRole.Arn
+      Timeout: 5
+      Environment:
+        Variables:
+          # obfuscated so it doesn't jump out of the console - the lab is to EARN it through WAF
+          PARTNER_MANIFEST: fWxlYmFsX3liX2RlaWZpcmV2X3JlbnRyYXBfZGV0c3VydHtZS1MK
+      Code:
+        ZipFile: |
+          import base64, json, os
+          HTML = """<!doctype html><title>Nimbus Cargo Portal</title>
+          <body style="font-family:sans-serif;background:#060915;color:#e8ecff;padding:40px">
+          <h1>&#128640; Nimbus Interstellar &middot; Cargo Portal</h1>
+          <p>Routes: /search?q= &middot; /files?path= &middot; POST /login &middot; /partner/manifest</p></body>"""
+          def resp(code, body, ctype="application/json"):
+              return {"statusCode": code, "headers": {"content-type": ctype},
+                      "body": body if isinstance(body, str) else json.dumps(body)}
+          def handler(event, _ctx):
+              path = event.get("path", "/")
+              h = {k.lower(): v for k, v in (event.get("headers") or {}).items()}
+              q = event.get("queryStringParameters") or {}
+              if path == "/":
+                  return resp(200, HTML, "text/html")
+              if path == "/search":
+                  return resp(200, {"query": q.get("q", ""), "results": ["orbital-crate-17", "ion-drive-spares"]})
+              if path == "/files":
+                  return resp(404, {"error": "no such manifest file", "path": q.get("path", "")})
+              if path == "/login":
+                  return resp(401, {"ok": False, "error": "invalid credentials"})
+              if path == "/partner/manifest":
+                  # Only AWS WAF can grant this: a WAF ALLOW rule inserts x-amzn-waf-partner: verified
+                  if h.get("x-amzn-waf-partner") == "verified":
+                      flag = base64.b64decode(os.environ["PARTNER_MANIFEST"]).decode().strip()[::-1]
+                      return resp(200, {"manifest": "Q4 partner cargo manifest", "token": flag})
+                  return resp(403, {"error": "partners only - verification must come from the edge"})
+              return resp(404, {"error": "not found"})
+
+  Api:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: nimbus-cargo-portal
+      EndpointConfiguration: { Types: [REGIONAL] }
+  ProxyResource:
+    Type: AWS::ApiGateway::Resource
+    Properties: { RestApiId: !Ref Api, ParentId: !GetAtt Api.RootResourceId, PathPart: "{proxy+}" }
+  RootMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref Api
+      ResourceId: !GetAtt Api.RootResourceId
+      HttpMethod: ANY
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${PortalFn.Arn}/invocations
+  ProxyMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref Api
+      ResourceId: !Ref ProxyResource
+      HttpMethod: ANY
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${PortalFn.Arn}/invocations
+  Deployment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn: [RootMethod, ProxyMethod]
+    Properties: { RestApiId: !Ref Api }
+  Stage:
+    Type: AWS::ApiGateway::Stage
+    Properties: { RestApiId: !Ref Api, DeploymentId: !Ref Deployment, StageName: prod }
+  InvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref PortalFn
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${Api}/*
+
+Outputs:
+  PortalUrl: { Value: !Sub "https://${Api}.execute-api.${AWS::Region}.amazonaws.com/prod" }
+  StageArn: { Value: !Sub "arn:aws:apigateway:${AWS::Region}::/restapis/${Api}/stages/prod" }

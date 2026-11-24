@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 720">
+<title>The least-privilege loop: generate, gate, deploy, measure, trim — with access findings as the verifier</title>
+<defs>
+  <marker id="ar" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="#c7d2fe"/></marker>
+  <filter id="g" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="8" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  <radialGradient id="c" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#2a1f6e"/><stop offset="1" stop-color="#120c34"/></radialGradient>
+</defs>
+<rect width="1400" height="720" fill="#070b1c"/>
+<text x="40" y="58" font-family="Space Grotesk, Inter, sans-serif" font-size="28" font-weight="700" fill="#fff">The least-privilege loop</text>
+<text x="40" y="88" font-family="Space Grotesk, Inter, sans-serif" font-size="16" fill="#9aa6d1">Nobody writes 40 accounts of policies by hand. You generate, gate, measure and trim — forever.</text>
+<circle cx="700" cy="410" r="230" fill="none" stroke="#3b4580" stroke-width="3" stroke-dasharray="4 10"/>
+<g fill="none" stroke="#c7d2fe" stroke-width="3" marker-end="url(#ar)">
+  <path d="M790 196 A230 230 0 0 1 904 300"/><path d="M920 470 A230 230 0 0 1 820 610"/>
+  <path d="M590 616 A230 230 0 0 1 488 500"/><path d="M482 320 A230 230 0 0 1 600 200"/>
+</g>
+<circle cx="700" cy="410" r="110" fill="url(#c)" stroke="#ff9900" stroke-width="3" filter="url(#g)"/>
+<text x="700" y="396" text-anchor="middle" font-family="Space Grotesk, Inter, sans-serif" font-size="19" font-weight="700" fill="#fff">Access findings</text>
+<text x="700" y="422" text-anchor="middle" font-family="Space Grotesk, Inter, sans-serif" font-size="14" fill="#fde68a">external · internal</text>
+<text x="700" y="444" text-anchor="middle" font-family="Space Grotesk, Inter, sans-serif" font-size="14" fill="#fde68a">"who can actually reach it?"</text>
+<g transform="translate(700 170)"><rect x="-150" y="-62" width="300" height="124" rx="16" fill="#0f1533" stroke="#a78bfa" stroke-width="3"/><text y="-30" text-anchor="middle" font-family="JetBrains Mono, ui-monospace, monospace" font-size="15" font-weight="700" fill="#a78bfa">1 · GENERATE</text><text y="-2" text-anchor="middle" font-family="Space Grotesk, Inter, sans-serif" font-size="15" fill="#dbe2ff">Policy generation reads</text><text y="20" text-anchor="middle" font-family="Space Grotesk, Inter, sans-serif" font-size="15" fill="#dbe2ff">CloudTrail for a role</text><text y="42" text-anchor="middle" font-family="Space Grotesk, Inter, sans-serif" font-size="15" fill="#dbe2ff">and drafts a policy</text></g><g transform="translate(960 410)"><rect x="-150" y="-62" width="300" height="124" rx="16" fill="#0f1533" stroke="#22d3ee" stroke-width="3"/><text y="-30" text-anchor="middle" font-family="JetBrains Mono, ui-monospace, monospace" font-size="15" font-weight="700" fill="#22d3ee">2 · GATE</text><text y="-2" text-anchor="middle" font-family="Space Grotesk, Inter, sans-serif" font-size="15" fill="#dbe2ff">Custom policy checks in CI:</text><text y="20" text-anchor="middle" font-family="Space Grotesk, Inter, sans-serif" font-size="15" fill="#dbe2ff">no-new-access, not-granted,</text><text y="42" text-anchor="middle" font-family="Space Grotesk, Inter, sans-serif" font-size="15" fill="#dbe2ff">no-public-access</text></g><g transform="translate(700 650)"><rect x="-150" y="-62" width="300" height="124" rx="16" fill="#0f1533" stroke="#34d399" stroke-width="3"/><text y="-30" text-anchor="middle" font-family="JetBrains Mono, ui-monospace, monospace" font-size="15" font-weight="700" fill="#34d399">3 · DEPLOY + MEASURE</text><text y="-2" text-anchor="middle" font-family="Space Grotesk, Inter, sans-serif" font-size="15" fill="#dbe2ff">Unused access analyzer:</text><text y="20" text-anchor="middle" font-family="Space Grotesk, Inter, sans-serif" font-size="15" fill="#dbe2ff">unused roles, keys,</text><text y="42" text-anchor="middle" font-family="Space Grotesk, Inter, sans-serif" font-size="15" fill="#dbe2ff">services and actions</text></g><g transform="translate(440 410)"><rect x="-150" y="-62" width="300" height="124" rx="16" fill="#0f1533" stroke="#f472b6" stroke-width="3"/><text y="-30" text-anchor="middle" font-family="JetBrains Mono, ui-monospace, monospace" font-size="15" font-weight="700" fill="#f472b6">4 · TRIM</text><text y="-2" text-anchor="middle" font-family="Space Grotesk, Inter, sans-serif" font-size="15" fill="#dbe2ff">Finding recommendation</text><text y="20" text-anchor="middle" font-family="Space Grotesk, Inter, sans-serif" font-size="15" fill="#dbe2ff">→ smaller policy → back</text><text y="42" text-anchor="middle" font-family="Space Grotesk, Inter, sans-serif" font-size="15" fill="#dbe2ff">through the gate</text></g>
+<g transform="translate(1130 150)">
+  <rect width="240" height="150" rx="14" fill="#1b1340" stroke="#fbbf24" stroke-opacity=".7"/>
+  <text x="18" y="32" font-family="Space Grotesk, Inter, sans-serif" font-size="15" font-weight="700" fill="#fbbf24">Proof, not regex</text>
+  <text x="18" y="60" font-family="Space Grotesk, Inter, sans-serif" font-size="13" fill="#fde68a">Checks translate policies</text>
+  <text x="18" y="82" font-family="Space Grotesk, Inter, sans-serif" font-size="13" fill="#fde68a">into logic and ask an SMT</text>
+  <text x="18" y="104" font-family="Space Grotesk, Inter, sans-serif" font-size="13" fill="#fde68a">solver (Zelkova) whether</text>
+  <text x="18" y="126" font-family="Space Grotesk, Inter, sans-serif" font-size="13" fill="#fde68a">a property always holds.</text>
+</g>
+<g transform="translate(40 560)">
+  <rect width="260" height="120" rx="14" fill="#111833" stroke="#3b4580"/>
+  <text x="18" y="32" font-family="Space Grotesk, Inter, sans-serif" font-size="15" font-weight="700" fill="#c7d2fe">Cost shape</text>
+  <text x="18" y="58" font-family="Space Grotesk, Inter, sans-serif" font-size="13" fill="#9aa6d1">External access: free</text>
+  <text x="18" y="80" font-family="Space Grotesk, Inter, sans-serif" font-size="13" fill="#9aa6d1">Unused / internal: per role/mo</text>
+  <text x="18" y="102" font-family="Space Grotesk, Inter, sans-serif" font-size="13" fill="#9aa6d1">Policy checks: per API call</text>
+</g>
+</svg>

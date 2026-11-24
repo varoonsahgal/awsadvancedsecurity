@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 460" font-family="Space Grotesk, Inter, sans-serif">
+  <title>Lab 3.2 architecture: the Kraken siege script and a trusted partner both hit AWS WAF in front of API Gateway and Lambda</title>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#34d399"/></marker>
+    <marker id="r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#fb7185"/></marker>
+    <filter id="g"><feGaussianBlur stdDeviation="6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <radialGradient id="sh" cx=".5" cy=".5" r=".55"><stop offset="0" stop-color="#34d399" stop-opacity=".05"/><stop offset=".85" stop-color="#34d399" stop-opacity=".2"/><stop offset="1" stop-color="#a7f3d0" stop-opacity=".7"/></radialGradient>
+  </defs>
+  <rect width="1200" height="460" fill="#060b18"/>
+  <text x="40" y="44" fill="#34d399" font-size="15" letter-spacing="3">LAB 3.2 · SHIELDS UP — WHO GETS THROUGH THE GATE?</text>
+
+  <g font-size="15">
+    <rect x="40" y="80" width="250" height="210" rx="14" fill="#1a0b14" stroke="#fb7185"/>
+    <text x="60" y="112" fill="#fda4af" font-size="17" font-weight="600">🐙 kraken-siege.py</text>
+    <text x="60" y="142" fill="#fecdd3">P1 SQLi on /search</text>
+    <text x="60" y="166" fill="#fecdd3">P2 ../ traversal on /files</text>
+    <text x="60" y="190" fill="#fecdd3">P3 python-requests bots</text>
+    <text x="60" y="214" fill="#fecdd3">P4 credential stuffing /login</text>
+    <text x="60" y="238" fill="#fecdd3">P5 KrakenScraper AI swarm</text>
+    <text x="60" y="270" fill="#94a3b8" font-size="13">P0 control: a browser GET /</text>
+    <rect x="40" y="310" width="250" height="110" rx="14" fill="#06201a" stroke="#34d399"/>
+    <text x="60" y="342" fill="#86efac" font-size="17" font-weight="600">🤝 Orbital Freight (partner)</text>
+    <text x="60" y="368" fill="#d1fae5">x-partner-key: nimbus-orbital-7</text>
+    <text x="60" y="392" fill="#d1fae5">from a trusted IP set</text>
+  </g>
+
+  <ellipse cx="560" cy="250" rx="150" ry="180" fill="url(#sh)" filter="url(#g)"/>
+  <text x="560" y="210" fill="#ecfdf5" font-size="22" text-anchor="middle" font-weight="700">AWS WAF</text>
+  <text x="560" y="236" fill="#a7f3d0" font-size="15" text-anchor="middle">web ACL SkyShield</text>
+  <text x="560" y="266" fill="#a7f3d0" font-size="14" text-anchor="middle">labels · rate · managed</text>
+  <text x="560" y="290" fill="#a7f3d0" font-size="14" text-anchor="middle">Bot Control · custom 429</text>
+
+  <path d="M290 160 C350 160 380 180 420 200" stroke="#fb7185" stroke-width="3" fill="none" marker-end="url(#r)"/>
+  <path d="M290 365 C350 365 390 330 420 300" stroke="#34d399" stroke-width="3" fill="none" marker-end="url(#a)"/>
+  <text x="300" y="130" fill="#fb7185" font-size="14">403 / 429</text>
+
+  <g font-size="15">
+    <rect x="780" y="190" width="170" height="110" rx="14" fill="#0b1a2e" stroke="#60a5fa"/>
+    <text x="865" y="230" fill="#fff" text-anchor="middle" font-size="17">API Gateway</text>
+    <text x="865" y="254" fill="#93c5fd" text-anchor="middle">REST · stage prod</text>
+    <text x="865" y="278" fill="#93c5fd" text-anchor="middle" font-size="13">regional</text>
+    <rect x="1000" y="190" width="170" height="110" rx="14" fill="#2a1a06" stroke="#ff9900"/>
+    <text x="1085" y="230" fill="#fff" text-anchor="middle" font-size="17">Lambda</text>
+    <text x="1085" y="254" fill="#ffb347" text-anchor="middle">cargo-portal</text>
+    <text x="1085" y="278" fill="#ffb347" text-anchor="middle" font-size="13">/partner/manifest 🚩</text>
+  </g>
+  <path d="M710 250 H776" stroke="#34d399" stroke-width="3" marker-end="url(#a)"/>
+  <path d="M950 245 H996" stroke="#34d399" stroke-width="3" marker-end="url(#a)"/>
+  <text x="740" y="350" fill="#fde68a" font-size="14">WAF inserts x-amzn-waf-partner: verified</text>
+  <text x="740" y="372" fill="#94a3b8" font-size="13">the backend trusts a header only the edge can add</text>
+</svg>

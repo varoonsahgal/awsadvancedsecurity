@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 420">
+  <title>The Poisoned Manifest — a kraken tentacle bursting out of a cargo manifest</title>
+  <defs>
+    <linearGradient id="paper" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff7e0"/><stop offset="1" stop-color="#e9cf95"/></linearGradient>
+    <linearGradient id="ten" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff6b9a"/><stop offset="1" stop-color="#7a0f45"/></linearGradient>
+    <filter id="gl" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="8" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+  <ellipse cx="200" cy="400" rx="140" ry="14" fill="#000" opacity=".35"/>
+  <!-- glow -->
+  <circle cx="200" cy="200" r="150" fill="#fb7185" opacity=".18" filter="url(#gl)"/>
+  <!-- manifest -->
+  <g transform="rotate(-6 200 220)">
+    <path d="M90 60 L290 60 L320 90 L320 380 L90 380 Z" fill="url(#paper)" stroke="#b45309" stroke-width="3"/>
+    <path d="M290 60 L290 90 L320 90" fill="#e2c07a" stroke="#b45309" stroke-width="3"/>
+    <text x="110" y="100" font-family="Space Grotesk, Inter, sans-serif" font-weight="700" font-size="18" fill="#7c2d12">MANIFEST NX-7781</text>
+    <g stroke="#b08a4a" stroke-width="5" stroke-linecap="round" opacity=".7">
+      <line x1="110" y1="128" x2="290" y2="128"/><line x1="110" y1="150" x2="260" y2="150"/><line x1="110" y1="172" x2="280" y2="172"/>
+      <line x1="110" y1="194" x2="230" y2="194"/><line x1="110" y1="300" x2="270" y2="300"/><line x1="110" y1="322" x2="240" y2="322"/>
+    </g>
+    <!-- rip -->
+    <path d="M110 220 L150 236 L170 214 L205 244 L235 218 L265 240 L300 222 L300 280 L110 280 Z" fill="#1a0614"/>
+    <text x="122" y="270" font-family="JetBrains Mono, monospace" font-size="12" fill="#fb7185">[[note-to-assistant…]]</text>
+    <text x="110" y="360" font-family="JetBrains Mono, monospace" font-size="13" fill="#7c2d12">/s/ M. Ferreira</text>
+  </g>
+  <!-- tentacle bursting -->
+  <path d="M200 260 C180 200 250 170 240 120 C232 80 190 70 200 30 C206 10 230 8 236 24" stroke="url(#ten)" stroke-width="30" fill="none" stroke-linecap="round"/>
+  <g fill="#ffd0de"><circle cx="214" cy="230" r="5"/><circle cx="232" cy="180" r="5"/><circle cx="232" cy="130" r="4.5"/><circle cx="206" cy="84" r="4"/><circle cx="204" cy="48" r="3.5"/></g>
+  <!-- stolen data bits -->
+  <g font-family="JetBrains Mono, monospace" font-size="16" fill="#fbbf24" filter="url(#gl)">
+    <text x="270" y="60">{PII}</text><text x="40" y="120">01101</text><text x="300" y="150">🔑</text>
+  </g>
+</svg>

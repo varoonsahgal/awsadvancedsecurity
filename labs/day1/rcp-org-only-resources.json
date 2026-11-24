@@ -1,0 +1,60 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "EnforceOrgIdentities",
+      "Effect": "Deny",
+      "Principal": "*",
+      "Action": [
+        "s3:*",
+        "sqs:*",
+        "kms:*",
+        "secretsmanager:*",
+        "sts:AssumeRole",
+        "sts:DecodeAuthorizationMessage",
+        "sts:GetAccessKeyInfo",
+        "sts:GetFederationToken",
+        "sts:GetServiceBearerToken",
+        "sts:GetSessionToken",
+        "sts:SetContext"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "StringNotEqualsIfExists": {
+          "aws:PrincipalOrgID": "o-REPLACEME"
+        },
+        "BoolIfExists": {
+          "aws:PrincipalIsAWSService": "false"
+        }
+      }
+    },
+    {
+      "Sid": "EnforceConfusedDeputyProtection",
+      "Effect": "Deny",
+      "Principal": "*",
+      "Action": ["s3:*", "sqs:*", "kms:*", "secretsmanager:*", "sts:*"],
+      "Resource": "*",
+      "Condition": {
+        "StringNotEqualsIfExists": {
+          "aws:SourceOrgID": "o-REPLACEME"
+        },
+        "Null": {
+          "aws:SourceAccount": "false"
+        },
+        "Bool": {
+          "aws:PrincipalIsAWSService": "true"
+        }
+      }
+    },
+    {
+      "Sid": "EnforceSecureTransport",
+      "Effect": "Deny",
+      "Principal": "*",
+      "Action": ["s3:*", "sqs:*", "kms:*", "secretsmanager:*", "sts:*"],
+      "Resource": "*",
+      "Condition": {
+        "BoolIfExists": { "aws:SecureTransport": "false" }
+      }
+    }
+  ]
+}

@@ -1,0 +1,102 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 860" font-family="Space Grotesk, Inter, sans-serif">
+  <title>Nimbus Interstellar organization: OU tree with SCPs, RCPs and declarative policies layered per OU</title>
+  <defs>
+    <linearGradient id="bg2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0c0f2e"/><stop offset="1" stop-color="#070b1c"/></linearGradient>
+    <radialGradient id="rootg" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#a78bfa" stop-opacity=".45"/><stop offset="1" stop-color="#a78bfa" stop-opacity="0"/></radialGradient>
+    <filter id="gl" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+  <rect width="1400" height="860" fill="url(#bg2)"/>
+  <text x="50" y="58" font-size="28" font-weight="700" fill="#fff">Guardrails by OU — the Nimbus Interstellar org</text>
+  <text x="50" y="88" font-size="16" fill="#8a95c2">Policies inherit downward. A child can never exceed its parent's SCP/RCP ceiling.</text>
+
+  <!-- legend -->
+  <g font-size="14" font-family="JetBrains Mono, monospace">
+    <rect x="990" y="40" width="64" height="24" rx="12" fill="#a78bfa" opacity=".2" stroke="#a78bfa"/><text x="1022" y="57" fill="#c4b5fd" text-anchor="middle">SCP</text>
+    <rect x="1064" y="40" width="64" height="24" rx="12" fill="#f472b6" opacity=".2" stroke="#f472b6"/><text x="1096" y="57" fill="#f9a8d4" text-anchor="middle">RCP</text>
+    <rect x="1138" y="40" width="104" height="24" rx="12" fill="#ff9900" opacity=".2" stroke="#ff9900"/><text x="1190" y="57" fill="#ffc46b" text-anchor="middle">DECLARATIVE</text>
+    <rect x="1252" y="40" width="104" height="24" rx="12" fill="#22d3ee" opacity=".15" stroke="#22d3ee"/><text x="1304" y="57" fill="#67e8f9" text-anchor="middle">ACCOUNT</text>
+  </g>
+
+  <!-- management account (outside) -->
+  <rect x="50" y="130" width="300" height="118" rx="16" fill="#1d1430" stroke="#fbbf24" stroke-dasharray="6 6" stroke-width="2"/>
+  <text x="70" y="160" font-size="14" fill="#fbbf24" font-family="JetBrains Mono, monospace">MANAGEMENT ACCOUNT</text>
+  <text x="70" y="188" font-size="16" fill="#fff">SCPs and RCPs do NOT apply here.</text>
+  <text x="70" y="210" font-size="16" fill="#b7c0e6">Keep it empty: billing + Org admin.</text>
+  <text x="70" y="232" font-size="16" fill="#b7c0e6">Delegate security services out.</text>
+
+  <!-- root -->
+  <circle cx="700" cy="190" r="110" fill="url(#rootg)"/>
+  <rect x="560" y="140" width="280" height="100" rx="18" fill="#191b52" stroke="#a78bfa" stroke-width="2.5" filter="url(#gl)"/>
+  <text x="700" y="174" font-size="22" font-weight="700" fill="#fff" text-anchor="middle">Root</text>
+  <g font-size="12.5" font-family="JetBrains Mono, monospace" text-anchor="middle">
+    <rect x="574" y="188" width="122" height="20" rx="10" fill="#a78bfa" fill-opacity=".2" stroke="#a78bfa"/><text x="635" y="202" fill="#ddd6fe">deny-leave-org</text>
+    <rect x="704" y="188" width="122" height="20" rx="10" fill="#a78bfa" fill-opacity=".2" stroke="#a78bfa"/><text x="765" y="202" fill="#ddd6fe">region-lock</text>
+    <rect x="574" y="212" width="122" height="20" rx="10" fill="#f472b6" fill-opacity=".2" stroke="#f472b6"/><text x="635" y="226" fill="#fbcfe8">org-identities</text>
+    <rect x="704" y="212" width="122" height="20" rx="10" fill="#ff9900" fill-opacity=".2" stroke="#ff9900"/><text x="765" y="226" fill="#ffd59a">guardduty-on</text>
+  </g>
+
+  <!-- connectors -->
+  <g stroke="#a78bfa" stroke-opacity=".6" stroke-width="2" fill="none">
+    <path d="M700 240 V290 H170 V330"/><path d="M700 290 H480 V330"/><path d="M700 290 H860 V330"/><path d="M700 290 H1230 V330"/>
+  </g>
+
+  <!-- OU cards -->
+  <g font-size="12.5" font-family="JetBrains Mono, monospace">
+    <!-- Security -->
+    <rect x="50" y="330" width="240" height="190" rx="16" fill="#12163d" stroke="#a78bfa" stroke-opacity=".6"/>
+    <text x="70" y="362" font-size="19" font-family="Space Grotesk, Inter, sans-serif" font-weight="700" fill="#fff">Security OU</text>
+    <rect x="66" y="378" width="208" height="20" rx="10" fill="#a78bfa" fill-opacity=".2" stroke="#a78bfa"/><text x="76" y="392" fill="#ddd6fe">protect-sec-tooling</text>
+    <rect x="66" y="404" width="208" height="20" rx="10" fill="#a78bfa" fill-opacity=".2" stroke="#a78bfa"/><text x="76" y="418" fill="#ddd6fe">deny-cloudtrail-stop</text>
+    <rect x="66" y="430" width="208" height="20" rx="10" fill="#f472b6" fill-opacity=".2" stroke="#f472b6"/><text x="76" y="444" fill="#fbcfe8">kms-org-only</text>
+    <text x="70" y="480" fill="#8a95c2" font-size="13">log-archive · audit</text>
+    <text x="70" y="500" fill="#8a95c2" font-size="13">(delegated admins)</text>
+
+    <!-- Infrastructure -->
+    <rect x="360" y="330" width="240" height="190" rx="16" fill="#12163d" stroke="#a78bfa" stroke-opacity=".6"/>
+    <text x="380" y="362" font-size="19" font-family="Space Grotesk, Inter, sans-serif" font-weight="700" fill="#fff">Infrastructure OU</text>
+    <rect x="376" y="378" width="208" height="20" rx="10" fill="#a78bfa" fill-opacity=".2" stroke="#a78bfa"/><text x="386" y="392" fill="#ddd6fe">protect-network</text>
+    <rect x="376" y="404" width="208" height="20" rx="10" fill="#ff9900" fill-opacity=".2" stroke="#ff9900"/><text x="386" y="418" fill="#ffd59a">vpc-block-public</text>
+    <rect x="376" y="430" width="208" height="20" rx="10" fill="#ff9900" fill-opacity=".2" stroke="#ff9900"/><text x="386" y="444" fill="#ffd59a">imdsv2-required</text>
+    <text x="380" y="480" fill="#8a95c2" font-size="13">network-hub · shared-svcs</text>
+
+    <!-- Workloads -->
+    <rect x="740" y="330" width="240" height="160" rx="16" fill="#12163d" stroke="#a78bfa" stroke-opacity=".6"/>
+    <text x="760" y="362" font-size="19" font-family="Space Grotesk, Inter, sans-serif" font-weight="700" fill="#fff">Workloads OU</text>
+    <rect x="756" y="378" width="208" height="20" rx="10" fill="#a78bfa" fill-opacity=".2" stroke="#a78bfa"/><text x="766" y="392" fill="#ddd6fe">protect-privileged-iam</text>
+    <rect x="756" y="404" width="208" height="20" rx="10" fill="#ff9900" fill-opacity=".2" stroke="#ff9900"/><text x="766" y="418" fill="#ffd59a">ebs-snapshot-no-public</text>
+    <rect x="756" y="430" width="208" height="20" rx="10" fill="#ff9900" fill-opacity=".2" stroke="#ff9900"/><text x="766" y="444" fill="#ffd59a">securityhub-cspm-on</text>
+
+    <!-- Sandbox / Suspended -->
+    <rect x="1110" y="330" width="240" height="120" rx="16" fill="#12163d" stroke="#a78bfa" stroke-opacity=".6"/>
+    <text x="1130" y="362" font-size="19" font-family="Space Grotesk, Inter, sans-serif" font-weight="700" fill="#fff">Sandbox OU</text>
+    <rect x="1126" y="378" width="208" height="20" rx="10" fill="#a78bfa" fill-opacity=".2" stroke="#a78bfa"/><text x="1136" y="392" fill="#ddd6fe">deny-expensive-svcs</text>
+    <rect x="1126" y="404" width="208" height="20" rx="10" fill="#a78bfa" fill-opacity=".2" stroke="#a78bfa"/><text x="1136" y="418" fill="#ddd6fe">no-vpc-peering</text>
+
+    <rect x="1110" y="470" width="240" height="96" rx="16" fill="#1a0d1d" stroke="#fb7185" stroke-opacity=".7"/>
+    <text x="1130" y="502" font-size="19" font-family="Space Grotesk, Inter, sans-serif" font-weight="700" fill="#fda4af">Suspended OU</text>
+    <rect x="1126" y="518" width="208" height="20" rx="10" fill="#fb7185" fill-opacity=".2" stroke="#fb7185"/><text x="1136" y="532" fill="#fecdd3">deny-all (quarantine)</text>
+  </g>
+
+  <!-- workload children -->
+  <g stroke="#a78bfa" stroke-opacity=".5" stroke-width="2" fill="none"><path d="M860 490 V530 H760 V560"/><path d="M860 530 H960 V560"/></g>
+  <g font-family="Space Grotesk, Inter, sans-serif">
+    <rect x="680" y="560" width="160" height="96" rx="14" fill="#0e1c33" stroke="#22d3ee" stroke-opacity=".7"/>
+    <text x="700" y="590" font-size="17" font-weight="700" fill="#fff">Prod OU</text>
+    <text x="700" y="614" font-size="13" fill="#67e8f9" font-family="JetBrains Mono, monospace">skyfortress-prod</text>
+    <text x="700" y="636" font-size="13" fill="#8a95c2">+ deny-console-writes</text>
+    <rect x="880" y="560" width="160" height="96" rx="14" fill="#0e1c33" stroke="#22d3ee" stroke-opacity=".7"/>
+    <text x="900" y="590" font-size="17" font-weight="700" fill="#fff">Dev OU</text>
+    <text x="900" y="614" font-size="13" fill="#67e8f9" font-family="JetBrains Mono, monospace">skyfortress-dev</text>
+    <text x="900" y="636" font-size="13" fill="#8a95c2">+ today's lab SCP/RCP</text>
+  </g>
+
+  <!-- quotas strip -->
+  <rect x="50" y="700" width="1300" height="120" rx="18" fill="#140f2e" stroke="#ff9900" stroke-opacity=".5"/>
+  <text x="76" y="734" font-size="14" fill="#ff9900" font-family="JetBrains Mono, monospace">2026 LIMITS &amp; DEFAULTS</text>
+  <g font-size="17" fill="#e8ecff">
+    <text x="76" y="768">• Up to <tspan font-weight="700" fill="#fff">10 SCPs</tspan> per root / OU / account</text>
+    <text x="76" y="796">• Max SCP size <tspan font-weight="700" fill="#fff">10,240 chars</tspan> (was 5 / 5,120)</text>
+    <text x="560" y="768">• SCPs speak full IAM language (conditions on Allow, resource ARNs, NotResource)</text>
+    <text x="560" y="796">• New orgs (console): leave-org / close-account SCPs applied by default</text>
+  </g>
+</svg>

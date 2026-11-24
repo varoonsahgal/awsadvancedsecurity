@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Operation Skyfortress — Advanced AWS Security Bootcamp 2026</title>
+  <meta name="description" content="A one-week, hands-on, gamified advanced AWS security bootcamp: identity, detection, infrastructure, data & AI security, incident response — with 20+ labs, CTF flags, boss fights and a capstone GameDay.">
+  <meta property="og:title" content="Operation Skyfortress — Advanced AWS Security Bootcamp 2026">
+  <meta property="og:description" content="Five days. Twenty-plus labs. One Kraken. Defend the cloud.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://varoonsahgal.github.io/awsadvancedsecurity/">
+  <meta property="og:image" content="https://varoonsahgal.github.io/awsadvancedsecurity/assets/img/og-card.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="theme-color" content="#060915">
+  <link rel="icon" href="assets/img/logo.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/site.css">
+  <style>
+    .hero h1 .line2 { display: block; font-size: 0.5em; letter-spacing: -0.01em; color: var(--text-dim); font-weight: 500; margin-top: 10px; }
+    .day-card .d { color: var(--c); }
+    .day-card { --c: var(--accent); }
+    .day-card:hover { border-color: var(--c); }
+    .new-card .when { font-family: var(--mono); font-size: 0.72rem; color: var(--orange); letter-spacing: 0.12em; text-transform: uppercase; }
+    .new-card h3 { font-size: 1.12rem; margin: 6px 0 8px; }
+    .new-card p { font-size: 0.92rem; color: var(--text-dim); margin: 0; }
+    .new-card .day-tag { position: absolute; top: 18px; right: 18px; }
+    .level-table td:first-child { font-family: var(--mono); color: var(--orange); }
+    .cta-band { text-align: center; padding: 70px 30px; border-radius: 28px; background: radial-gradient(circle at 20% 0%, rgba(167,139,250,.3), transparent 50%), radial-gradient(circle at 80% 100%, rgba(255,153,0,.25), transparent 50%), #0b1028; border: 1px solid var(--border-strong); }
+    .cta-band img { width: 120px; margin: 0 auto 10px; animation: float 6s ease-in-out infinite; }
+    .dossier-card { display: grid; grid-template-columns: 180px 1fr; gap: 28px; align-items: center; }
+    .dossier-card img { width: 180px; animation: float 6s ease-in-out infinite; }
+    @media (max-width: 700px) { .dossier-card { grid-template-columns: 1fr; } .dossier-card img { width: 130px; } }
+    .gd-card { display: grid; grid-template-columns: minmax(0, 1.2fr) 1fr; gap: 0; padding: 0; overflow: hidden; margin-top: 22px; color: inherit; text-decoration: none; }
+    .gd-card:hover { text-decoration: none; border-color: var(--orange); }
+    @media (max-width: 760px) { .gd-card { grid-template-columns: 1fr; } .gd-card > img { min-height: 0 !important; aspect-ratio: 16/10; } }
+    .stamp { display: inline-block; transform: rotate(-6deg); border: 2px solid var(--red); color: var(--red); font-family: var(--mono); font-weight: 700; letter-spacing: 0.2em; padding: 2px 10px; border-radius: 6px; font-size: 0.8rem; }
+  </style>
+</head>
+<body>
+<header id="site-nav"></header>
+
+<!-- ================= HERO ================= -->
+<section class="hero">
+  <div class="container">
+    <div class="reveal">
+      <div class="eyebrow">Advanced AWS Security Bootcamp · 2026 Edition</div>
+      <h1>Operation <span class="grad">Skyfortress</span><span class="line2">Five days to defend a cloud empire from the Kraken.</span></h1>
+      <p class="lead">A hands-on, story-driven, slightly unhinged week of advanced AWS security. You'll break things on purpose, catch attackers in the logs, build guardrails across a whole AWS Organization, and lock down AI agents. Then you'll defend it all in a live capstone GameDay.</p>
+      <div class="cta">
+        <a class="btn" href="plan.html">🚀 Read the mission plan</a>
+        <a class="btn ghost" href="setup.html">⚙️ Lab 0: set up your sandbox</a>
+      </div>
+      <div class="stats">
+        <div class="stat"><b>5</b><span>days</span></div>
+        <div class="stat"><b>20+</b><span>hands-on labs</span></div>
+        <div class="stat"><b>50+</b><span>CTF flags</span></div>
+        <div class="stat"><b>6</b><span>boss fights</span></div>
+      </div>
+    </div>
+    <div class="hero-art"><img src="assets/img/hero-fortress.svg" alt="A glowing citadel on a floating island, protected by an energy dome, while a kraken tentacle rises from the clouds"></div>
+  </div>
+</section>
+
+<div class="marquee" aria-hidden="true"><div class="track">
+  <span>Resource Control Policies</span><span>Declarative policies for GuardDuty &amp; Security Hub</span><span>10 SCPs per node · 10,240 chars</span><span>GuardDuty Extended Threat Detection</span><span>Unified Security Hub</span><span>Security Hub AI inventory</span><span>GuardDuty AI Protection</span><span>Bedrock AgentCore Policy (Cedar)</span><span>AWS Security Agent pentesting</span><span>ML-KEM post-quantum TLS</span><span>ML-DSA signing in KMS</span><span>Centralized root access</span><span>IAM Identity Center multi-Region</span><span>Security Incident Response</span><span>VPC Block Public Access</span><span>OCSF + Security Lake</span>
+  <span>Resource Control Policies</span><span>Declarative policies for GuardDuty &amp; Security Hub</span><span>10 SCPs per node · 10,240 chars</span><span>GuardDuty Extended Threat Detection</span><span>Unified Security Hub</span><span>Security Hub AI inventory</span><span>GuardDuty AI Protection</span><span>Bedrock AgentCore Policy (Cedar)</span><span>AWS Security Agent pentesting</span><span>ML-KEM post-quantum TLS</span><span>ML-DSA signing in KMS</span><span>Centralized root access</span><span>IAM Identity Center multi-Region</span><span>Security Incident Response</span><span>VPC Block Public Access</span><span>OCSF + Security Lake</span>
+</div></div>
+
+<!-- ================= BRIEFING ================= -->
+<section class="section">
+  <div class="container">
+    <div class="section-title reveal">
+      <div class="eyebrow">Incoming transmission</div>
+      <h2>Welcome to Nimbus Interstellar, operator.</h2>
+      <p class="lead">You've just joined the security team at a fast-growing space-logistics company: 40 AWS accounts, three Kubernetes clusters, a customer-facing AI agent, and an attacker crew that already knows your name.</p>
+    </div>
+    <div class="grid g2">
+      <div class="story reveal">
+        <img class="avatar" src="assets/img/owlsley.svg" alt="Owlsley the owl">
+        <div>
+          <div class="who">OWLSLEY · CISO-in-residence, Nimbus Interstellar</div>
+          <p>"Hoo-boy. Glad you're here. Our cloud grew faster than our guardrails. We have IAM roles nobody remembers creating, a bucket policy that says <code>"Principal": "*"</code> in a tone I don't like, and a support chatbot that will tell anyone anything if they ask nicely."</p>
+          <p>"This week we fix it, one layer at a time: identity, detection, network, data and AI. On Friday, we find out if it held."</p>
+        </div>
+      </div>
+      <div class="story villain reveal">
+        <img class="avatar" src="assets/img/kraken.svg" alt="The Kraken">
+        <div>
+          <div class="who">INTERCEPTED · The Kraken Collective</div>
+          <p>"Eight arms. Forty accounts. Do the math, little owl. We don't need a zero-day. We need one long-lived access key, one <code>iam:PassRole</code> you forgot, one agent that trusts whatever it reads."</p>
+          <p>"See you Friday. Bring snacks. 🐙"</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= WEEK MAP ================= -->
+<section class="section" id="week">
+  <div class="container">
+    <div class="section-title reveal">
+      <div class="eyebrow">The campaign</div>
+      <h2>One week, five realms, one final battle.</h2>
+      <p class="lead">Each day defends a different layer of the fortress. Each day ends with a boss fight. Each boss drops a badge.</p>
+    </div>
+    <div class="week">
+      <a class="card day-card lift reveal" href="day1.html" style="--c:#a78bfa">
+        <div class="imgwrap"><img src="assets/img/day1/banner.svg" alt="Day 1 illustration: identity"></div>
+        <div class="body"><span class="d">Day 1 · Monday</span><h3>Keys to the Kingdom</h3><p>Policy evaluation, SCPs, RCPs, declarative policies, Identity Center, privilege escalation, data perimeters.</p><span class="chip accent" style="--accent:#a78bfa">Boss: The Confused Deputy</span></div>
+      </a>
+      <a class="card day-card lift reveal" href="day2.html" style="--c:#22d3ee">
+        <div class="imgwrap"><img src="assets/img/day2/banner.svg" alt="Day 2 illustration: detection"></div>
+        <div class="body"><span class="d">Day 2 · Tuesday</span><h3>Eyes in the Sky</h3><p>CloudTrail, GuardDuty attack sequences, the new Security Hub, Security Lake + OCSF hunts, detection-as-code.</p><span class="chip accent" style="--accent:#22d3ee">Boss: The 3 A.M. Backdoor</span></div>
+      </a>
+      <a class="card day-card lift reveal" href="day3.html" style="--c:#34d399">
+        <div class="imgwrap"><img src="assets/img/day3/banner.svg" alt="Day 3 illustration: infrastructure"></div>
+        <div class="body"><span class="d">Day 3 · Wednesday</span><h3>Walls &amp; Moats</h3><p>Egress filtering, Network Firewall, WAF vs bots, Verified Access, EKS hardening, supply-chain signing.</p><span class="chip accent" style="--accent:#34d399">Boss: DNS Tunnel Escape</span></div>
+      </a>
+      <a class="card day-card lift reveal" href="day4.html" style="--c:#fbbf24">
+        <div class="imgwrap"><img src="assets/img/day4/banner.svg" alt="Day 4 illustration: data and AI"></div>
+        <div class="body"><span class="d">Day 4 · Thursday</span><h3>Vaults &amp; Thinking Machines</h3><p>KMS mastery, post-quantum crypto, ransomware resilience, prompt injection, Bedrock Guardrails, AgentCore Policy.</p><span class="chip accent" style="--accent:#fbbf24">Boss: The Poisoned Manifest</span></div>
+      </a>
+      <a class="card day-card lift reveal" href="day5.html" style="--c:#fb7185">
+        <div class="imgwrap"><img src="assets/img/day5/banner.svg" alt="Day 5 illustration: incident response"></div>
+        <div class="body"><span class="d">Day 5 · Friday</span><h3>Kraken Rising</h3><p>Incident response, credential compromise, EC2 forensics, Step Functions auto-remediation, agents in the SOC.</p><span class="chip accent" style="--accent:#fb7185">Boss: The Kraken's Last Stand</span></div>
+      </a>
+    </div>
+    <a class="card lift reveal gd-card" href="gameday.html">
+      <img src="assets/img/gameday/banner.svg" alt="GameDay: the Kraken attacks the fortress" style="height:100%;object-fit:cover;min-height:260px">
+      <div style="padding:34px">
+        <div class="eyebrow" style="color:var(--orange)">Friday afternoon · Capstone</div>
+        <h2 style="font-size:2.2rem">GameDay: <span class="grad" style="--accent:#ff9900;--accent-2:#fb7185">Kraken Rising</span></h2>
+        <p class="muted">Teams of four get a pre-compromised AWS environment and 3.5 hours on the clock. Detect, contain, eradicate, recover, harden, and write it up. It's scored, it's chaotic, and you'll be talking about it for weeks.</p>
+        <span class="btn sm" style="--accent:#ff9900;--accent-2:#fb7185">Enter the arena →</span>
+      </div>
+    </a>
+  </div>
+</section>
+
+<!-- ================= HOW IT WORKS ================= -->
+<section class="section">
+  <div class="container split">
+    <div class="reveal">
+      <div class="eyebrow">How it works</div>
+      <h2>Learn it. Build it. Break it. Defend it.</h2>
+      <p class="lead">Every concept goes through the same loop. We explain the mechanism, you build the control as code, you attack it yourself in your sandbox, and then you prove the defence holds.</p>
+      <ul>
+        <li><b>Concept modules</b> with real diagrams of how things work, not marketing slides.</li>
+        <li><b>20+ labs</b> with numbered steps, copy-paste code, checkpoints, hints, full solutions, and cleanup scripts.</li>
+        <li><b>CTF flags</b> planted inside the lab environments. Do the lab properly and you'll find them.</li>
+        <li><b>Boss fights</b> at the end of each day: open-ended scenarios that combine everything you learned.</li>
+        <li><b>XP, levels and badges</b> tracked in your browser, so you can see how far you've come (and compete with your neighbour).</li>
+      </ul>
+    </div>
+    <figure class="figure reveal" style="background:transparent;border:0"><img src="assets/img/loop.svg" alt="Learning loop: Learn, Build, Break, Defend, all feeding into XP and flags"></figure>
+  </div>
+</section>
+
+<!-- ================= INSIDE THE COURSE ================= -->
+<section class="section" id="inside">
+  <div class="container">
+    <div class="section-title reveal">
+      <div class="eyebrow">Inside the course</div>
+      <h2>A peek behind the fortress walls</h2>
+      <p class="lead">Every lab has cover art, a guided path and a challenge path, terminal screenshots of the output you should expect, console mock-ups, "predict before you run" moments and a troubleshooting table.</p>
+    </div>
+    <div class="gallery">
+      <a href="setup.html" style="color:inherit;text-decoration:none"><figure class="shot reveal" data-url="varoonsahgal.github.io/awsadvancedsecurity/setup.html">
+        <img src="assets/img/screens/setup.jpg" alt="Lab 0 page showing a terminal screenshot of the bootstrap script output" loading="lazy">
+        <figcaption><b>LAB 0</b> Expected output appears as terminal screenshots</figcaption>
+      </figure></a>
+      <a href="day1.html#lab-1-2" style="color:inherit;text-decoration:none"><figure class="shot reveal" data-url="varoonsahgal.github.io/awsadvancedsecurity/day1.html#lab-1-2">
+        <img src="assets/img/screens/day1-lab.jpg" alt="Day 1 PassRole Heist lab with cover art and guided/challenge paths" loading="lazy">
+        <figcaption><b>DAY 1</b> The PassRole Heist: guided or challenge path</figcaption>
+      </figure></a>
+      <a href="day2.html#lab-2-2" style="color:inherit;text-decoration:none"><figure class="shot reveal" data-url="varoonsahgal.github.io/awsadvancedsecurity/day2.html#lab-2-2">
+        <img src="assets/img/screens/day2-lab.jpg" alt="Day 2 lab showing Stratus Red Team detonation output" loading="lazy">
+        <figcaption><b>DAY 2</b> Detonating real attack techniques with Stratus</figcaption>
+      </figure></a>
+      <a href="day3.html" style="color:inherit;text-decoration:none"><figure class="shot reveal" data-url="varoonsahgal.github.io/awsadvancedsecurity/day3.html">
+        <img src="assets/img/screens/day3.jpg" alt="Day 3 hero with glowing fortress illustration" loading="lazy">
+        <figcaption><b>DAY 3</b> Walls &amp; Moats: network, EKS, supply chain</figcaption>
+      </figure></a>
+      <a href="day5.html#runbook-card" style="color:inherit;text-decoration:none"><figure class="shot reveal" data-url="varoonsahgal.github.io/awsadvancedsecurity/day5.html#runbook-card">
+        <img src="assets/img/screens/day5.jpg" alt="Day 5 printable incident response runbook card" loading="lazy">
+        <figcaption><b>DAY 5</b> A printable one-page IR runbook card</figcaption>
+      </figure></a>
+      <a href="gameday.html" style="color:inherit;text-decoration:none"><figure class="shot reveal" data-url="varoonsahgal.github.io/awsadvancedsecurity/gameday.html">
+        <img src="assets/img/screens/gameday.jpg" alt="GameDay capstone hero: Kraken Rising" loading="lazy">
+        <figcaption><b>GAMEDAY</b> 3.5 hours, 13 flags, one Kraken</figcaption>
+      </figure></a>
+    </div>
+  </div>
+</section>
+
+<!-- ================= WHAT'S NEW 2026 ================= -->
+<section class="section" id="new">
+  <div class="container">
+    <div class="section-title reveal">
+      <div class="eyebrow">Fresh off the launch pad</div>
+      <h2>What's new in AWS security, 2026, and where you'll use it</h2>
+      <p class="lead">This course is built around the current platform, not 2019's. Here are the launches that change how you'd design AWS security today, each mapped to the day you'll use it.</p>
+    </div>
+    <div class="grid g3">
+      <div class="card new-card reveal"><span class="chip day-tag">Day 1</span><div class="when">May 2026</div><h3>Bigger SCPs</h3><p>Up to 10 SCPs per root, OU or account, and 10,240 characters each. That's room for real guardrail libraries, written in the full IAM policy language.</p></div>
+      <div class="card new-card reveal"><span class="chip day-tag">Day 1–2</span><div class="when">Oct–Nov 2026</div><h3>Declarative policies for detection</h3><p>Organizations declarative policies can now enforce GuardDuty and Security Hub CSPM enablement across every account and Region. Member accounts can't turn them off.</p></div>
+      <div class="card new-card reveal"><span class="chip day-tag">Day 1</span><div class="when">Aug 2026</div><h3>Identity Center, reworked</h3><p>One-click multi-Region instances, optional account-access management (fewer service-linked roles), and the IAM account access manager for assigning roles to workforce users.</p></div>
+      <div class="card new-card reveal"><span class="chip day-tag">Day 2</span><div class="when">May 2026</div><h3>Richer attack sequences</h3><p>GuardDuty Extended Threat Detection now attaches malicious-package, misconfiguration, reachability, sensitive-data and vulnerability indicators to attack sequences.</p></div>
+      <div class="card new-card reveal"><span class="chip day-tag">Day 2 &amp; 4</span><div class="when">Jul 2026</div><h3>Security Hub for AI and multicloud</h3><p>GuardDuty AI Protection for Bedrock and SageMaker, an organization-wide AI inventory, Azure posture coverage, and AI-powered investigations (preview).</p></div>
+      <div class="card new-card reveal"><span class="chip day-tag">Day 3</span><div class="when">Oct 2026</div><h3>Runtime Monitoring included</h3><p>GuardDuty Runtime Monitoring is now part of the Security Hub Threat Analytics plan, which removes the usual cost objection to turning it on for EKS, ECS and EC2.</p></div>
+      <div class="card new-card reveal"><span class="chip day-tag">Day 4</span><div class="when">Mar &amp; Jun 2026</div><h3>AgentCore Policy</h3><p>Deterministic Cedar policies, enforced at the AgentCore Gateway outside the agent's code, decide which tool calls an agent may make. Since June they can also use Bedrock Guardrails.</p></div>
+      <div class="card new-card reveal"><span class="chip day-tag">Day 4</span><div class="when">2025 → 2026</div><h3>Post-quantum, for real</h3><p>Hybrid ML-KEM TLS on AWS endpoints, ML-DSA signing keys in KMS and Private CA. The pre-standard Kyber draft is being retired from AWS endpoints in 2026, so check that your clients are ready.</p></div>
+      <div class="card new-card reveal"><span class="chip day-tag">Day 5</span><div class="when">Mar 2026</div><h3>AWS Security Agent</h3><p>On-demand, context-aware penetration testing reached general availability, alongside the AWS DevOps Agent. Learn where AI agents help in a SOC, and where they need guardrails of their own.</p></div>
+    </div>
+    <div class="callout new reveal" style="margin-top:30px"><strong class="ct">Running this course the week of re:Invent 2026?</strong><p>re:Invent (Nov 30 – Dec 4, Las Vegas) now includes re:Inforce, with a security-focused day on Thursday, Dec 3. Expect launches. Each day page has a "watch for announcements" callout, so instructors can add a 10-minute "what just shipped" segment.</p></div>
+  </div>
+</section>
+
+<!-- ================= VILLAIN DOSSIER ================= -->
+<section class="section">
+  <div class="container">
+    <div class="card reveal" style="border-color:rgba(251,113,133,.45);background:linear-gradient(135deg,rgba(251,113,133,.1),rgba(255,255,255,.02))">
+      <div class="dossier-card">
+        <img src="assets/img/kraken.svg" alt="The Kraken Collective">
+        <div>
+          <span class="stamp">THREAT DOSSIER · TLP:CLEAR</span>
+          <h2 style="margin-top:14px">The Kraken Collective</h2>
+          <p class="muted">A fictional threat actor whose techniques come from real cloud attacks. Everything they do this week maps to MITRE ATT&amp;CK for Cloud, and every move is one you'll simulate safely in your own sandbox.</p>
+          <div class="table-wrap"><table>
+            <thead><tr><th>Arm</th><th>Technique</th><th>You'll stop it on</th></tr></thead>
+            <tbody>
+              <tr><td>🐙 1</td><td>Leaked long-lived access keys from CI logs (T1552)</td><td>Day 1 · Day 5</td></tr>
+              <tr><td>🐙 2</td><td><code>iam:PassRole</code> privilege escalation (T1098)</td><td>Day 1</td></tr>
+              <tr><td>🐙 3</td><td>Disabling GuardDuty and CloudTrail (T1562.008)</td><td>Day 2 · Day 5</td></tr>
+              <tr><td>🐙 4</td><td>Instance-credential exfiltration through IMDS (T1552.005)</td><td>Day 2 · Day 3</td></tr>
+              <tr><td>🐙 5</td><td>DNS-tunnel exfiltration and C2 beacons (T1071.004)</td><td>Day 3</td></tr>
+              <tr><td>🐙 6</td><td>S3 ransomware via SSE-C re-encryption (T1486)</td><td>Day 4</td></tr>
+              <tr><td>🐙 7</td><td>Indirect prompt injection against AI agents</td><td>Day 4</td></tr>
+              <tr><td>🐙 8</td><td>Backdoor cross-account roles for persistence (T1098.003)</td><td>Day 5 · GameDay</td></tr>
+            </tbody>
+          </table></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= WHO / PREREQS ================= -->
+<section class="section">
+  <div class="container">
+    <div class="section-title reveal"><div class="eyebrow">Is this you?</div><h2>Who should enlist</h2></div>
+    <div class="grid g3">
+      <div class="card reveal"><div style="font-size:2.2rem">🧑‍🚀</div><h3>Cloud security engineers</h3><p class="muted">You already know IAM and VPCs. Now you want org-scale guardrails, detection engineering and IR that hold up against a real attacker.</p></div>
+      <div class="card reveal"><div style="font-size:2.2rem">🛠️</div><h3>Platform &amp; DevOps leads</h3><p class="muted">You own the landing zone, the pipelines and the clusters, and you want security built in as code, not bolted on with tickets.</p></div>
+      <div class="card reveal"><div style="font-size:2.2rem">🕵️</div><h3>SOC analysts &amp; IR responders</h3><p class="muted">You hunt in logs every day, and you want to know cloud attack paths, OCSF hunts and AWS-native forensics in depth.</p></div>
+    </div>
+    <div class="callout info reveal"><strong class="ct">Prerequisites</strong><p>Associate-level AWS knowledge (Solutions Architect or SysOps level). You're comfortable in a terminal, can read JSON and basic Python, and know roughly what Terraform does. Specialty certifications are not required. Bring curiosity and a sandbox AWS Organization (<a href="setup.html">Lab 0</a> walks you through creating one).</p></div>
+  </div>
+</section>
+
+<!-- ================= BADGES ================= -->
+<section class="section" id="badges">
+  <div class="container">
+    <div class="section-title reveal">
+      <div class="eyebrow">Your trophy case</div>
+      <h2>⚡ <span class="xp-val">0</span> XP · <span class="xp-level grad">Cloud Cadet</span></h2>
+      <div class="bar xp-bar" style="max-width:520px"><i></i></div>
+      <p class="muted" style="margin-top:12px">Progress is saved in this browser only (localStorage). Each lab step you mark done is worth +10 XP, each correct quiz answer +20, and flags are worth 100–500. Beat a day's boss to earn its badge.</p>
+    </div>
+    <div class="badge-shelf reveal">
+      <div class="badge" data-badge="day1"><img src="assets/img/badges/day1.svg" alt=""><b>Keymaster</b><span>Defeat the Confused Deputy</span></div>
+      <div class="badge" data-badge="day2"><img src="assets/img/badges/day2.svg" alt=""><b>Skywatcher</b><span>Catch the 3 A.M. Backdoor</span></div>
+      <div class="badge" data-badge="day3"><img src="assets/img/badges/day3.svg" alt=""><b>Warden</b><span>Collapse the DNS tunnel</span></div>
+      <div class="badge" data-badge="day4"><img src="assets/img/badges/day4.svg" alt=""><b>Vaultkeeper</b><span>Neutralise the Poisoned Manifest</span></div>
+      <div class="badge" data-badge="day5"><img src="assets/img/badges/day5.svg" alt=""><b>Kraken Slayer</b><span>Win the Last Stand</span></div>
+      <div class="badge" data-badge="gameday"><img src="assets/img/badges/gameday.svg" alt=""><b>Legend</b><span>Capture the GameDay final flag</span></div>
+    </div>
+    <div class="table-wrap reveal" style="max-width:620px;margin-top:40px"><table class="level-table">
+      <thead><tr><th>XP</th><th>Rank</th></tr></thead>
+      <tbody>
+        <tr><td>0</td><td>Cloud Cadet</td></tr><tr><td>300</td><td>Packet Padawan</td></tr><tr><td>800</td><td>IAM Illusionist</td></tr>
+        <tr><td>1,500</td><td>Threat Hunter</td></tr><tr><td>2,500</td><td>Crypto Knight</td></tr><tr><td>4,000</td><td>Kraken Slayer</td></tr><tr><td>6,000</td><td>Skyfortress Legend</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+</section>
+
+<!-- ================= CTA ================= -->
+<section class="section">
+  <div class="container">
+    <div class="cta-band reveal">
+      <img src="assets/img/owlsley.svg" alt="">
+      <h2>The fortress won't defend itself.</h2>
+      <p class="lead" style="max-width:640px;margin:0 auto 26px">Set up your sandbox, read the plan, and meet us on Monday at 09:00. Coffee is provided. Root credentials are not.</p>
+      <div class="cta" style="justify-content:center;display:flex;gap:14px;flex-wrap:wrap">
+        <a class="btn" href="setup.html">Start Lab 0 →</a>
+        <a class="btn ghost" href="day1.html">Jump to Day 1</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer id="site-footer"></footer>
+<script src="assets/js/site.js"></script>
+</body>
+</html>

@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 640" font-family="Inter, system-ui, sans-serif">
+  <title>Illustrative mock-up of the AWS Organizations accounts view after Lab 0</title>
+  <rect width="1200" height="640" fill="#0f1424"/>
+  <!-- top bar -->
+  <rect width="1200" height="44" fill="#161d33"/>
+  <text x="20" y="28" font-size="15" font-weight="700" fill="#e8ecff">Console</text>
+  <rect x="110" y="11" width="360" height="22" rx="4" fill="#0f1424" stroke="#2a3358"/><text x="122" y="27" font-size="12" fill="#6b76a8">Search services</text>
+  <text x="1040" y="28" font-size="13" fill="#b7c0e6">N. Virginia ▾</text><text x="1130" y="28" font-size="13" fill="#b7c0e6">admin ▾</text>
+  <!-- sidebar -->
+  <rect y="44" width="230" height="596" fill="#121931"/>
+  <text x="20" y="80" font-size="16" font-weight="700" fill="#fff">AWS Organizations</text>
+  <g font-size="13" fill="#b7c0e6">
+    <rect x="10" y="98" width="210" height="30" rx="4" fill="#1f2a52"/><text x="22" y="118" fill="#fff" font-weight="600">AWS accounts</text>
+    <text x="22" y="150">Services</text><text x="22" y="178">Policies</text><text x="22" y="206">Settings</text><text x="22" y="234">Get started</text>
+  </g>
+  <!-- main -->
+  <text x="260" y="84" font-size="22" font-weight="700" fill="#fff">AWS accounts</text>
+  <text x="260" y="108" font-size="13" fill="#8a95c2">Organization ID: o-a1b2c3d4e5 · 3 accounts · Hierarchy view</text>
+  <rect x="1010" y="66" width="160" height="32" rx="4" fill="#ff9900"/><text x="1090" y="87" font-size="13" font-weight="700" fill="#0f1424" text-anchor="middle">Add an AWS account</text>
+  <rect x="260" y="124" width="910" height="490" rx="8" fill="#141b33" stroke="#2a3358"/>
+  <g font-size="14">
+    <text x="284" y="160" fill="#8a95c2" font-size="12" letter-spacing="1">ORGANIZATIONAL STRUCTURE</text>
+    <text x="284" y="196" fill="#fff" font-weight="700">▾ 🌐 Root</text><text x="420" y="196" fill="#6b76a8" font-size="12">r-ab12</text>
+    <g font-size="11"><rect x="700" y="182" width="62" height="20" rx="10" fill="#1e3a5f"/><text x="731" y="196" fill="#93c5fd" text-anchor="middle">SCP ✓</text>
+    <rect x="768" y="182" width="62" height="20" rx="10" fill="#1e3a5f"/><text x="799" y="196" fill="#93c5fd" text-anchor="middle">RCP ✓</text>
+    <rect x="836" y="182" width="116" height="20" rx="10" fill="#1e3a5f"/><text x="894" y="196" fill="#93c5fd" text-anchor="middle">Declarative EC2 ✓</text></g>
+    <line x1="296" y1="206" x2="296" y2="560" stroke="#2a3358" stroke-width="2"/>
+    <text x="316" y="236" fill="#e8ecff">▸ 📁 Forensics</text><text x="520" y="236" fill="#6b76a8" font-size="12">ou-ab12-f0r3ns1c</text>
+    <text x="316" y="276" fill="#e8ecff">▾ 📁 Sandbox</text><text x="520" y="276" fill="#6b76a8" font-size="12">ou-ab12-s4ndb0x</text>
+    <text x="346" y="310" fill="#c7d2fe">👤 skyfortress-dev</text><text x="520" y="310" fill="#6b76a8" font-size="12">111122223333 · you+sky-dev@example.com</text>
+    <text x="316" y="350" fill="#e8ecff">▸ 📁 Security</text><text x="520" y="350" fill="#6b76a8" font-size="12">ou-ab12-s3cur1ty</text>
+    <text x="316" y="390" fill="#e8ecff">▾ 📁 Workloads</text><text x="520" y="390" fill="#6b76a8" font-size="12">ou-ab12-w0rkl0ad</text>
+    <text x="346" y="424" fill="#c7d2fe">👤 skyfortress-prod</text><text x="520" y="424" fill="#6b76a8" font-size="12">444455556666 · you+sky-prod@example.com</text>
+    <text x="316" y="464" fill="#e8ecff">👑 sky-management</text><text x="470" y="464" font-size="11" fill="#fbbf24">management account</text><text x="620" y="464" fill="#6b76a8" font-size="12">999988887777</text>
+  </g>
+  <rect x="284" y="500" width="860" height="90" rx="6" fill="#10233a" stroke="#1e4d7a"/>
+  <text x="300" y="528" font-size="13" font-weight="700" fill="#7dd3fc">ⓘ  Policy types enabled on Root</text>
+  <text x="300" y="554" font-size="13" fill="#b7c0e6">Service control policies · Resource control policies · Declarative policies for EC2</text>
+  <text x="300" y="576" font-size="12" fill="#6b76a8">Member accounts get OrganizationAccountAccessRole, which your sky-dev / sky-prod profiles assume.</text>
+</svg>

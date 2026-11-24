@@ -1,0 +1,21 @@
+[
+  { "uid": { "type": "Nimbus::Role", "id": "support-agent" }, "attrs": {}, "parents": [] },
+  { "uid": { "type": "Nimbus::Role", "id": "support-lead" },  "attrs": {}, "parents": [] },
+  { "uid": { "type": "Nimbus::Role", "id": "automation-agent" }, "attrs": {}, "parents": [] },
+  {
+    "uid": { "type": "Nimbus::User", "id": "alice" },
+    "attrs": { "account_id": "acct-1001" },
+    "parents": [{ "type": "Nimbus::Role", "id": "support-agent" }]
+  },
+  {
+    "uid": { "type": "Nimbus::User", "id": "bob" },
+    "attrs": { "account_id": "acct-0000" },
+    "parents": [{ "type": "Nimbus::Role", "id": "support-lead" }]
+  },
+  {
+    "uid": { "type": "Nimbus::User", "id": "customs-agent" },
+    "attrs": { "account_id": "acct-1001" },
+    "parents": [{ "type": "Nimbus::Role", "id": "automation-agent" }]
+  },
+  { "uid": { "type": "Nimbus::Gateway", "id": "refund-gateway" }, "attrs": {}, "parents": [] }
+]

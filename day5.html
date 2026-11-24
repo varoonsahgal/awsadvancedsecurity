@@ -1,0 +1,1219 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Day 5 · Kraken Rising — Operation Skyfortress</title>
+  <meta name="description" content="Day 5 of the Operation Skyfortress advanced AWS security bootcamp: incident response, cloud forensics, credential compromise, Step Functions auto-remediation, AI agents in the SOC, and the final boss.">
+  <link rel="icon" href="assets/img/logo.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/site.css">
+  <style>
+    /* Day 5 page-local extras */
+    .inject { border-left: 4px solid var(--accent); }
+    .inject .t { font-family: var(--mono); font-size: .78rem; color: var(--accent); letter-spacing: .14em; }
+    .clock { font-family: var(--mono); font-size: .85rem; color: var(--gold); }
+    .redact { background: #2a0f1e; color: #2a0f1e; border-radius: 4px; padding: 0 4px; cursor: help; transition: color .3s; }
+    .redact:hover { color: var(--pink); }
+    /* page-local guard: a bare 1fr track lets 1200px SVG mock-ups and long <pre> lines widen the column on mobile */
+    @media (max-width: 1080px) { .day-layout { grid-template-columns: minmax(0, 1fr); } }
+    .rb-card { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border-radius: 18px; overflow: hidden; border: 2px solid var(--accent); background: #0b0920; }
+    .rb-card > div { padding: 22px 24px; }
+    .rb-card > div + div { border-left: 1px dashed var(--border-strong); }
+    .rb-card h3 { font-size: 1.15rem; margin: 0 0 10px; color: var(--accent); }
+    .rb-card ol { margin: 0; padding-left: 1.2em; font-size: .92rem; }
+    .rb-card ol li { margin: 6px 0; overflow-wrap: anywhere; }
+    .rb-card code { word-break: break-all; }
+    .rb-card .rb-head { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; background: linear-gradient(90deg, rgba(251,113,133,.25), rgba(255,153,0,.12)); border-bottom: 1px solid var(--border-strong); }
+    .rb-card .rb-head b { font-family: var(--display); font-size: 1.3rem; }
+    .rb-card .rb-foot { grid-column: 1 / -1; border-left: 0 !important; border-top: 1px dashed var(--border-strong); font-family: var(--mono); font-size: .78rem; color: var(--muted); }
+    @media (max-width: 760px) { .rb-card { grid-template-columns: 1fr; } .rb-card > div + div { border-left: 0; border-top: 1px dashed var(--border-strong); } }
+    @media print {
+      body.print-card .day-hero, body.print-card .toc, body.print-card .pager, body.print-card .day-content > section:not(#runbook-card), body.print-card #runbook-card > :not(.rb-card) { display: none !important; }
+      body.print-card .day-layout { display: block; }
+      .rb-card { background: #fff; color: #000; border-color: #000; }
+      .rb-card * { color: #000 !important; }
+      .rb-card code { background: #eee; }
+    }
+  </style>
+</head>
+<body class="day-5">
+<header id="site-nav"></header>
+
+<!-- ============ DAY HERO ============ -->
+<section class="day-hero">
+  <div class="container">
+    <div class="reveal">
+      <div class="day-num">05</div>
+      <div class="eyebrow">Day 5 · Friday</div>
+      <h1>Kraken <span class="grad">Rising</span></h1>
+      <p class="lead">Incident response, cloud forensics &amp; automation. The morning is for practice: burned keys, a digital autopsy, a robot playbook and a boss fight. The afternoon is <a href="gameday.html">GameDay</a>, a live red-vs-blue exercise that tests everything from the week.</p>
+      <div class="chips">
+        <span class="chip accent">3 labs + boss</span>
+        <span class="chip">~3.5 hrs hands-on</span>
+        <span class="chip">GameDay 13:30</span>
+        <span class="chip new">2026 NEW</span>
+      </div>
+    </div>
+    <div class="banner reveal"><img src="assets/img/day5/banner.svg" alt="A colossal crimson kraken rises from a sea of storm clouds and wraps a tentacle around the shield of the floating Skyfortress while searchlights pin it in the dark."></div>
+  </div>
+</section>
+
+<div class="container day-layout">
+  <nav class="toc" data-auto></nav>
+  <main class="day-content">
+
+    <!-- ============ BRIEFING ============ -->
+    <section id="briefing">
+      <div class="eyebrow">Mission briefing</div>
+      <h2>03:14 UTC. The pager goes off.</h2>
+      <div class="story reveal">
+        <img class="avatar" src="assets/img/owlsley.svg" alt="Owlsley">
+        <div>
+          <div class="who">OWLSLEY · CISO-in-residence, Nimbus Interstellar</div>
+          <p>Wake up, operators. At 03:14 UTC GuardDuty raised an <b>attack sequence</b> finding that ties three separate signals into one story. A build bot's access key turned up in a public repo. That key was used from an ASN we've never seen. Then <code>nimbus-web-07</code> began resolving <code>beacon.kraken-collective.invalid</code>.</p>
+          <p>Monday through Thursday you built the walls: identity guardrails, detection, network moats, vaults. Today is about what happens when something gets past them. You'll contain it <b>without tipping off</b> the attacker, preserve evidence a court would accept, and automate the boring parts so humans can focus on judgment. After lunch, the Kraken attacks for real.</p>
+        </div>
+      </div>
+      <div class="story villain reveal">
+        <img class="avatar" src="assets/img/kraken.svg" alt="The Kraken">
+        <div>
+          <div class="who">INTERCEPTED · The Kraken Collective · #ops-tentacle-7</div>
+          <p>lol they rotated the key. they always rotate the key. nobody ever revokes the <i>sessions</i> 🦑 i've got a 12-hour role token, a cron job that phones home, and something living in RAM that their disk images will never see. see you at GameDay, little owls.</p>
+        </div>
+      </div>
+      <h3 style="margin-top:34px">Cold open: the last 26 hours, reconstructed</h3>
+      <div class="timeline">
+        <div class="slot"><div class="time">Thu 01:02</div><div class="what">A developer pushes <code>ci/.env</code> to a public fork. <b>Automated scanners find exposed keys within minutes.</b> The Kraken's in four.</div></div>
+        <div class="slot"><div class="time">Thu 01:06</div><div class="what">Recon from a residential proxy: <code>GetCallerIdentity</code>, <code>ListBuckets</code>, <code>ListRoles</code>, and one <code>CreateUser</code> → <code>AccessDenied</code> <span class="chip">first signal nobody looked at</span></div></div>
+        <div class="slot"><div class="time">Thu 01:09</div><div class="what"><code>AssumeRole nimbus-deploy-role</code> with <code>DurationSeconds=43200</code>. A 12-hour foothold.</div></div>
+        <div class="slot lab-slot"><div class="time">Thu 19:40</div><div class="what">An SSRF in <code>cargo-tracker</code> leads to a shell on <code>nimbus-web-07</code>, a cron implant and a <span class="redact" title="hover to reveal">fileless config in RAM</span></div></div>
+        <div class="slot lab-slot"><div class="time">Fri 03:14</div><div class="what">GuardDuty Extended Threat Detection connects it all into one <b>attack sequence</b> finding. 📟 You're paged.</div></div>
+        <div class="slot"><div class="time">Fri 09:00</div><div class="what">That's now. Let's work out what went wrong, and how to get faster.</div></div>
+      </div>
+      <div class="callout info"><strong class="ct">How today works</strong>
+        <p>Every lab uses the same fictional incident (case <code>IR-2026-1204-007</code>) and builds on the one before. Lab 5.1 contains the identity side. Lab 5.2 handles the compromised host. Lab 5.3 turns those manual steps into a playbook. The boss fight puts all of it together. Lab files are in <a href="labs/day5/index.html">labs/day5/</a> and the take-home runbooks are in <a href="labs/day5/index.html#runbooks">labs/day5/runbooks/</a>.</p>
+      </div>
+    </section>
+
+    <!-- ============ OBJECTIVES + SCHEDULE ============ -->
+    <section id="objectives">
+      <div class="eyebrow">Outcomes</div>
+      <h2>By the end of today you will…</h2>
+      <ul class="objectives">
+        <li>Map an IR program onto <b>NIST SP 800-61r3 / CSF 2.0</b>, with AWS services in each function</li>
+        <li>Contain a leaked key <b>and every session it spawned</b>, using <code>aws:TokenIssueTime</code> revocation</li>
+        <li>Follow AKIA → AssumeRole → ASIA pivots through CloudTrail to scope the blast radius</li>
+        <li>Isolate an EC2 instance <b>without leaving tracked connections alive</b> and without cutting off your own SSM access</li>
+        <li>Capture memory with AVML, snapshot disks and mount them read-only on a forensic workstation</li>
+        <li>Keep chain of custody in an <b>S3 Object Lock</b> evidence bucket</li>
+        <li>Build an EventBridge → Step Functions playbook with a <b>human approval step using a task token</b></li>
+        <li>Decide where AI agents (Security Agent, AI investigations, AgentCore agents) belong in the SOC, and what guardrails they need</li>
+      </ul>
+
+      <h3 style="margin-top:40px">Schedule</h3>
+      <div class="timeline">
+        <div class="slot break-slot"><div class="time">08:45</div><div class="what">Coffee and a cold open: the 03:14 incident replayed on the big screen</div></div>
+        <div class="slot"><div class="time">09:00</div><div class="what"><b>Module 5.1</b> — Incident response on AWS: 800-61r3, preparation, the Security Incident Response service <span class="chip">25 min</span></div></div>
+        <div class="slot"><div class="time">09:25</div><div class="what"><b>Module 5.2</b> — Credential compromise: keys, sessions and pivots <span class="chip">15 min</span></div></div>
+        <div class="slot lab-slot"><div class="time">09:40</div><div class="what"><b>Lab 5.1</b> — Burned Keys <span class="chip accent">40 min</span></div></div>
+        <div class="slot break-slot"><div class="time">10:20</div><div class="what">Break (start the Lab 5.2 stack deploy before you leave your desk!)</div></div>
+        <div class="slot"><div class="time">10:30</div><div class="what"><b>Module 5.3</b> — Workload forensics: volatility, isolation, custody <span class="chip">15 min</span></div></div>
+        <div class="slot lab-slot"><div class="time">10:45</div><div class="what"><b>Lab 5.2</b> — Digital Autopsy <span class="chip accent">55 min</span></div></div>
+        <div class="slot"><div class="time">11:40</div><div class="what"><b>Modules 5.4 + 5.5</b> — Automation and agents in the SOC; tabletops and post-incident work <span class="chip">20 min</span></div></div>
+        <div class="slot lab-slot"><div class="time">12:00</div><div class="what"><b>Lab 5.3</b> — Autopilot Defense <span class="chip accent">40 min</span></div></div>
+        <div class="slot lab-slot"><div class="time">12:40</div><div class="what"><b>Boss</b> — The Kraken's Last Stand (speed run) <span class="chip accent">30 min</span></div></div>
+        <div class="slot break-slot"><div class="time">13:10</div><div class="what">Grab-and-go lunch. The Kraken doesn't take lunch breaks.</div></div>
+        <div class="slot lab-slot"><div class="time">13:30</div><div class="what"><b><a href="gameday.html">GameDay: Kraken Rising</a></b>, live red vs blue across the whole week <span class="chip accent">3.5 hrs</span></div></div>
+        <div class="slot"><div class="time">17:00</div><div class="what"><b>Retro and graduation</b>: blameless review, 30/60/90 plans, badges 🎓</div></div>
+      </div>
+    </section>
+
+    <!-- ============ CONCEPTS ============ -->
+    <section id="concepts">
+      <div class="eyebrow">Concepts</div>
+      <h2>Responding like you've done it before</h2>
+      <p class="lead">The worst time to design an incident response program is during an incident. All five modules today come back to one idea: <b>whatever you prepare in advance is what you'll be able to do at 3 a.m.</b></p>
+
+      <!-- ===== 5.1 ===== -->
+      <div class="module" id="m5-1">
+        <div class="module-num">MODULE 5.1</div>
+        <h3>Incident response on AWS, 2026 edition</h3>
+        <p>In April 2025 NIST published <b>SP 800-61 Revision 3</b>. It drops the old four-phase lifecycle (prepare → detect &amp; analyze → contain/eradicate/recover → post-incident) and organizes incident response around the six <b>CSF 2.0 functions</b>. In practice this means preparation is no longer a phase you finish once. It's continuous work under <i>Govern</i>, <i>Identify</i> and <i>Protect</i>. Lessons learned now feed back into every function, not just into "next time".</p>
+        <figure class="figure reveal"><img src="assets/img/day5/ir-lifecycle.svg" alt="Diagram: GOVERN at the center surrounded by IDENTIFY, PROTECT, DETECT, RESPOND, RECOVER, each listing AWS services such as Security Hub, GuardDuty, Security Incident Response, Backup."><figcaption><b>FIG 5.1</b> NIST SP 800-61r3 uses CSF 2.0's six functions. Govern sits at the center: policy, roles, break-glass access and playbooks.</figcaption></figure>
+
+        <h4>Shared responsibility for incident response</h4>
+        <p>AWS responds to incidents in <i>the cloud's</i> infrastructure: hypervisors, facilities, the control plane. <b>You</b> respond to incidents in what you put <i>in</i> the cloud: identities, configurations, workloads and data. Most AWS customer incidents begin with one of three things. Learn them well:</p>
+        <div class="grid g3">
+          <div class="card lift"><h4 style="color:var(--accent)">🔑 Credentials</h4><p>Leaked keys, phished SSO, stolen instance-role tokens. This is the most common cause by a wide margin. <b>Lab 5.1.</b></p></div>
+          <div class="card lift"><h4 style="color:var(--accent)">🖥️ Workloads</h4><p>An unpatched app, an exposed admin port, SSRF to IMDSv1, a poisoned package. <b>Lab 5.2.</b></p></div>
+          <div class="card lift"><h4 style="color:var(--accent)">🪣 Misconfiguration</h4><p>Public buckets, permissive resource policies, a logging gap. The fix is usually a guardrail: an SCP, RCP or declarative policy (Day 1).</p></div>
+        </div>
+
+        <h4 style="margin-top:28px">Preparation checklist (what you need before the pager goes off)</h4>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Prepare</th><th>What good looks like</th><th>AWS building blocks</th></tr></thead>
+          <tbody>
+            <tr><td><b>Responder access</b></td><td>A pre-provisioned IR role in every account, assumable only from the security account with MFA. A <i>break-glass</i> path for when Identity Center itself is broken, and an alarm whenever it's used.</td><td>StackSets / Control Tower, Identity Center permission sets, EventBridge</td></tr>
+            <tr><td><b>Forensic account</b></td><td>An isolated account in the Security OU with a no-internet VPC, a forensic AMI that already has tools installed, a KMS CMK for re-encrypting shared snapshots, and an evidence bucket with Object Lock.</td><td>Organizations, EC2 Image Builder, KMS, S3 Object Lock</td></tr>
+            <tr><td><b>Telemetry</b></td><td>An org trail with data events where they matter, VPC Flow Logs, DNS logs, and retention that's longer than your dwell-time assumptions.</td><td>Org trail + Athena, Security Lake, Route 53 Resolver query logs (CloudTrail Lake closed to new customers on May 31, 2026)</td></tr>
+            <tr><td><b>Contacts</b></td><td>A <i>security</i> alternate contact on every account, so AWS's abuse and risk emails reach a team mailbox and not a former employee.</td><td>Account Management API (<code>put-alternate-contact</code>)</td></tr>
+            <tr><td><b>Playbooks</b></td><td>Written, version-controlled and <b>rehearsed</b>. One per top scenario, each automated as far as it's safe to.</td><td>SSM Automation, Step Functions, this course's <a href="labs/day5/index.html#runbooks">runbooks</a></td></tr>
+            <tr><td><b>Comms &amp; legal</b></td><td>Who declares a SEV-1, who talks to customers, who calls legal and regulators, and the deadlines (GDPR's 72 hours, SEC 8-K's 4 business days after determining materiality).</td><td>Your org chart, not AWS 🙂</td></tr>
+          </tbody>
+        </table></div>
+
+<pre data-title="eventbridge: page me whenever break-glass is used (deploy in every Region you use)"><code class="language-json">{
+  "source": ["aws.sts"],
+  "detail-type": ["AWS API Call via CloudTrail"],
+  "detail": {
+    "eventName": ["AssumeRole"],
+    "requestParameters": {
+      "roleArn": [{ "suffix": ":role/SkyfortressSecurityBreakGlass" }]
+    }
+  }
+}</code></pre>
+        <div class="callout gotcha"><strong class="ct">Gotcha: STS events are regional</strong><p>An <code>AssumeRole</code> call is logged in the Region of the STS endpoint that handled it. A rule deployed only in us-east-1 won't see a break-glass assumption made through <code>sts.eu-west-1.amazonaws.com</code>. Deploy the rule to every Region you use, or hunt for it across Regions in the org trail with Athena.</p></div>
+
+        <div class="callout new"><strong class="ct">New since 2024–2026: AWS Security Incident Response</strong>
+          <p>AWS Security Incident Response (launched December 2024) automatically triages GuardDuty and integrated Security Hub findings, gives you case management for your own team, and when you need it, <b>24/7 access to the AWS Customer Incident Response Team (CIRT)</b> from inside a case. Since 2025, Security Hub has correlated signals into exposures and attack paths, and GuardDuty <b>Extended Threat Detection</b> combines multi-stage activity into a single <i>attack sequence</i> finding. In May 2026 it gained new indicator types including <code>MALICIOUS_PACKAGE</code>, <code>VULNERABILITY</code> and <code>SENSITIVE_DATA</code>. The effect: your first alert now often looks like a whole incident, not one isolated signal.</p>
+        </div>
+        <div class="callout war"><strong class="ct">War story: Code Spaces (2014)</strong><p>An attacker got into a code-hosting company's AWS console and demanded a ransom. When the company tried to lock them out, the attacker deleted EC2 instances, EBS snapshots, S3 buckets and backups. Everything was in one account under one set of credentials. Within days the company announced it was shutting down. The lessons still apply: keep <b>backups in a separate account with Object Lock or a logically air-gapped vault</b> (Day 4), and <b>contain everything at once</b>. If you only partly contain an attacker, you've warned them.</p></div>
+      </div>
+
+      <!-- ===== 5.2 ===== -->
+      <div class="module" id="m5-2">
+        <div class="module-num">MODULE 5.2</div>
+        <h3>Credential compromise: you rotated the key, but did you revoke the sessions?</h3>
+        <p>Deactivating a key is the reflex. It's necessary but it isn't enough. Any <b>temporary credentials</b> minted with that key before you deactivated it (from <code>AssumeRole</code>, <code>GetSessionToken</code> or <code>GetFederationToken</code>) are independent bearer tokens. They stay valid until they expire, which can be up to 12 hours for a role session and 36 hours for <code>GetSessionToken</code>.</p>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Credential</th><th>Looks like</th><th>How to kill it</th></tr></thead>
+          <tbody>
+            <tr><td>IAM user access key</td><td><code>AKIA…</code></td><td><code>update-access-key --status Inactive</code> (keep it for the investigation; delete later)</td></tr>
+            <tr><td>Role session (incl. pivots)</td><td><code>ASIA…</code> + session token</td><td>Revoke sessions on the role: inline <code>AWSRevokeOlderSessions</code> policy, Deny <code>*</code> where <code>aws:TokenIssueTime</code> &lt; now</td></tr>
+            <tr><td>User's GetSessionToken creds</td><td><code>ASIA…</code></td><td>Same Deny-by-<code>TokenIssueTime</code> policy, attached to the <i>user</i></td></tr>
+            <tr><td>EC2 instance-role creds stolen via IMDS</td><td><code>ASIA…</code> used off-instance</td><td>Revoke on the role. Legitimate instances get fresh creds at their next IMDS refresh (expect a brief blip). Prevent with <code>aws:ec2InstanceSourceVPC</code> conditions.</td></tr>
+            <tr><td>Identity Center user</td><td>portal session → <code>AWSReservedSSO_*</code> role sessions</td><td>Disable the user and delete their active sessions in Identity Center, <i>then</i> deny their existing role sessions (SCP on <code>aws:userid</code> + <code>aws:TokenIssueTime</code>)</td></tr>
+          </tbody>
+        </table></div>
+
+        <div class="tabs">
+          <div class="tab-list"><button>Revoke a role's sessions (CLI)</button><button>Identity Center user (SCP)</button><button>Prevent: instance-cred perimeter</button></div>
+          <div class="tab-panel">
+<pre data-title="what the console's 'Revoke active sessions' button does"><code class="language-bash">NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+cat &gt; /tmp/revoke.json &lt;&lt;JSON
+{
+  "Version": "2012-10-17",
+  "Statement": [{
+    "Effect": "Deny",
+    "Action": ["*"],
+    "Resource": ["*"],
+    "Condition": { "DateLessThan": { "aws:TokenIssueTime": "${NOW}" } }
+  }]
+}
+JSON
+aws iam put-role-policy --role-name nimbus-deploy-role \
+  --policy-name AWSRevokeOlderSessions --policy-document file:///tmp/revoke.json</code></pre>
+          </div>
+          <div class="tab-panel">
+<pre data-title="quarantine SCP: kill alice's existing SSO role sessions in every account"><code class="language-json">{
+  "Version": "2012-10-17",
+  "Statement": [{
+    "Sid": "RevokeAliceSsoSessions",
+    "Effect": "Deny",
+    "Action": "*",
+    "Resource": "*",
+    "Condition": {
+      "StringLike":   { "aws:userid": "*:alice@nimbus.example" },
+      "DateLessThan": { "aws:TokenIssueTime": "2026-12-04T03:40:00Z" }
+    }
+  }]
+}</code></pre>
+            <p class="muted">For Identity Center role sessions, <code>aws:userid</code> is <code>ROLE-ID:username</code>. You can't edit the <code>AWSReservedSSO_*</code> roles directly, so an SCP on the OU is the clean way to revoke across many accounts at once.</p>
+          </div>
+          <div class="tab-panel">
+<pre data-title="identity or resource policy statement: instance creds only work from their own VPC"><code class="language-json">{
+  "Sid": "DenyInstanceCredsOffInstance",
+  "Effect": "Deny",
+  "Action": "*",
+  "Resource": "*",
+  "Condition": {
+    "StringNotEquals": { "aws:ec2InstanceSourceVPC": "${aws:SourceVpc}" },
+    "Null":            { "ec2:SourceInstanceARN": "false" },
+    "BoolIfExists":    { "aws:ViaAWSService": "false" }
+  }
+}</code></pre>
+            <p class="muted">This is the data-perimeter pattern from Day 1, applied to instance credentials. A token copied off the box and used from the attacker's laptop doesn't match the instance's VPC, so the request is denied. Test carefully: calls that don't go through a VPC endpoint carry no <code>aws:SourceVpc</code>.</p>
+          </div>
+        </div>
+
+        <h4>Scoping the blast radius: follow the pivots</h4>
+        <p>Every <code>AssumeRole</code> event in CloudTrail records the <b>new</b> temporary access key ID in <code>responseElements.credentials.accessKeyId</code>. That gives you a chain to follow: search by the AKIA, find the AssumeRole calls it made, extract each new ASIA, search by that ASIA, and repeat. The Kraken can hop through three roles. If you track only the first key, you've missed most of what happened.</p>
+        <figure class="figure reveal"><img src="assets/img/day5/cred-playbook.svg" alt="Five-column playbook: signal, scope, contain, eradicate, improve, with boxes such as lookup-events, follow the pivot, AWSRevokeOlderSessions, remove backdoors, new SCP."><figcaption><b>FIG 5.2</b> The credential-compromise playbook (full version in <a href="labs/day5/runbooks/credential-compromise.md">runbooks/credential-compromise.md</a>).</figcaption></figure>
+        <div class="callout tip"><strong class="ct">Pro tip: <code>sts get-access-key-info</code></strong><p>Found a key in a paste site and don't know whose it is? <code>aws sts get-access-key-info --access-key-id AKIA…</code> returns the <b>account ID</b> that owns it, without needing the secret. Then <code>aws iam get-access-key-last-used</code> (in that account) tells you when, where and against which service it was last used.</p></div>
+        <div class="callout war"><strong class="ct">War story: Uber (2016)</strong><p>Attackers found AWS credentials in a private GitHub repository used by Uber engineers. They used them to download data on about 57 million riders and drivers from S3. The incident was then concealed, which led to regulatory penalties and later a criminal conviction for the former CSO. Two lessons: <b>long-term keys in code are a matter of when, not if</b>, and <b>how you handle disclosure is part of incident response</b>.</p></div>
+      </div>
+
+      <!-- ===== 5.3 ===== -->
+      <div class="module" id="m5-3">
+        <div class="module-num">MODULE 5.3</div>
+        <h3>Workload forensics: isolate quietly, collect in order, prove integrity</h3>
+        <p>When you find a compromised instance, the instinct is to stop it or terminate it. <b>Don't.</b> Stopping it wipes RAM, which holds the injected code, decrypted configs, live network sockets and the attacker's in-memory tooling. Terminating it destroys the evidence completely. Instead, follow the <b>order of volatility</b>: memory → network state → processes → disk → logs. And make each containment step something the attacker can't easily notice.</p>
+        <div class="grid g2">
+          <div class="card"><h4 style="color:var(--accent)">Preserve the scene</h4><ul>
+            <li>Turn on <b>termination protection</b> and set shutdown behavior to <code>stop</code></li>
+            <li>Tag <code>ir-case</code>, <code>ir-status</code></li>
+            <li><b>Detach it from its Auto Scaling group</b> first, or the ASG may replace and terminate your evidence</li>
+            <li>Deregister it from target groups</li>
+          </ul></div>
+          <div class="card"><h4 style="color:var(--accent)">Isolate without going blind</h4><ul>
+            <li>Swap to an <b>allow-all</b> SG first, then to the quarantine SG (see FIG 5.4)</li>
+            <li>Quarantine egress allows <b>only</b> 443 to your SSM interface endpoints, so you keep access</li>
+            <li>Leave the instance profile alone until you've recorded what it can do, then revoke the role's sessions</li>
+          </ul></div>
+        </div>
+        <figure class="figure reveal"><img src="assets/img/day5/tracked-connections.svg" alt="Left: swapping directly to quarantine leaves the tracked reverse shell alive. Right: flushing through an allow-all security group first makes flows untracked, so they drop on the quarantine swap."><figcaption><b>FIG 5.4</b> Security groups are stateful. A flow that's already <i>tracked</i> survives a rule change. Making it untracked first means the quarantine swap actually cuts it.</figcaption></figure>
+        <figure class="figure reveal"><img src="assets/img/day5/ec2-forensics.svg" alt="Architecture: victim instance in a workload subnet with SG swap and evidence volume, forensic workstation in an isolated subnet with SSM interface endpoints and S3 gateway endpoint, snapshots and an Object Lock evidence bucket."><figcaption><b>FIG 5.3</b> The Lab 5.2 setup. The forensic subnet has no internet route. SSM works through interface endpoints and S3 through a free gateway endpoint.</figcaption></figure>
+
+        <h4>Chain of custody</h4>
+        <p>If an incident could end up in court, with a regulator or an insurer, then <i>how</i> you collected evidence matters as much as <i>what</i> you collected. For every artifact, record: who collected it, when (UTC), how, its hash, and every time it changed hands. Store it <b>WORM</b> (write once, read many): S3 Object Lock, versioning, SSE-KMS, and access limited to the IR role. In real cases, <b>copy snapshots to a separate forensic account</b>, re-encrypted with a customer managed KMS key.</p>
+        <div class="callout gotcha"><strong class="ct">Gotcha: snapshots encrypted with <code>aws/ebs</code> can't be shared</strong><p>A snapshot encrypted with the AWS managed key <code>aws/ebs</code> can't be shared with another account. You first <code>copy-snapshot</code> it with a <b>customer managed key</b>, grant the forensic account use of that key, and then share. Do this in a GameDay before you need it during an incident.</p></div>
+        <div class="callout gotcha"><strong class="ct">Gotcha: XFS refuses to mount your evidence</strong><p>Amazon Linux 2023 uses XFS. A volume restored from an instance launched from the <i>same AMI</i> as your workstation has the <b>same filesystem UUID</b>, so the mount fails. Mount with <code>-o ro,norecovery,nouuid</code>. <code>norecovery</code> matters as well: without it, XFS replays its journal, which <b>writes to your evidence</b>. For ext4, use <code>ro,noload</code>.</p></div>
+
+        <h4>Containers in one paragraph</h4>
+        <p><b>EKS:</b> label the pod (<code>quarantine=true</code>) and apply a deny-all NetworkPolicy that selects that label. Cordon the node (don't drain it, because draining kills the pod). Then capture the node's memory and snapshot its volumes the same way you would for EC2. Use GuardDuty Runtime Monitoring findings to identify the container and process. <b>Fargate:</b> there's no host to image, so your evidence is runtime findings, logs and the image digest. Make sure your prep includes runtime monitoring and image provenance (Day 3).</p>
+      </div>
+
+      <!-- ===== 5.4 ===== -->
+      <div class="module" id="m5-4">
+        <div class="module-num">MODULE 5.4</div>
+        <h3>Automation and agents in the SOC</h3>
+        <p>Automate what's <b>deterministic, reversible and well understood</b>: tag, snapshot, isolate, notify. Leave a human in charge of decisions that are irreversible or need judgment: terminate, wipe, disclose, call law enforcement. Step Functions handles both through a <b>task token</b>. The workflow pauses at a step and waits, at no cost, for up to a year, until something holding the token calls <code>SendTaskSuccess</code> or <code>SendTaskFailure</code>.</p>
+        <figure class="figure reveal"><img src="assets/img/day5/sfn-playbook.svg" alt="State machine diagram: EventBridge rule, ParseFinding, IsHighSeverity choice, TagForIR, ProtectFromTermination, Isolate, PreserveEvidence, NotifySOC, AwaitHumanApproval with a human, Approved choice, RemoveTerminationProtection, Terminate, IssueReceipt, PlaybookFailed."><figcaption><b>FIG 5.5</b> The Lab 5.3 playbook. Automation contains and preserves evidence; a human decides whether to terminate.</figcaption></figure>
+        <div class="callout tip"><strong class="ct">Security Hub automation rules ≠ remediation</strong><p>Security Hub automation rules change <i>findings</i>: severity, workflow status, notes, suppression. They don't change your resources. For remediation, send findings to EventBridge, then to Step Functions or SSM Automation. Use rules to cut noise, for example suppressing a known-benign finding on a tagged sandbox, so that what reaches your playbooks deserves attention.</p></div>
+
+        <h4>Where AI fits in 2026, and where it doesn't</h4>
+        <figure class="figure reveal"><img src="assets/img/day5/soc-agents.svg" alt="The 2026 SOC: signals flow to AI triage, agents, human gates and automation; an autonomy ladder from read to act alone; and a guardrails rail."><figcaption><b>FIG 5.6</b> Choose an autonomy level for each <i>action</i>, not for each agent.</figcaption></figure>
+        <div class="callout new"><strong class="ct">New in 2026</strong>
+          <ul>
+            <li><b>AWS Security Agent</b> became generally available on March 31, 2026 for on-demand, context-aware <b>penetration testing</b>. It also does design and code security reviews. It launched in six Regions including us-east-1. Run it against staging, scope it carefully, and file its findings as tickets.</li>
+            <li><b>AWS DevOps Agent</b> also went GA in 2026. It investigates operational incidents, and many "security" pages turn out to be operational, and vice versa.</li>
+            <li><b>GuardDuty AI-powered investigations</b> (preview, July 2026) analyze findings to help separate malicious activity from benign events. In the same update, Security Hub added an <b>AI inventory</b>, GuardDuty AI Protection for Bedrock and SageMaker, and Azure coverage.</li>
+            <li><b>Policy in Amazon Bedrock AgentCore</b> (GA March 2026) enforces Cedar policies on every tool call your own agents make, outside the agent's code. Since June 2026 it can also use Bedrock Guardrails. If you build a triage agent, this is its leash.</li>
+            <li>📅 <b>re:Invent 2026</b> (Nov 30–Dec 4) absorbed re:Inforce this year, with a security focus day on Dec 3. Expect announcements in this area; check the AWS Security Blog the following week.</li>
+          </ul>
+        </div>
+        <div class="callout warn"><strong class="ct">Findings are data, not instructions</strong><p>Attackers control a surprising number of strings that reach your triage pipeline: IAM user descriptions, S3 object keys, User-Agent headers, GuardDuty filter descriptions, even log lines. In the boss fight, the Kraken names its suppression rule <i>"Suppress noisy low-value findings (approved by SecOps)"</i>. That's social engineering aimed at your analyst <b>or your LLM</b>. Every AI agent in the SOC must treat finding content as untrusted input, have no authority to whitelist or suppress on its own, and use least-privilege roles with Cedar policy on each tool call.</p></div>
+      </div>
+
+      <!-- ===== 5.5 ===== -->
+      <div class="module" id="m5-5">
+        <div class="module-num">MODULE 5.5</div>
+        <h3>Tabletops, retros and the improvement loop</h3>
+        <p>A tabletop exercise is a rehearsal with no infrastructure at risk. The facilitator reads <b>injects</b> (new developments) and the team says what they'd do, who does it and what they'd need. It costs nothing, takes 60 minutes, and is the cheapest way to find out your break-glass password is in a vault that requires SSO.</p>
+        <div class="grid g3">
+          <div class="card inject"><div class="t">INJECT 1 · T+0</div><p>Security Hub shows a critical attack sequence on <code>prod-payments</code>. The on-call engineer is on a flight. <b>Who gets paged next?</b></p></div>
+          <div class="card inject"><div class="t">INJECT 2 · T+20m</div><p>Identity Center is configured with an external IdP, and that IdP is <i>also</i> reporting suspicious logins. <b>How do you get into AWS now?</b></p></div>
+          <div class="card inject"><div class="t">INJECT 3 · T+45m</div><p>A journalist emails about "leaked Nimbus customer data". <b>Who replies, and what is everyone else told not to say?</b></p></div>
+          <div class="card inject"><div class="t">INJECT 4 · T+2h</div><p>The attacker deletes a KMS key alias and schedules the key for deletion. <b>How long do you have, and what stops it?</b></p></div>
+          <div class="card inject"><div class="t">INJECT 5 · T+4h</div><p>Your AI triage agent recommends suppressing the finding because "the description says SecOps approved it". <b>Now what?</b></p></div>
+          <div class="card inject"><div class="t">INJECT 6 · T+1d</div><p>Legal asks whether this is reportable and when you <i>determined</i> it was material. <b>Where's your timeline?</b></p></div>
+        </div>
+        <figure class="figure reveal"><img src="assets/img/day5/improvement-loop.svg" alt="The improvement loop: tabletop, friction log, blameless retro, ship three changes, and back to tabletop, with MTTD, MTTA, MTTC and MTTR measured at the center."><figcaption><b>FIG 5.8</b> The improvement loop. A tabletop produces a friction log, the retro turns it into three shipped changes, and the next tabletop tests them.</figcaption></figure>
+        <h4 style="margin-top:28px">The metrics that matter</h4>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Metric</th><th>Clock starts → stops</th><th>What moves it</th></tr></thead>
+          <tbody>
+            <tr><td><b>MTTD</b> (detect)</td><td>first malicious action → first alert</td><td>Coverage (Day 2), Extended Threat Detection, data events</td></tr>
+            <tr><td><b>MTTA</b> (acknowledge)</td><td>alert → human owns it</td><td>Routing, severity accuracy, alert fatigue, AI triage</td></tr>
+            <tr><td><b>MTTC</b> (contain)</td><td>acknowledged → attacker can no longer act</td><td>Pre-built roles, playbooks, automation (Labs 5.1–5.3)</td></tr>
+            <tr><td><b>MTTR</b> (recover)</td><td>contained → business normal</td><td>IaC rebuilds, tested backups, air-gapped vaults (Day 4)</td></tr>
+          </tbody>
+        </table></div>
+        <p>Blameless retros ask "what made this the reasonable choice at the time?" rather than "who messed up?". Every retro should end with at least one <b>guardrail</b> (an SCP, RCP or declarative policy that makes the technique impossible), at least one <b>detection</b> (for the earliest signal you missed), and at least one <b>playbook change</b>. That's how lessons get back into Govern, Identify and Protect.</p>
+      </div>
+    </section>
+
+    <!-- ============ LABS ============ -->
+    <section id="labs">
+      <div class="eyebrow">Hands-on</div>
+      <h2>Labs</h2>
+      <div class="callout cost"><strong class="ct">Before you start</strong><p>Run everything from <b>AWS CloudShell in us-east-1</b> in your sandbox (Lab 0). Get the lab files into CloudShell with <code>git clone</code> of your course repo, or upload the <code>labs/day5</code> folder (<i>Actions → Upload file</i>). Total cost for the day, if you clean up: <b>under $1</b>.</p>
+<pre data-title="CloudShell"><code class="language-bash">git clone https://github.com/varoonsahgal/awsadvancedsecurity.git ~/skyfortress
+cd ~/skyfortress/labs/day5 &amp;&amp; chmod +x */*.sh
+aws sts get-caller-identity   # confirm you're in the sandbox, not prod 😅</code></pre>
+      </div>
+
+      <!-- ================= LAB 5.1 ================= -->
+      <article class="lab" id="lab-5-1" data-toc="Lab 5.1 · Burned Keys">
+        <img class="lab-cover" src="assets/img/day5/lab1-cover.svg" alt="Lab 5.1 cover: a burning golden access key over a leaked .env file, with a chain snapping and a dotted AssumeRole path to an ASIA session.">
+        <div class="lab-head">
+          <div class="lab-num">Lab 5.1</div>
+          <h3>Burned Keys 🔥🔑</h3>
+          <div class="chips"><span class="chip med">Intermediate</span><span class="chip">⏱ 40 min</span><span class="chip">💸 ~$0.01</span><span class="chip">IAM · STS · CloudTrail · SSM</span></div>
+        </div>
+        <div class="lab-body">
+          <p><b>Goal:</b> A build bot's access key was committed to a public repo. The Kraken has used it to do reconnaissance, steal payroll data, <b>pivot into a deploy role with a 12-hour session</b>, and plant persistence. You'll scope everything the key did, contain the key <i>and</i> its sessions, verify containment by replaying the stolen credentials, and recover what the attacker planted.</p>
+          <div class="grid g2">
+            <div><h4>You'll need</h4><ul><li>CloudShell with admin in a sandbox account (Lab 0)</li><li><code>jq</code> (preinstalled in CloudShell)</li><li>Files: <a href="labs/day5/index.html#lab1">labs/day5/lab1-burned-keys/</a></li></ul></div>
+            <div><h4>Attack path</h4><p class="mono" style="font-size:.85rem">leaked AKIA → recon → s3:GetObject payroll → sts:AssumeRole (12h) → ASIA → ssm:PutParameter 🦑</p></div>
+          </div>
+
+          <div class="paths">
+            <div class="path guided"><p>Follow the 10 numbered steps. Each one ends in something you can check: a command output, a value in your notes, or a ⛔ from the attacker's retry script.</p></div>
+            <div class="path challenge"><p><b>Goal:</b> after <code>setup.sh</code> and <code>attacker.sh</code>, make every stolen credential useless and recover what was planted, without looking at the steps.</p>
+              <p><b>Constraints:</b> don't delete the user or the role (you need them for the investigation), and save evidence before you change anything.</p>
+              <p><b>Done when:</b> <code>kraken-retry.sh</code> shows ⛔ on the second call in both blocks, your timeline has both IOCs with UTC times, and you've captured the flag.</p></div>
+          </div>
+
+          <h4>Steps</h4>
+          <ol class="steps" data-lab="d5-lab1">
+            <li><strong>Stage the crime scene</strong>
+              <p>This creates the over-trusted user <code>nimbus-build-bot</code>, a deploy role it can assume, a bucket of fake payroll data, and a <code>.env</code> file containing the "leaked" key.</p>
+<pre data-title="CloudShell"><code class="language-bash">cd ~/skyfortress/labs/day5/lab1-burned-keys
+./setup.sh
+export LEAKED=$(grep AWS_ACCESS_KEY_ID ~/skyfortress-d5-lab1/leaked/.env | cut -d= -f2)
+echo "IOC #1: $LEAKED"</code></pre>
+            </li>
+            <li><strong>Unleash the Kraken</strong>
+              <p>Wait about 15 seconds for IAM to propagate, then run the attacker simulation. It only uses the leaked credentials: the script clears your admin credentials inside its subshells. Read the output carefully. A good responder reads the attacker's moves.</p>
+<pre data-title="CloudShell"><code class="language-bash">./attacker.sh</code></pre>
+              <div class="predict"><p>The Kraken tried <code>iam:CreateUser</code> and got <code>AccessDenied</code>. Will that failed call appear in CloudTrail?</p><details><summary>Reveal</summary><p>Yes. Denied calls are logged with an <code>errorCode</code>, and they're often your <b>earliest</b> sign that an attacker is probing permissions. Many detections key on bursts of <code>AccessDenied</code> from one principal.</p></details></div>
+            </li>
+            <li><strong>Triage: whose key is this, and when was it last used?</strong>
+<pre data-title="CloudShell"><code class="language-bash">aws sts get-access-key-info --access-key-id "$LEAKED"          # → owning account
+aws iam list-access-keys --user-name nimbus-build-bot
+aws iam get-access-key-last-used --access-key-id "$LEAKED"      # → service + Region + time</code></pre>
+              <p>Write down the start of your timeline: <span class="clock">T0 = first use of the key</span>. Open a case document now; your future self (and legal) will thank you.</p>
+            </li>
+            <li><strong>Scope: everything the AKIA did</strong>
+              <p>CloudTrail event history covers the last 90 days of management events in the current Region. Events usually show up within about 5 minutes. If the list looks short, wait and run it again.</p>
+<pre data-title="CloudShell"><code class="language-bash">aws cloudtrail lookup-events \
+  --lookup-attributes AttributeKey=AccessKeyId,AttributeValue="$LEAKED" \
+  --max-results 50 --output json \
+| jq -r '.Events[] | .CloudTrailEvent | fromjson
+         | [.eventTime, .eventSource, .eventName, (.errorCode // "ok"), .sourceIPAddress] | @tsv' \
+| sort | column -t</code></pre>
+<div class="term" data-title="CloudShell · us-east-1 · management"><pre><span class="o">2026-12-04T03:12:04Z  sts.amazonaws.com  GetCallerIdentity  ok            203.0.113.66</span>
+<span class="o">2026-12-04T03:12:06Z  s3.amazonaws.com   ListBuckets        ok            203.0.113.66</span>
+<span class="o">2026-12-04T03:12:09Z  iam.amazonaws.com  ListRoles          ok            203.0.113.66</span>
+2026-12-04T03:12:31Z  iam.amazonaws.com  CreateUser         <span class="err">AccessDenied</span>  203.0.113.66
+<span class="warn">2026-12-04T03:13:02Z  sts.amazonaws.com  AssumeRole         ok            203.0.113.66</span></pre></div>
+              <p class="term-caption">Expected shape. Your times will differ, and the source IP will be your CloudShell's, because the lab's "attacker" runs there. <code>GetObject</code> on the payroll file is missing: S3 object reads are <i>data events</i> and never appear in event history.</p>
+            </li>
+            <li><strong>Follow the pivot: AKIA → AssumeRole → ASIA</strong>
+              <p>Find the <code>AssumeRole</code> event and pull the <b>new temporary access key ID</b> from <code>responseElements</code>. That's IOC #2, and it's the key that actually did the damage.</p>
+<pre data-title="CloudShell"><code class="language-bash">aws cloudtrail lookup-events \
+  --lookup-attributes AttributeKey=AccessKeyId,AttributeValue="$LEAKED" --output json \
+| jq -r '.Events[].CloudTrailEvent | fromjson | select(.eventName=="AssumeRole")
+         | {role: .requestParameters.roleArn, session: .requestParameters.roleSessionName,
+            duration: .requestParameters.durationSeconds,
+            newKey: .responseElements.credentials.accessKeyId}'
+export PIVOT=ASIA...   # paste newKey here</code></pre>
+              <figure class="shot" data-url="console.aws.amazon.com/cloudtrailv2/home?region=us-east-1#/events"><img src="assets/img/day5/shot-cloudtrail-akia.svg" alt="Illustrative mock-up of CloudTrail event history filtered by the leaked key, with the AssumeRole event selected and its record showing the new ASIA access key in responseElements"><figcaption><b>SCREEN 5.1</b> Illustrative mock-up; the live console layout may differ.</figcaption></figure>
+              <div class="predict"><p>The AssumeRole session lasts 12 hours. If you deactivate the AKIA right now, how long can the ASIA keep working?</p><details><summary>Reveal</summary><p>Until it expires, up to 12 hours from <code>03:13:02</code>. Temporary credentials are validated on their own; they don't check whether the key that created them is still active. Step 8 proves it.</p></details></div>
+              <details class="hint"><summary>Hint: I don't see responseElements</summary><p>Make sure you're filtering the AKIA's events, not the role's. The <code>AssumeRole</code> call is made <i>by</i> the AKIA, so it appears under the AKIA. Its response contains the new ASIA key. If you hit the event before CloudTrail finished processing it, wait a minute and try again.</p></details>
+            </li>
+            <li><strong>Scope the pivot: what did the role session do?</strong>
+<pre data-title="CloudShell"><code class="language-bash">aws cloudtrail lookup-events \
+  --lookup-attributes AttributeKey=AccessKeyId,AttributeValue="$PIVOT" --output json \
+| jq -r '.Events[].CloudTrailEvent | fromjson
+         | [.eventTime, .eventName, (.requestParameters | tostring | .[0:90])] | @tsv' | sort</code></pre>
+              <p>You should find <code>DescribeInstances</code> (reconnaissance), <code>PutParameter</code> and <code>AddTagsToResource</code>. The attacker used the parameter store to <b>persist</b> a config, and tagged it <code>owner=platform-team</code> so it would look legitimate.</p>
+            </li>
+            <li><strong>Recover the attacker's planted config</strong>
+              <p>Save the parameter as evidence <i>before</i> you change anything, then decode it.</p>
+<pre data-title="CloudShell"><code class="language-bash">mkdir -p ~/case-IR-2026-1204-007
+aws ssm get-parameter --name /nimbus/ops/sync-token --output json \
+  | tee ~/case-IR-2026-1204-007/ssm-sync-token.json \
+  | jq -r .Parameter.Value | base64 -d | jq .</code></pre>
+<div class="term" data-title="CloudShell · decoded /nimbus/ops/sync-token"><pre><span class="o">{</span>
+  <span class="k">"c2"</span>: <span class="s">"beacon.kraken-collective.invalid"</span>,
+  <span class="k">"op"</span>: <span class="s">"tentacle-7"</span>,
+  <span class="k">"token"</span>: <span class="hl">SKY{ •••••• redacted: this is your flag •••••• }</span>
+<span class="o">}</span></pre></div>
+              <p class="term-caption">The C2 domain is IOC #3. Add it to your DNS Firewall block list (Day 3) and your hunting queries.</p>
+            </li>
+            <li><strong>Contain, part 1: deactivate the key. Then predict.</strong>
+<pre data-title="CloudShell"><code class="language-bash">aws iam update-access-key --user-name nimbus-build-bot --access-key-id "$LEAKED" --status Inactive
+sleep 10 &amp;&amp; ./kraken-retry.sh</code></pre>
+              <div class="predict"><p>The key is now Inactive. Will the stolen <b>role session</b> still be able to read the SSM parameter? Commit to an answer, then run <code>kraken-retry.sh</code>.</p><details><summary>Reveal</summary><p>It will. Deactivating a key does nothing to sessions it already created. This is the single most common containment mistake.</p></details></div>
+<div class="term" data-title="CloudShell · ./kraken-retry.sh (after deactivating the key)"><pre>🐙 Long-term key (AKIA…) from the leaked .env:
+   <span class="err">⛔ DENIED  → An error occurred (InvalidClientTokenId)</span>
+   <span class="err">⛔ DENIED  → An error occurred (InvalidAccessKeyId)</span>
+🐙 Stolen role session (ASIA…) from ~/.kraken/session.json:
+   <span class="ok">✅ WORKS   → arn:aws:sts::111122223333:assumed-role/nimbus-deploy-role/kraken-tentacle-7</span>
+   <span class="ok">✅ WORKS   → /nimbus/ops/sync-token</span>
+(note: sts:GetCallerIdentity can never be denied by policy — watch the SECOND call in each block)</pre></div>
+              <p class="term-caption">The key is dead and the session isn't. That gap is why step 9 exists.</p>
+            </li>
+            <li><strong>Contain, part 2: revoke every session issued before now</strong>
+              <p>Attach the <code>AWSRevokeOlderSessions</code> deny to the <b>role</b> (kills the pivot) and to the <b>user</b> (kills any <code>GetSessionToken</code> credentials). You can also use the console: <i>IAM → Roles → nimbus-deploy-role → Revoke sessions</i>.</p>
+<pre data-title="CloudShell"><code class="language-bash">NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+jq --arg t "$NOW" '.Statement[0].Condition.DateLessThan["aws:TokenIssueTime"]=$t' \
+  revoke-older-sessions.json &gt; /tmp/revoke.json
+aws iam put-role-policy --role-name nimbus-deploy-role --policy-name AWSRevokeOlderSessions --policy-document file:///tmp/revoke.json
+aws iam put-user-policy --user-name nimbus-build-bot  --policy-name AWSRevokeOlderSessions --policy-document file:///tmp/revoke.json
+sleep 15 &amp;&amp; ./kraken-retry.sh</code></pre>
+<div class="term" data-title="CloudShell · ./kraken-retry.sh (after revoking sessions)"><pre>🐙 Long-term key (AKIA…) from the leaked .env:
+   <span class="err">⛔ DENIED  → An error occurred (InvalidClientTokenId)</span>
+   <span class="err">⛔ DENIED  → An error occurred (InvalidAccessKeyId)</span>
+🐙 Stolen role session (ASIA…) from ~/.kraken/session.json:
+   <span class="ok">✅ WORKS   → arn:aws:sts::111122223333:assumed-role/nimbus-deploy-role/kraken-tentacle-7</span>
+   <span class="err">⛔ DENIED  → An error occurred (AccessDeniedException)</span></pre></div>
+              <figure class="shot" data-url="console.aws.amazon.com/iam/home#/roles/details/nimbus-deploy-role?section=revoke_sessions"><img src="assets/img/day5/shot-iam-revoke.svg" alt="Illustrative mock-up of the IAM revoke active sessions dialog for nimbus-deploy-role, showing the cutoff time and the AWSRevokeOlderSessions inline policy that it attaches"><figcaption><b>SCREEN 5.2</b> Illustrative mock-up; the live console layout may differ.</figcaption></figure>
+              <p>Now every call except <code>sts:GetCallerIdentity</code> should return ⛔ <code>AccessDenied</code>. That one call can't be denied by any policy, so attackers often use it to check whether stolen credentials are "valid". A successful <code>GetCallerIdentity</code> doesn't mean containment failed.</p>
+            </li>
+            <li><strong>Eradicate and document</strong>
+              <p>With the evidence saved, remove the persistence and record what was exposed:</p>
+<pre data-title="CloudShell"><code class="language-bash">aws ssm delete-parameter --name /nimbus/ops/sync-token
+# Data exposure: which objects did the key read? (S3 object reads are DATA events —
+# only visible if your trail logs S3 data events. Day 2 says: it should.)
+aws s3api list-objects-v2 --bucket "$(cat ~/skyfortress-d5-lab1/bucket.txt)" --query 'Contents[].Key'</code></pre>
+              <p>Fill in the case timeline (time, actor, action, evidence source). Use this as a template:</p>
+              <div class="table-wrap"><table>
+                <thead><tr><th>UTC</th><th>Actor</th><th>Action</th><th>Source</th></tr></thead>
+                <tbody>
+                  <tr><td>T0</td><td>AKIA… (nimbus-build-bot)</td><td>GetCallerIdentity, ListBuckets, ListRoles</td><td>CloudTrail</td></tr>
+                  <tr><td>T0+1m</td><td>AKIA…</td><td>CreateUser → AccessDenied</td><td>CloudTrail</td></tr>
+                  <tr><td>T0+1m</td><td>AKIA…</td><td>GetObject finance/payroll-2026-q4.csv</td><td>S3 data events (if enabled)</td></tr>
+                  <tr><td>T0+2m</td><td>AKIA… → ASIA… (kraken-tentacle-7)</td><td>AssumeRole nimbus-deploy-role, 43200s</td><td>CloudTrail</td></tr>
+                  <tr><td>T0+2m</td><td>ASIA…</td><td>PutParameter /nimbus/ops/sync-token</td><td>CloudTrail</td></tr>
+                  <tr><td>T1</td><td>you</td><td>Key Inactive; sessions revoked</td><td>CloudTrail</td></tr>
+                </tbody>
+              </table></div>
+            </li>
+          </ol>
+
+          <div class="checkpoint"><p><code>kraken-retry.sh</code> shows ⛔ for every call except <code>GetCallerIdentity</code>, the SSM parameter is gone, and your timeline has both IOCs (the AKIA and the ASIA) with timestamps.</p></div>
+          <h4>Troubleshooting</h4><div class="table-wrap"><table><thead><tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr></thead><tbody><tr><td><code>attacker.sh</code> fails with <code>InvalidClientTokenId</code></td><td>The new key hasn't propagated yet</td><td>Wait 15–30 seconds and run it again</td></tr><tr><td><code>lookup-events</code> returns nothing or very little</td><td>CloudTrail delivery lag (usually under 5 minutes), or you're in a different Region</td><td>Check <code>echo $AWS_REGION</code> is <code>us-east-1</code>, wait, retry</td></tr><tr><td>No <code>responseElements</code> on the AssumeRole event</td><td>You searched by the ASIA, or the event isn't fully processed</td><td>Search by the AKIA. The AssumeRole call is made <i>by</i> it</td></tr><tr><td>Session still works after the revoke policy</td><td>IAM propagation, or the policy went on the user only</td><td>Wait 15 seconds. Confirm with <code>aws iam list-role-policies --role-name nimbus-deploy-role</code></td></tr><tr><td><code>jq: error … Cannot index</code> on the decode</td><td>The parameter was already deleted (step 10 before step 7)</td><td>Restore from your saved <code>ssm-sync-token.json</code> evidence file</td></tr></tbody></table></div>
+
+          <details class="hint solution"><summary>Solution: the whole containment in one go</summary>
+<pre data-title="CloudShell"><code class="language-bash">LEAKED=$(grep AWS_ACCESS_KEY_ID ~/skyfortress-d5-lab1/leaked/.env | cut -d= -f2)
+NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+jq --arg t "$NOW" '.Statement[0].Condition.DateLessThan["aws:TokenIssueTime"]=$t' revoke-older-sessions.json &gt; /tmp/r.json
+aws iam update-access-key --user-name nimbus-build-bot --access-key-id "$LEAKED" --status Inactive
+aws iam put-user-policy --user-name nimbus-build-bot --policy-name AWSRevokeOlderSessions --policy-document file:///tmp/r.json
+aws iam put-role-policy --role-name nimbus-deploy-role --policy-name AWSRevokeOlderSessions --policy-document file:///tmp/r.json
+aws ssm get-parameter --name /nimbus/ops/sync-token --query Parameter.Value --output text | base64 -d | jq -r .token</code></pre>
+            <p>Order matters in real life. Do the three containment calls back to back (or from a script) so the attacker doesn't get a window between "key dead" and "sessions dead" in which to create new persistence.</p>
+          </details>
+
+          <form class="flag" data-id="d5-flag1" data-hash="578db462cc665c6b9394862eb83ed972613b9fa3dd56f3ae044f8ad61413f9fd" data-xp="150" data-label="Flag 5.1 · the Kraken's planted config"></form>
+
+          <div class="stretch">
+            <p><b>Automate the first 60 seconds.</b> When AWS detects one of your keys exposed publicly, it sends an AWS Health event (type code <code>AWS_RISK_CREDENTIALS_EXPOSED</code>) and may attach an <code>AWSCompromisedKeyQuarantine</code> managed policy to the user. Write an EventBridge rule for that event that starts a Lambda or SSM Automation to deactivate the key, revoke sessions and open a case. Health events for global services like IAM arrive in <b>us-east-1</b>, so put the rule there:</p>
+<pre data-title="EventBridge pattern (us-east-1)"><code class="language-json">{
+  "source": ["aws.health"],
+  "detail-type": ["AWS Health Event"],
+  "detail": {
+    "service": ["RISK"],
+    "eventTypeCode": ["AWS_RISK_CREDENTIALS_EXPOSED"]
+  }
+}</code></pre>
+            <p>The exposed key ID arrives in <code>resources[]</code>. AWS publishes a full reference implementation in <code>aws-samples/notify-and-remediate-exposed-access-key</code>. Then ask yourself: <i>should the automation also revoke sessions on every role the user can assume?</i> (Hint: <code>iam simulate-principal-policy</code> or Access Analyzer can tell you which roles those are.)</p>
+          </div>
+          <div class="cleanup">
+<pre><code class="language-bash">./cleanup.sh   # deletes user, role, parameter, bucket and local files</code></pre>
+          </div>
+        </div>
+      </article>
+
+      <!-- ================= LAB 5.2 ================= -->
+      <article class="lab" id="lab-5-2" data-toc="Lab 5.2 · Digital Autopsy">
+        <img class="lab-cover" src="assets/img/day5/lab2-cover.svg" alt="Lab 5.2 cover: a quarantined server behind orange bars, scrolling hexdump, and a magnifying glass over a glowing RAM stick.">
+        <div class="lab-head">
+          <div class="lab-num">Lab 5.2</div>
+          <h3>Digital Autopsy 🔬🖥️</h3>
+          <div class="chips"><span class="chip hard">Advanced</span><span class="chip">⏱ 55 min</span><span class="chip">💸 ~$0.15</span><span class="chip">EC2 · EBS · SSM · VPC endpoints · S3 Object Lock</span></div>
+        </div>
+        <div class="lab-body">
+          <p><b>Goal:</b> <code>nimbus-web-07</code> is beaconing to the Kraken. Without stopping it, rebooting it or letting the attacker see you coming: preserve it, isolate it in two moves, capture its <b>memory</b>, snapshot its disks, and analyze everything <b>read-only</b> on a forensic workstation in a subnet with no internet. Two flags are hidden, one on disk and one <b>only in RAM</b>.</p>
+          <figure class="figure"><img src="assets/img/day5/ec2-forensics.svg" alt="Lab 5.2 architecture with numbered steps from victim through SG swap, evidence volume, snapshots, forensic workstation and evidence bucket."><figcaption><b>LAB 5.2</b> Numbers match the major phases below: ① preserve, ② isolate, ③ memory, ④ snapshots, ⑤ analyze, ⑥ custody.</figcaption></figure>
+          <div class="grid g2">
+            <div><h4>You'll need</h4><ul><li>CloudShell admin (Lab 0) in us-east-1</li><li>Files: <a href="labs/day5/index.html#lab2">labs/day5/lab2-digital-autopsy/</a></li><li>About 5 minutes for the stack. <b>Start it before the break.</b></li></ul></div>
+            <div><h4>What the stack builds</h4><ul><li>Victim (t3.small, AL2023) with planted artifacts</li><li>Forensic workstation in an isolated subnet</li><li>SSM interface endpoints + S3 gateway endpoint</li><li>Flush and quarantine SGs; an Object Lock evidence bucket</li></ul></div>
+          </div>
+
+          <div class="paths">
+            <div class="path guided"><p>Follow the 13 steps in order. The order <i>is</i> the lesson: preserve, isolate, memory, disk, analysis, custody.</p></div>
+            <div class="path challenge"><p><b>Goal:</b> recover both flags from <code>nimbus-web-07</code> using only the stack outputs and <code>ssm-run.sh</code>.</p>
+              <p><b>Constraints:</b> never stop, reboot or SSH into the victim. No internet egress from the victim after isolation. Analyze copies only, mounted read-only. Hash the memory image at capture <i>and</i> at analysis.</p>
+              <p><b>Done when:</b> both flags are captured, the two hashes match, and the image plus your chain-of-custody file sit in the Object Lock bucket.</p></div>
+          </div>
+
+          <h4>Steps</h4>
+          <ol class="steps" data-lab="d5-lab2">
+            <li><strong>Deploy the crime scene (do this before the break)</strong>
+<pre data-title="CloudShell"><code class="language-bash">cd ~/skyfortress/labs/day5/lab2-digital-autopsy
+./deploy.sh                       # ~5 min: VPC, endpoints, 2 instances, bucket
+source ~/skyfortress-d5-lab2.env  # VICTIM, FORENSIC, FLUSH_SG, ISOLATION_SG, EVIDENCE_BUCKET, AZ, CASE
+echo $VICTIM $FORENSIC</code></pre>
+              <p>The victim's user-data needs about 3 more minutes after the stack finishes. Use that time to read <a href="labs/day5/runbooks/ec2-compromise.md">runbooks/ec2-compromise.md</a>.</p>
+            </li>
+            <li><strong>① Preserve the scene</strong>
+              <p>Make the instance hard to destroy, whether by accident or by the attacker, and label it so nobody "helpfully" cleans it up.</p>
+<pre data-title="CloudShell"><code class="language-bash">aws ec2 modify-instance-attribute --instance-id $VICTIM --disable-api-termination
+aws ec2 modify-instance-attribute --instance-id $VICTIM --instance-initiated-shutdown-behavior Value=stop
+aws ec2 create-tags --resources $VICTIM --tags Key=ir-case,Value=$CASE Key=ir-status,Value=contained
+# In a real ASG you would ALSO run:
+#   aws autoscaling detach-instances --instance-ids $VICTIM --auto-scaling-group-name ASG --no-should-decrement-desired-capacity</code></pre>
+            </li>
+            <li><strong>② Isolate in two moves: flush, then quarantine</strong>
+              <p>Look at FIG 5.4 again. The first swap to an allow-all SG converts existing flows to <b>untracked</b>. The second swap, to quarantine, then drops them.</p>
+<pre data-title="CloudShell"><code class="language-bash">aws ec2 describe-instances --instance-ids $VICTIM \
+  --query 'Reservations[0].Instances[0].SecurityGroups' --output table | tee ~/case-sg-before.txt
+aws ec2 modify-instance-attribute --instance-id $VICTIM --groups $FLUSH_SG
+sleep 5
+aws ec2 modify-instance-attribute --instance-id $VICTIM --groups $ISOLATION_SG
+aws ec2 describe-security-groups --group-ids $ISOLATION_SG --query 'SecurityGroups[0].IpPermissionsEgress'</code></pre>
+              <div class="predict"><p>The victim is in a <i>public</i> subnet and its SSM agent used to reach SSM over the internet. After quarantine, egress allows only 443 to the endpoint SG. Can you still run commands on it?</p><details><summary>Reveal</summary><p>Yes, as long as the VPC has SSM interface endpoints with private DNS turned on. The agent's hostname then resolves to the endpoint IPs, which the quarantine SG allows. Step 4 proves it.</p></details></div>
+              <figure class="shot" data-url="console.aws.amazon.com/ec2/home?region=us-east-1#InstanceDetails:instanceId=i-0a1b2c3d4e5f60718"><img src="assets/img/day5/shot-ec2-quarantine.svg" alt="Illustrative mock-up of the EC2 instance page for nimbus-web-07 showing the quarantine security group, termination protection enabled, stop shutdown behavior and IR tags"><figcaption><b>SCREEN 5.3</b> Illustrative mock-up; the live console layout may differ.</figcaption></figure>
+            </li>
+            <li><strong>Prove you're not blind</strong>
+<pre data-title="CloudShell"><code class="language-bash">./ssm-run.sh $VICTIM 'hostname; uptime; curl -s -m 4 https://example.com &gt;/dev/null &amp;&amp; echo "INTERNET: open 😱" || echo "INTERNET: blocked ✅"'</code></pre>
+<div class="term" data-title="CloudShell · ./ssm-run.sh $VICTIM …"><pre><span class="o">[*] command 5c1e8f0a-3b2d-4e8f-9a1c-0d2e3f4a5b6c on i-0a1b2c3d4e5f60718 — waiting…</span>
+<span class="ok">Success</span>	ip-10-50-1-23.ec2.internal
+ 03:51:12 up 47 min,  0 users,  load average: 0.08, 0.04, 0.01
+<span class="ok">INTERNET: blocked ✅</span></pre></div>
+              <p class="term-caption">The first word is the SSM invocation status. <code>Failed</code> or <code>TimedOut</code> means the agent can't reach the endpoints.</p>
+              <p>SSM still works because the interface endpoints have <b>private DNS</b>, so <code>ssm.us-east-1.amazonaws.com</code> resolves to endpoint IPs inside the VPC. The internet is blocked. Plan your quarantine SG and your endpoints together, before an incident.</p>
+            </li>
+            <li><strong>Live response: find the impostor process</strong>
+              <p>Real kernel threads (<code>[kworker/…]</code>) are children of <code>kthreadd</code> (PID 2). A process that looks like a kernel thread but has a different parent is lying about what it is.</p>
+<pre data-title="CloudShell"><code class="language-bash">./ssm-run.sh $VICTIM 'ps -eo pid,ppid,user,lstart,args | grep -E "^ *PID|kworker" | grep -v grep'
+# real kworkers show PPID 2. Found one that doesn't? Then, with its PID:
+./ssm-run.sh $VICTIM 'P=&lt;PID&gt;; ls -l /proc/$P/exe; tr "\0" " " &lt; /proc/$P/cmdline; echo; ls -la /tmp/.kworker.py'</code></pre>
+<div class="term" data-title="CloudShell · live response on the victim"><pre>    PID    PPID USER     STARTED                  COMMAND
+<span class="o">     28       2 root     Fri Dec  4 03:04:11 2026 [kworker/0:1H-kblockd]</span>
+<span class="o">     61       2 root     Fri Dec  4 03:04:12 2026 [kworker/u4:1-events_unbound]</span>
+<span class="hl">   2417    2390 root     Fri Dec  4 03:06:40 2026 [kworker/u4:2-events] /tmp/.kworker.py</span>
+<span class="o">   3120       2 root     Fri Dec  4 03:40:02 2026 [kworker/1:2-mm_percpu_wq]</span></pre></div>
+              <p class="term-caption">Spot the odd one out: PPID 2390, not 2, and an argv[1] that real kernel threads never have.</p>
+              <p>You'll find a fake <code>[kworker/u4:2-events]</code> that is really <code>python3</code> running <code>/tmp/.kworker.py</code>. That file <b>no longer exists</b> on disk. Whatever it holds now exists only in memory. Capture memory before anything else changes.</p>
+              <details class="hint"><summary>Hint: there are dozens of kworkers</summary><p>Look only at the <b>PPID</b> column. Every genuine kworker shows <code>2</code>. The impostor's parent is a <code>bash</code> process that cloud-init started, and its start time is just after boot. Also note the trailing <code>/tmp/.kworker.py</code> argument: the attacker renamed argv[0] but left argv[1] alone.</p></details>
+            </li>
+            <li><strong>③ Capture memory onto a fresh evidence volume</strong>
+              <p>Never write evidence onto the victim's own root disk, because you'd overwrite deleted blocks you may want later. Attach a new empty volume and write there. AVML (Microsoft's open-source Linux memory acquirer) was staged on the box at boot. In real life you'd bake it into your golden AMI or distribute it with SSM Distributor.</p>
+<pre data-title="CloudShell"><code class="language-bash">EVOL=$(aws ec2 create-volume --availability-zone $AZ --size 8 --volume-type gp3 \
+  --tag-specifications "ResourceType=volume,Tags=[{Key=ir-case,Value=$CASE},{Key=Name,Value=evidence-mem}]" \
+  --query VolumeId --output text)
+aws ec2 wait volume-available --volume-ids $EVOL
+aws ec2 attach-volume --volume-id $EVOL --instance-id $VICTIM --device /dev/sdf
+sleep 15
+SERIAL=${EVOL//-/}     # expanded HERE, locally; everything with \$ is expanded on the victim
+./ssm-run.sh $VICTIM "
+  DEV=\$(lsblk -dpno NAME,SERIAL | grep $SERIAL | awk '{print \$1}'); echo evidence dev: \$DEV
+  mkfs.xfs -q \$DEV &amp;&amp; mkdir -p /mnt/evidence &amp;&amp; mount \$DEV /mnt/evidence
+  date -u +%FT%TZ &gt; /mnt/evidence/acquired_at.txt
+  /usr/local/sbin/avml /mnt/evidence/nimbus-web-07.lime
+  sha256sum /mnt/evidence/nimbus-web-07.lime | tee /mnt/evidence/nimbus-web-07.lime.sha256
+  sync; umount /mnt/evidence" 900</code></pre>
+              <p class="muted">Note the <code>${EVOL//-/}</code>: on Nitro instances the NVMe serial number is the volume ID without the dash. That's how you match <code>/dev/nvme1n1</code> to <code>vol-…</code> reliably. <b>Copy the sha256 into your notes now.</b> If the command shows <code>InProgress</code>, re-run <code>aws ssm get-command-invocation</code> after a minute. A 2 GiB capture takes 30–90 s.</p>
+            </li>
+            <li><strong>④ Snapshot every volume: crash-consistent, tagged, at the same moment</strong>
+<pre data-title="CloudShell"><code class="language-bash">aws ec2 create-snapshots --instance-specification InstanceId=$VICTIM \
+  --description "$CASE nimbus-web-07 root+evidence" --copy-tags-from-source volume \
+  --tag-specifications "ResourceType=snapshot,Tags=[{Key=ir-case,Value=$CASE}]" \
+  --query 'Snapshots[].[SnapshotId,VolumeId,VolumeSize]' --output table
+SNAPS=$(aws ec2 describe-snapshots --owner-ids self --filters Name=tag:ir-case,Values=$CASE --query 'Snapshots[].SnapshotId' --output text)
+aws ec2 wait snapshot-completed --snapshot-ids $SNAPS &amp;&amp; echo "snapshots done: $SNAPS"</code></pre>
+              <p><code>create-snapshots</code> (plural) takes a crash-consistent set across all attached volumes at one point in time. That matters when evidence is spread across volumes.</p>
+            </li>
+            <li><strong>Start the chain of custody (⑥) and test the lock</strong>
+<pre data-title="CloudShell"><code class="language-bash">cp chain-of-custody.json ~/case-coc.json   # edit: snapshot ids, sha256, your ARN, times
+aws s3 cp ~/case-coc.json s3://$EVIDENCE_BUCKET/$CASE/chain-of-custody.json --checksum-algorithm SHA256
+V=$(aws s3api list-object-versions --bucket $EVIDENCE_BUCKET --prefix $CASE/chain --query 'Versions[0].VersionId' --output text)
+aws s3api get-object-retention --bucket $EVIDENCE_BUCKET --key $CASE/chain-of-custody.json
+aws s3api delete-object --bucket $EVIDENCE_BUCKET --key $CASE/chain-of-custody.json --version-id $V   # 🤔 predict!</code></pre>
+              <div class="predict"><p>Deleting the specific <b>version</b> returns <code>AccessDenied</code>, because it's under GOVERNANCE retention. But <code>aws s3 rm</code> <i>without</i> a version ID "succeeds". Why?</p><details><summary>Reveal</summary><p>A delete without a version ID only adds a <b>delete marker</b>; the locked version is still there. Anyone holding <code>s3:BypassGovernanceRetention</code> could still delete it. Use COMPLIANCE mode when nobody, including root, should be able to.</p></details></div>
+              <figure class="shot" data-url="console.aws.amazon.com/s3/object/skyfortress-d5-evidence-111122223333?prefix=IR-2026-1204-007/"><img src="assets/img/day5/shot-s3-objectlock.svg" alt="Illustrative mock-up of the S3 object page for the memory image showing SHA-256 checksum, GOVERNANCE retention and a failed attempt to delete the locked version"><figcaption><b>SCREEN 5.4</b> Illustrative mock-up; the live console layout may differ.</figcaption></figure>
+            </li>
+            <li><strong>⑤ Bring the evidence to the forensic workstation</strong>
+              <p>Restore volumes from the snapshots <b>in the workstation's AZ</b> and attach them. You always analyze copies, never the originals.</p>
+<pre data-title="CloudShell"><code class="language-bash">DEVS=(g h i j); i=0
+for S in $SNAPS; do
+  V=$(aws ec2 create-volume --snapshot-id $S --availability-zone $AZ --volume-type gp3 \
+      --tag-specifications "ResourceType=volume,Tags=[{Key=ir-case,Value=$CASE},{Key=Name,Value=analysis-copy-$S}]" \
+      --query VolumeId --output text)
+  aws ec2 wait volume-available --volume-ids $V
+  aws ec2 attach-volume --volume-id $V --instance-id $FORENSIC --device /dev/sd${DEVS[$i]}
+  i=$((i+1))
+done
+sleep 15</code></pre>
+            </li>
+            <li><strong>Mount read-only, the right way</strong>
+<pre data-title="CloudShell"><code class="language-bash">./ssm-run.sh $FORENSIC "$(cat forensic-mount.sh)"</code></pre>
+<div class="term" data-title="CloudShell · forensic workstation"><pre><span class="ok">Success</span>	<span class="ok">[+] /dev/nvme1n1p1 (xfs) mounted read-only at /evidence/nvme1n1p1</span>
+<span class="ok">[+] /dev/nvme2n1 (xfs) mounted read-only at /evidence/nvme2n1</span>
+
+== triage ==
+--- /evidence/nvme1n1p1
+<span class="o">-rw-r--r--. 1 root root  92 Nov 30 03:14 kraken-sync</span>
+<span class="warn">/evidence/nvme1n1p1/usr/local/bin/.ksync</span>
+<span class="warn">/evidence/nvme1n1p1/home/ec2-user/.ssh/authorized_keys:ssh-ed25519 AAAAC3Nz… kraken@tentacle-7</span>
+--- /evidence/nvme2n1
+<span class="o">-rw-r--r--. 1 root root 2147483648 Dec  4 03:55 /evidence/nvme2n1/nimbus-web-07.lime</span></pre></div>
+              <p class="term-caption">Two volumes, both read-only: the root disk copy and the memory-evidence copy. Note the hidden files the triage already found.</p>
+              <p>The script sets each block device read-only (<code>blockdev --setro</code>), then mounts XFS with <code>ro,norecovery,nouuid</code>. Try mounting one manually with plain <code>-o ro</code> to see the duplicate-UUID error for yourself.</p>
+            </li>
+            <li><strong>Disk forensics: persistence, backdoors and a forged timestamp</strong>
+<pre data-title="CloudShell"><code class="language-bash">./ssm-run.sh $FORENSIC '
+R=$(dirname $(ls -d /evidence/*/etc/cron.d | head -1))
+echo "== cron =="; cat $R/etc/cron.d/kraken-sync
+echo "== implant =="; cat $R/usr/local/bin/.ksync
+echo "== keys =="; cat $R/home/ec2-user/.ssh/authorized_keys
+echo "== root history =="; cat $R/root/.bash_history
+echo "== timestamps =="; stat -c "%n  modify=%y  change=%z" $R/etc/cron.d/kraken-sync $R/usr/local/bin/.ksync'</code></pre>
+<div class="term" data-title="CloudShell · stat on the evidence copy"><pre>== timestamps ==
+/evidence/nvme1n1p1/etc/cron.d/kraken-sync  modify=<span class="warn">2026-11-30 03:14:15.000000000 +0000</span>  change=<span class="err">2026-12-04 03:06:39.512283101 +0000</span>
+/evidence/nvme1n1p1/usr/local/bin/.ksync    modify=<span class="warn">2026-11-30 03:14:15.000000000 +0000</span>  change=<span class="err">2026-12-04 03:06:39.520114877 +0000</span></pre></div>
+              <p class="term-caption">Round-number mtimes with zero nanoseconds, and ctimes from boot day: a forged timestamp.</p>
+              <div class="predict"><p>The attacker forged mtime to make the cron file look four days old. Which timestamp couldn't they forge with <code>touch</code>, and why?</p><details><summary>Reveal</summary><p><b>ctime</b> (inode change time). The kernel sets it to "now" whenever the inode changes, and <code>touch -d</code> is itself an inode change. Only resetting the system clock or editing the raw disk would fake it.</p></details></div>
+              <p>Look at <code>stat</code>: <b>Modify</b> says 2026-11-30 03:14:15, but <b>Change</b> (ctime) is today. <code>touch -d</code> can forge mtime and atime but not ctime. This is classic timestomping, and now you know how to catch it. The cron file also carries a <code>beacon=</code> value. Decode it:</p>
+<pre data-title="CloudShell"><code class="language-bash">echo '&lt;beacon value&gt;' | base64 -d</code></pre>
+            </li>
+            <li><strong>Memory forensics: what the disk never saw</strong>
+              <p>The implant's script deleted itself, and the secret was assembled at runtime from a reversed string, so <code>grep</code> on the disk image finds nothing. RAM doesn't forget.</p>
+<pre data-title="CloudShell"><code class="language-bash">./ssm-run.sh $FORENSIC '
+L=$(ls /evidence/*/nimbus-web-07.lime); ls -la $L
+sha256sum $L; cat ${L}.sha256          # integrity: must match what you recorded in step 6
+grep -a -o "implant-cfg:[A-Za-z0-9_{}]*:tentacle-7" $L | sort | uniq -c | head
+grep -rasl "SKY{" /evidence/*/etc /evidence/*/usr/local 2&gt;/dev/null || echo "disk: nothing in plaintext 👀"' 900</code></pre>
+<div class="term" data-title="CloudShell · memory triage on the forensic workstation"><pre><span class="ok">Success</span>	<span class="o">-rw-r--r--. 1 root root 2147483648 Dec  4 03:55 /evidence/nvme2n1/nimbus-web-07.lime</span>
+<span class="ok">7d1f0c9a52e4…b81e  /evidence/nvme2n1/nimbus-web-07.lime</span>
+<span class="ok">7d1f0c9a52e4…b81e  /mnt/evidence/nimbus-web-07.lime</span>
+    256 implant-cfg:<span class="hl">SKY{ •••••• redacted •••••• }</span>:tentacle-7
+<span class="warn">disk: nothing in plaintext 👀</span></pre></div>
+              <p class="term-caption">Matching hashes first, then about 256 copies of the runtime config in RAM, and nothing on disk. That contrast is the whole case for memory capture.</p>
+              <div class="callout tip"><strong class="ct">Going deeper: Volatility 3</strong><p><code>grep -a</code> is the quick win. For a real investigation, use Volatility 3 with a symbol table built for the <b>exact</b> kernel (<code>uname -r</code> on the victim; build it with <code>dwarf2json</code> from the matching debuginfo). That gives you <code>linux.pslist</code>, <code>linux.bash</code>, <code>linux.sockstat</code> and <code>linux.malfind</code>. Build symbol packs for your golden AMIs <i>in advance</i>, as part of preparation.</p></div>
+            </li>
+            <li><strong>Seal the evidence</strong>
+              <p>Copy the memory image to the evidence bucket from the forensic workstation. Its role can <b>only</b> <code>PutObject</code> there, and the S3 gateway endpoint keeps the traffic off the internet.</p>
+<pre data-title="CloudShell"><code class="language-bash">./ssm-run.sh $FORENSIC "aws s3 cp \$(ls /evidence/*/nimbus-web-07.lime) s3://$EVIDENCE_BUCKET/$CASE/nimbus-web-07.lime --checksum-algorithm SHA256 --region us-east-1 &amp;&amp; echo sealed" 900
+aws s3api head-object --bucket $EVIDENCE_BUCKET --key $CASE/nimbus-web-07.lime \
+  --query '{size:ContentLength, lock:ObjectLockMode, until:ObjectLockRetainUntilDate}'</code></pre>
+            </li>
+          </ol>
+
+          <div class="checkpoint"><p>You have: a quarantined victim that SSM can still reach; snapshots tagged with the case ID; a memory image whose sha256 matches at capture and at analysis; chain of custody and memory image in an Object Lock bucket; two flags.</p></div>
+          <h4>Troubleshooting</h4><div class="table-wrap"><table><thead><tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr></thead><tbody><tr><td><code>ssm-run.sh</code> hangs or returns <code>Undeliverable</code></td><td>The victim's user-data hasn't finished, or the agent isn't registered yet</td><td>Wait 3 minutes after deploy. Check <code>aws ssm describe-instance-information</code></td></tr><tr><td>SSM breaks after the quarantine swap</td><td>The quarantine SG egress doesn't reach the endpoint SG, or private DNS is off</td><td>Check the endpoints' <code>PrivateDnsEnabled</code> and the SG egress rule in the stack</td></tr><tr><td><code>/usr/local/sbin/avml: No such file</code></td><td>The victim couldn't download AVML from GitHub at boot</td><td>Use the <code>procmem-grep.py</code> fallback in the solution and note the weaker evidence in your custody log</td></tr><tr><td><code>mount: wrong fs type</code> / duplicate UUID</td><td>XFS from the same AMI as the workstation</td><td>Use <code>ro,norecovery,nouuid</code>, which <code>forensic-mount.sh</code> already does</td></tr><tr><td><code>create-volume</code> fails to attach</td><td>The volume was created in a different AZ from the workstation</td><td>Use <code>$AZ</code> from the env file for every <code>create-volume</code></td></tr><tr><td>Hashes don't match</td><td>The image was still being written, or the copy is truncated</td><td>Re-run the capture into a fresh file. Never "fix" evidence; record the discrepancy</td></tr></tbody></table></div>
+
+          <details class="hint solution"><summary>Solution: where the flags are</summary>
+            <p><b>Disk flag:</b> <code>/etc/cron.d/kraken-sync</code> has a comment line <code># beacon=…</code>. Run <code>base64 -d</code> on it.</p>
+            <p><b>Memory flag:</b> <code>grep -a -o "implant-cfg:[A-Za-z0-9_{}]*" nimbus-web-07.lime</code> returns the in-RAM config about 256 times. The value between the colons is the flag. If AVML failed to download at boot (the victim couldn't reach GitHub), <code>/usr/local/sbin/avml</code> won't exist. Use the live-response fallback instead. It scans the impostor process's memory directly through <code>/proc/&lt;pid&gt;/mem</code>:</p>
+<pre data-title="CloudShell"><code class="language-bash">./ssm-run.sh $VICTIM "echo $(base64 -w0 procmem-grep.py) | base64 -d | python3"</code></pre>
+            <p>That's a weaker kind of evidence: you ran code on the compromised host and captured only one process. Write that down in your chain of custody.</p>
+          </details>
+
+          <form class="flag" data-id="d5-flag2" data-hash="8937ee85bdcc5ff576e4b6a8dedd37e13b46733f6e0e5a59c7c1070793202cd5" data-xp="150" data-label="Flag 5.2a · the cron beacon"></form>
+          <form class="flag" data-id="d5-flag3" data-hash="26aec296b1437f43e45e38722e1c6d5885eeeae3f53b0d701eb01165dbc21e75" data-xp="250" data-label="Flag 5.2b · what only RAM remembers"></form>
+
+          <div class="stretch">
+            <p><b>Cross-account forensics, done properly.</b> (1) Create a customer managed KMS key whose key policy grants <code>kms:CreateGrant</code>/<code>kms:Decrypt</code> to your <code>skyfortress-prod</code> account (standing in as "forensics"). (2) <code>copy-snapshot</code> with <code>--encrypted --kms-key-id</code> that key. (3) <code>modify-snapshot-attribute --create-volume-permission</code> to share the copy. (4) In the other account, restore and mount it. Then package steps 2–7 as an <b>SSM Automation runbook</b> so the next responder can do it with one click.</p>
+          </div>
+          <div class="cleanup">
+<pre><code class="language-bash">./cleanup.sh   # detaches/deletes evidence volumes + snapshots, bypasses governance retention, deletes the stack</code></pre>
+          </div>
+        </div>
+      </article>
+
+      <!-- ================= LAB 5.3 ================= -->
+      <article class="lab" id="lab-5-3" data-toc="Lab 5.3 · Autopilot Defense">
+        <img class="lab-cover" src="assets/img/day5/lab3-cover.svg" alt="Lab 5.3 cover: a constellation of playbook states (tag, protect, isolate, snapshot, notify) leading to a glowing 'await human' node, with a drone shielding a decoy instance.">
+        <div class="lab-head">
+          <div class="lab-num">Lab 5.3</div>
+          <h3>Autopilot Defense 🤖🛡️</h3>
+          <div class="chips"><span class="chip med">Intermediate</span><span class="chip">⏱ 40 min</span><span class="chip">💸 ~$0.03</span><span class="chip">EventBridge · Step Functions · Lambda · SNS · EC2</span></div>
+        </div>
+        <div class="lab-body">
+          <p><b>Goal:</b> Turn this morning's manual containment into a playbook. A high-severity GuardDuty EC2 finding starts a Step Functions workflow that <b>tags, protects, isolates and snapshots</b> the instance, notifies the SOC, and then <b>waits for a human</b> before doing anything irreversible. You'll exercise the failure path, the deny path and the approve path, and get a flag only when you approve a termination after evidence has been preserved.</p>
+          <figure class="figure"><img src="assets/img/day5/sfn-playbook.svg" alt="The Step Functions playbook state diagram."><figcaption><b>LAB 5.3</b> Full definition in <a href="labs/day5/lab3-autopilot/playbook.asl.json">playbook.asl.json</a>; deployed by <a href="labs/day5/lab3-autopilot/autopilot.yaml">autopilot.yaml</a>.</figcaption></figure>
+
+          <div class="paths">
+            <div class="path guided"><p>Deploy, read the machine, then drive it down all four paths: failure, deny, approve and filtered.</p></div>
+            <div class="path challenge"><p><b>Goal:</b> get a <code>terminated-after-approval</code> receipt for a decoy instance, using only <code>autopilot.yaml</code>, <code>fire.sh</code> and <code>approve.sh</code>.</p>
+              <p><b>Constraints:</b> don't edit the state machine or call <code>SendTaskSuccess</code> by hand. Show one <code>FAILED</code> execution and one "kept isolated" execution first.</p>
+              <p><b>Done when:</b> you hold the flag, evidence snapshots survive the termination, and you can name the identity behind each EC2 change from CloudTrail.</p></div>
+          </div>
+
+          <h4>Steps</h4>
+          <ol class="steps" data-lab="d5-lab3">
+            <li><strong>Deploy the playbook</strong>
+<pre data-title="CloudShell"><code class="language-bash">cd ~/skyfortress/labs/day5/lab3-autopilot
+aws cloudformation deploy --stack-name skyfortress-d5-autopilot --template-file autopilot.yaml \
+  --capabilities CAPABILITY_IAM --parameter-overrides AlertEmail=you@example.com   # optional; confirm the email
+out() { aws cloudformation describe-stacks --stack-name skyfortress-d5-autopilot \
+  --query "Stacks[0].Outputs[?OutputKey=='$1'].OutputValue" --output text; }
+export DECOY=$(out DecoyInstanceId) SM=$(out StateMachineArn)</code></pre>
+            </li>
+            <li><strong>Read the machine before you run it</strong>
+              <p>Open <a href="labs/day5/lab3-autopilot/playbook.asl.json">playbook.asl.json</a> (or the Step Functions console's graph view). Three details deserve attention:</p>
+<pre data-title="playbook.asl.json (excerpt)"><code class="language-json">"Isolate": {
+  "Type": "Task",
+  "Resource": "arn:aws:states:::aws-sdk:ec2:modifyInstanceAttribute",
+  "Parameters": { "InstanceId.$": "$.instanceId", "Groups": ["sg-quarantine…"] },
+  "ResultPath": null,
+  "Catch": [{ "ErrorEquals": ["States.ALL"], "ResultPath": "$.error", "Next": "PlaybookFailed" }],
+  "Next": "PreserveEvidence"
+},
+"AwaitHumanApproval": {
+  "Type": "Task",
+  "Resource": "arn:aws:states:::lambda:invoke.waitForTaskToken",
+  "Parameters": { "FunctionName": "…request-approval",
+                  "Payload": { "taskToken.$": "$$.Task.Token", "instanceId.$": "$.instanceId" } },
+  "TimeoutSeconds": 3600,
+  "ResultPath": "$.decision",
+  "Catch": [{ "ErrorEquals": ["States.Timeout"], "ResultPath": "$.error", "Next": "IssueReceipt" }]
+}</code></pre>
+              <ul>
+                <li><b>Direct SDK integrations</b> (<code>aws-sdk:ec2:*</code>) mean there's no Lambda to maintain for each action.</li>
+                <li><code>"ResultPath": null</code> discards the API response, so the state's input passes through unchanged.</li>
+                <li>A <b>timeout counts as "no"</b>. If nobody answers within an hour, the instance stays isolated with its evidence intact. A safe default.</li>
+              </ul>
+              <div class="callout new"><strong class="ct">JSONata in Step Functions</strong><p>Since late 2024 you can set <code>"QueryLanguage": "JSONata"</code> and replace most of the <code>.$</code>/<code>ResultSelector</code>/<code>ResultPath</code> plumbing with <code>Arguments</code> and <code>Output</code> expressions. This lab uses classic JSONPath because most existing playbooks you'll inherit are written that way. Rewriting it is a stretch goal.</p></div>
+            </li>
+            <li><strong>Failure path: fire a GuardDuty <i>sample</i> finding</strong>
+              <p>If GuardDuty is enabled in this account (it should be, from Day 2):</p>
+<pre data-title="CloudShell"><code class="language-bash">DET=$(aws guardduty list-detectors --query 'DetectorIds[0]' --output text)
+aws guardduty create-sample-findings --detector-id $DET --finding-types 'Backdoor:EC2/C&amp;CActivity.B!DNS'
+sleep 20; aws stepfunctions list-executions --state-machine-arn $SM --max-results 3 \
+  --query 'executions[].[name,status]' --output table</code></pre>
+              <div class="predict"><p>The sample finding is real enough to match the EventBridge rule. Which state fails, and why?</p><details><summary>Reveal</summary><p><code>TagForIR</code> fails because sample findings reference a fake instance ID like <code>i-99999999</code>. The <code>Catch</code> routes to <code>PlaybookFailed</code>, which tells humans. Sample findings test your <b>plumbing</b>, not your <b>actions</b>. Every playbook needs a "tell a human I failed" path.</p></details></div>
+<div class="term" data-title="CloudShell · list-executions"><pre>-------------------------------------------------------------
+|                      ListExecutions                       |
++------------------------------------------------+----------+
+|  8f2c1a7e-1d0b-4c55-9a8e-3f1b2c4d5e6f          |  <span class="err">FAILED</span>  |
++------------------------------------------------+----------+</pre></div>
+              <p class="term-caption">One FAILED execution per sample finding. Open it in the console and follow the red path into <code>PlaybookFailed</code>.</p>
+            </li>
+            <li><strong>Real path: fire a realistic finding at the decoy</strong>
+              <p>EventBridge doesn't let you <code>PutEvents</code> with an <code>aws.*</code> source, so the rule also matches <code>skyfortress.test</code>. <a href="labs/day5/lab3-autopilot/fire.sh">fire.sh</a> sends an event with the same shape as a real GuardDuty finding.</p>
+<pre data-title="CloudShell"><code class="language-bash">./fire.sh $DECOY 8
+sleep 30
+EXEC=$(aws stepfunctions list-executions --state-machine-arn $SM --status-filter RUNNING \
+  --query 'executions[0].executionArn' --output text); echo $EXEC
+aws stepfunctions get-execution-history --execution-arn $EXEC --reverse-order --max-results 4 \
+  --query 'events[].[type, stateEnteredEventDetails.name || `""`]' --output table</code></pre>
+<div class="term" data-title="CloudShell · get-execution-history (newest first)"><pre>----------------------------------------------
+|            GetExecutionHistory             |
++---------------------+----------------------+
+|  <span class="warn">TaskSubmitted</span>      |                      |
+|  TaskStarted        |                      |
+|  TaskScheduled      |                      |
+|  TaskStateEntered   |  <span class="warn">AwaitHumanApproval</span>  |
++---------------------+----------------------+</pre></div>
+              <p>The execution should be paused at <code>AwaitHumanApproval</code> (<code>TaskSubmitted</code>, but no <code>TaskSucceeded</code> yet).</p>
+              <figure class="shot" data-url="console.aws.amazon.com/states/home?region=us-east-1#/v2/executions/details/…"><img src="assets/img/day5/shot-sfn-paused.svg" alt="Illustrative mock-up of the Step Functions execution graph: seven completed states, the playbook paused at AwaitHumanApproval, and the waiting task's input with case ID and snapshot IDs"><figcaption><b>SCREEN 5.5</b> Illustrative mock-up; the live console layout may differ.</figcaption></figure>
+            </li>
+            <li><strong>Inspect what the robot did</strong>
+<pre data-title="CloudShell"><code class="language-bash">aws ec2 describe-instances --instance-ids $DECOY --query 'Reservations[0].Instances[0].{
+  sgs: SecurityGroups[].GroupName, tags: Tags, state: State.Name}'
+aws ec2 describe-instance-attribute --instance-id $DECOY --attribute disableApiTermination
+aws ec2 describe-snapshots --owner-ids self --filters Name=tag:ir-evidence,Values=true \
+  --query 'Snapshots[].[SnapshotId,State,Tags[?Key==`ir-case`]|[0].Value]' --output table</code></pre>
+            </li>
+            <li><strong>Try to "just terminate it"</strong>
+<pre data-title="CloudShell"><code class="language-bash">aws ec2 terminate-instances --instance-ids $DECOY   # 🤔 predict</code></pre>
+<div class="term" data-title="CloudShell"><pre><span class="p">$</span> <span class="c">aws ec2 terminate-instances --instance-ids $DECOY</span>
+<span class="err">An error occurred (OperationNotPermitted) when calling the TerminateInstances operation: The instance 'i-0decoy0000000001' may not be terminated. Modify its 'disableApiTermination' instance attribute and try again.</span></pre></div>
+              <p><code>OperationNotPermitted</code>. Termination protection is on, which is the point. Someone panicking with admin rights in the middle of the night shouldn't be able to destroy evidence by accident.</p>
+            </li>
+            <li><strong>Look at the approval request and think about the token</strong>
+<pre data-title="CloudShell"><code class="language-bash">aws ssm get-parameter --name /skyfortress/d5/pending-approval --query Parameter.Value --output text | jq '{caseId, token: (.taskToken[0:40] + "…")}'</code></pre>
+              <figure class="shot" data-url="mail.nimbus.example/inbox"><img src="assets/img/day5/shot-sns-approval.svg" alt="Illustrative mock-up of the SOC approval email from the playbook, listing the finding, the quarantined instance, the preserved snapshots and the approve or deny choices"><figcaption><b>SCREEN 5.6</b> Illustrative mock-up; the live console layout may differ.</figcaption></figure>
+              <div class="callout warn"><strong class="ct">A task token is a credential</strong><p>Anyone who holds the token and has <code>states:SendTaskSuccess</code> can approve. In production, deliver approval through an authenticated channel (an API Gateway endpoint with IAM or Cognito auth, or a ChatOps bot with SSO), log <b>who</b> approved, and keep the timeout short. Storing it in a plain SSM parameter is fine for a lab and a finding in a real audit.</p></div>
+            </li>
+            <li><strong>Deny path: say no</strong>
+<pre data-title="CloudShell"><code class="language-bash">./approve.sh no
+sleep 5; aws stepfunctions describe-execution --execution-arn $EXEC --query output --output text | jq .</code></pre>
+              <p>The receipt says <code>kept-isolated-for-forensics</code> and has no flag. The instance is still quarantined, protected and snapshotted, ready for Lab 5.2-style analysis.</p>
+            </li>
+            <li><strong>Approve path: forensics are done, decommission it</strong>
+              <p>Fire again. The playbook is <b>idempotent</b>: re-tagging and re-isolating are harmless, and you get a fresh snapshot set. Then approve.</p>
+<pre data-title="CloudShell"><code class="language-bash">./fire.sh $DECOY 8; sleep 40
+./approve.sh yes
+sleep 10
+EXEC=$(aws stepfunctions list-executions --state-machine-arn $SM --max-results 1 --query 'executions[0].executionArn' --output text)
+aws stepfunctions describe-execution --execution-arn $EXEC --query output --output text | jq .
+aws ec2 describe-instances --instance-ids $DECOY --query 'Reservations[0].Instances[0].State.Name'</code></pre>
+<div class="term" data-title="CloudShell · describe-execution --query output"><pre>[+] Case IR-2026-1204-007: decision 'yes' recorded by arn:aws:sts::111122223333:assumed-role/OrganizationAccountAccessRole/you
+<span class="o">{</span>
+  <span class="k">"caseId"</span>: <span class="s">"IR-2026-1204-007"</span>,
+  <span class="k">"instanceId"</span>: <span class="s">"i-0decoy0000000001"</span>,
+  <span class="k">"evidence"</span>: [<span class="s">"snap-0abc1234def567890"</span>, <span class="s">"snap-0abd1234def567891"</span>],
+  <span class="k">"approver"</span>: <span class="s">"arn:aws:sts::111122223333:assumed-role/OrganizationAccountAccessRole/you"</span>,
+  <span class="k">"outcome"</span>: <span class="ok">"terminated-after-approval"</span>,
+  <span class="k">"flag"</span>: <span class="hl">SKY{ •••••• redacted •••••• }</span>
+<span class="o">}</span>
+<span class="s">"shutting-down"</span></pre></div>
+              <p>The instance is <code>shutting-down</code>/<code>terminated</code>, <b>the snapshots survive</b>, and the receipt has your flag.</p>
+              <div class="predict"><p>You approve a second time, but the decoy was already terminated by the first approval. What does the next run do?</p><details><summary>Reveal</summary><p>It fails at <code>TagForIR</code> (the instance no longer exists) and lands in <code>PlaybookFailed</code>. The playbook is idempotent for live instances, not for dead ones. That's why the hint below tells you to run <code>launch-decoy.sh</code>.</p></details></div>
+            </li>
+            <li><strong>Low severity: predict the trap</strong>
+<pre data-title="CloudShell"><code class="language-bash">./fire.sh $DECOY 3; sleep 20
+aws stepfunctions list-executions --state-machine-arn $SM --max-results 2 --query 'executions[].[startDate,status]'</code></pre>
+              <p>No new execution. The <b>EventBridge rule</b> already filters severity ≥ 7, so the state machine's <code>LowSeverityNotify</code> branch can't be reached. Is that a bug or defense in depth? Talk it over with your neighbor. (Both answers are defensible. What matters is that you <i>know</i>.)</p>
+            </li>
+            <li><strong>Attribution: who did all that?</strong>
+<pre data-title="CloudShell"><code class="language-bash">aws cloudtrail lookup-events --lookup-attributes AttributeKey=EventName,AttributeValue=ModifyInstanceAttribute \
+  --max-results 5 --query 'Events[].CloudTrailEvent' --output json \
+| jq -r '.[] | fromjson | [.eventTime, .userIdentity.arn] | @tsv'</code></pre>
+              <p>Automated actions show up as the playbook role's session. During a retro, you need to be able to say "the robot did this, and Alice approved that". Make sure your automation identities are distinct and recognizable.</p>
+            </li>
+          </ol>
+
+          <div class="checkpoint"><p>Three executions with three different outcomes: <code>FAILED</code> (sample finding), <code>SUCCEEDED</code> with <code>kept-isolated-for-forensics</code>, and <code>SUCCEEDED</code> with <code>terminated-after-approval</code> plus a flag. Evidence snapshots tagged <code>ir-evidence=true</code> still exist.</p></div>
+          <h4>Troubleshooting</h4><div class="table-wrap"><table><thead><tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr></thead><tbody><tr><td>No execution after <code>create-sample-findings</code></td><td>GuardDuty isn't enabled here, or the rule is disabled</td><td>Run <code>aws guardduty list-detectors</code>. If it's empty, skip to <code>fire.sh</code>, which doesn't need GuardDuty</td></tr><tr><td><code>fire.sh</code> shows <code>FailedEntryCount: 1</code></td><td>Malformed event, or a wrong event bus or Region</td><td>Run it from <code>labs/day5/lab3-autopilot</code> in us-east-1, unmodified</td></tr><tr><td>Execution fails at <code>Isolate</code></td><td>The decoy is in a different VPC from the quarantine SG</td><td>Use the stack's <code>DecoyInstanceId</code> output, or <code>launch-decoy.sh</code></td></tr><tr><td><code>approve.sh</code>: <code>TaskTimedOut</code></td><td>You took longer than the 1-hour <code>TimeoutSeconds</code></td><td>Fire again. The timeout path kept the instance isolated, as designed</td></tr><tr><td>No SNS email</td><td>Subscription not confirmed, or no <code>AlertEmail</code> passed</td><td>Confirm the subscription email. The lab works without it, because <code>approve.sh</code> reads SSM</td></tr></tbody></table></div>
+
+          <details class="hint"><summary>Hint: my execution never pauses / approve.sh says ParameterNotFound</summary><p>Check (1) <code>fire.sh</code> printed <code>"FailedEntryCount": 0</code>, (2) the rule <code>skyfortress-guardduty-ec2-high</code> is enabled, and (3) the execution's history for a <code>PlaybookFailed</code>. The usual cause is passing a <b>terminated</b> instance ID after the approve path. Run <code>./launch-decoy.sh</code> and fire at the new ID.</p></details>
+          <details class="hint solution"><summary>Solution: get the receipt straight from the Lambda</summary><p>The flag comes from the <code>IssueReceipt</code> state's output, and only when <code>$.decision.approved == true</code> <b>and</b> <code>$.evidence.snapshotIds</code> is non-empty. That encodes the playbook's rule: no termination without evidence. Use <code>describe-execution --query output</code> on the approved run.</p></details>
+
+          <form class="flag" data-id="d5-flag4" data-hash="4086b376a82c8c3d4153e7face1a15f98c1962b1e4aa8d2e5dddfd4beb90b9ad" data-xp="200" data-label="Flag 5.3 · the approved receipt"></form>
+
+          <div class="stretch"><p>Pick one or more: (a) rewrite the machine in <b>JSONata</b>. (b) Add a <code>DetachFromAsg</code> state that runs before <code>Isolate</code> (<code>aws-sdk:autoscaling:detachInstances</code>), using a Choice on the <code>aws:autoscaling:groupName</code> tag. (c) Replace <code>approve.sh</code> with an API Gateway endpoint that uses IAM auth. (d) Add a <code>Map</code> state so a GuardDuty <b>attack sequence</b> that names several instances contains all of them in parallel. (e) Add a Security Hub <b>automation rule</b> that sets the finding's workflow status to <code>NOTIFIED</code> when the playbook starts.</p></div>
+          <div class="cleanup">
+<pre><code class="language-bash">./cleanup.sh   # stops waiting executions, deletes evidence snapshots + the stack</code></pre>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <!-- ============ BOSS ============ -->
+    <section id="boss">
+      <div class="eyebrow">Boss fight</div>
+      <h2>The Kraken's Last Stand</h2>
+      <div class="boss" data-flag="d5-boss">
+        <img class="lab-cover" src="assets/img/day5/boss-cover.svg" alt="Boss cover: the Kraken's five tentacles each grip one attack step (backdoor user, look-alike role, GuardDuty off, archive filter, StopLogging) while a green shield stands ready." style="width:100%;aspect-ratio:16/5;object-fit:cover;border-radius:18px;margin-bottom:26px;border:1px solid rgba(251,113,133,.4)">
+        <div class="boss-grid">
+          <img src="assets/img/kraken.svg" alt="The Kraken">
+          <div>
+            <div class="eyebrow">Final boss · Day 5</div>
+            <h3>Five API calls to own an account</h3>
+            <div class="hp"><i></i></div>
+            <p>The Kraken got hold of a session for <code>nimbus-ci-deployer</code>, the GitHub Actions role that someone gave <code>AdministratorAccess</code> "temporarily" in 2023. In five calls it planted two backdoors, tried to blind GuardDuty, buried future findings under a suppression rule, and stopped the audit trail. Your job is to <b>contain, eradicate, restore, and then make the technique impossible</b>. The verifier gives you the flag only when every tentacle is cut.</p>
+            <p class="muted">Arena: the <b>skyfortress-dev</b> member account. SCPs don't apply to the management account, so the final guardrail has to land on a member.</p>
+          </div>
+        </div>
+        <figure class="figure"><img src="assets/img/day5/boss-chain.svg" alt="Attack chain: stolen CI session, backdoor user, look-alike role, blind GuardDuty, stop the trail, mapped to MITRE ATT&amp;CK; plus counter-moves."><figcaption><b>BOSS</b> The attack chain, mapped to MITRE ATT&amp;CK. Your counter-moves are listed underneath.</figcaption></figure>
+        <div class="paths">
+          <div class="path guided"><p>Work through the seven steps. Run <code>verify.py</code> after every step and watch the checks turn green one by one.</p></div>
+          <div class="path challenge"><p><b>Goal:</b> six ✅ from <code>verify.py</code>.</p>
+            <p><b>Constraints:</b> you get only the account and the session name <code>gha-run-48151623</code>. Write down all five attacker calls <i>before</i> your first containment action. Contain in one script, not step by step.</p>
+            <p><b>Done when:</b> the flag prints, and your notes map each call to an ATT&amp;CK technique and to the control that now blocks it.</p></div>
+        </div>
+        <ol class="steps" data-lab="d5-boss">
+          <li><strong>Enter the arena</strong>
+              <p>Lab 0 already created the <code>sky-dev</code> profile and put <code>$SKY_DEV</code> (the account ID) in <code>~/.skyfortress.env</code>.</p>
+<pre data-title="CloudShell (management account)"><code class="language-bash">source ~/.skyfortress.env
+DEV_ID=$SKY_DEV
+aws sts get-caller-identity --profile sky-dev     # must show the skyfortress-dev account
+cd ~/skyfortress/labs/day5/boss &amp;&amp; AWS_PROFILE=sky-dev ./setup.sh</code></pre>
+<div class="term" data-title="CloudShell · ./setup.sh"><pre><span class="o">[*] Boss arena: account 444455556666 as arn:aws:sts::444455556666:assumed-role/OrganizationAccountAccessRole/botocore-session-1733283001</span>
+<span class="o">[*] Waiting for IAM propagation…</span>
+<span class="err">🐙 1/5 creating a quiet little admin user…</span>
+<span class="err">🐙 2/5 …and a role that looks like it belongs to AWS…</span>
+<span class="err">🐙 3/5 blinding the watchtower (GuardDuty)…</span>
+      detector DISABLED 😈
+<span class="err">🐙 4/5 …and auto-archiving every future finding, just in case</span>
+      suppression rule planted
+<span class="err">🐙 5/5 turning off the audit trail…</span>
+      trail 'nimbus-dev-audit' stopped</pre></div>
+              <p class="term-caption">If step 3 prints ⛔ instead, an org policy already protects GuardDuty in that account. That's a win, and the verifier accepts it.</p>
+          </li>
+          <li><strong>Investigate: reconstruct the five calls</strong><p>Use CloudTrail event history in the dev account. The role session name is your thread to pull. Name each call, its target and its ATT&amp;CK technique <b>before</b> you touch anything. Containing before you've scoped is how you miss tentacle number five.</p>
+            <details class="hint"><summary>Hint</summary><p><code>aws cloudtrail lookup-events --profile sky-dev --lookup-attributes AttributeKey=Username,AttributeValue=gha-run-48151623</code>. For assumed roles, the session name appears as the username.</p></details>
+            <div class="predict"><p>The Kraken ran <code>StopLogging</code> on <code>nimbus-dev-audit</code>. Does event history still show the calls it made <i>after</i> that?</p><details><summary>Reveal</summary><p>Yes. Event history is recorded independently of any trail you create; trails only control delivery to S3 or CloudWatch Logs. Stopping a trail blinds your long-term archive and your SIEM, not the 90-day event history. That's also why <code>StopLogging</code> itself is visible.</p></details></div>
+            <figure class="shot" data-url="console.aws.amazon.com/guardduty/home?region=us-east-1#/suppression-rules"><img src="assets/img/day5/shot-guardduty-boss.svg" alt="Illustrative mock-up of GuardDuty in the dev account: a suspended banner and a suppression rule named noise-reduction-ec2 that archives every finding of severity 1 or higher"><figcaption><b>SCREEN 5.7</b> Illustrative mock-up; the live console layout may differ.</figcaption></figure>
+          </li>
+          <li><strong>Contain: one coordinated move</strong><p>Revoke the CI role's sessions, deactivate the backdoor user's keys, and revoke the backdoor role's sessions, all at the same moment. Re-run <code>verify.py</code> to watch the first check turn green.</p>
+            <div class="predict"><p>You deleted <code>svc-telemetry</code>'s access key but forgot the backdoor role. The Kraken already assumed it an hour ago. Are they out?</p><details><summary>Reveal</summary><p>No. The role session they already hold stays valid until it expires. Deleting the user who assumed it doesn't revoke it. Revoke sessions on <b>every</b> role in the chain, then delete.</p></details></div></li>
+          <li><strong>Eradicate: cut the backdoors</strong><p>Delete <code>svc-telemetry</code> (keys, attached policies, then the user) and <code>AWSSupportDiagnostics-Helper</code>. Tell-tale sign: real AWS service-linked roles live under the path <code>/aws-service-role/</code> and you can't create them yourself. A role named "AWS…" at path <code>/</code> is a costume.</p></li>
+          <li><strong>Restore: re-enable the eyes and ears</strong><p>Make sure the GuardDuty detector is <code>ENABLED</code>, delete the <code>ARCHIVE</code> filter, and <code>start-logging</code> on <code>nimbus-dev-audit</code>. Then check: did anything happen in the gap while the trail was stopped? (Your org trail from Day 2 kept recording. That's why it exists.)</p></li>
+          <li><strong>Make it impossible: guardrail SCP</strong><p>From the management account, create <a href="labs/day5/boss/protect-security-tooling.scp.json">protect-security-tooling.scp.json</a> and attach it to the dev account (or its OU). It denies changes to detection and audit tooling, and creation of long-term IAM users or keys, except from the break-glass and org-access roles.</p>
+<pre data-title="CloudShell (management account)"><code class="language-bash">PID=$(aws organizations create-policy --name protect-security-tooling --type SERVICE_CONTROL_POLICY \
+  --description "Day 5 boss guardrail" --content file://protect-security-tooling.scp.json --query Policy.PolicySummary.Id --output text)
+aws organizations attach-policy --policy-id $PID --target-id $DEV_ID</code></pre>
+          </li>
+          <li><strong>Defeat the Kraken</strong>
+<pre data-title="CloudShell"><code class="language-bash">python3 verify.py --profile sky-dev</code></pre>
+<div class="term" data-title="CloudShell · python3 verify.py --profile sky-dev (half-way)"><pre>🐙  Verifying the Kraken's defeat in account 444455556666
+
+  <span class="ok">✅ Stolen CI session (gha-run-48151623) is useless</span>
+  <span class="ok">✅ Backdoor user svc-telemetry removed</span>
+  <span class="ok">✅ Backdoor role AWSSupportDiagnostics-Helper removed</span>
+  <span class="ok">✅ GuardDuty enabled, suppression rule removed</span>
+  <span class="err">❌ Audit trail nimbus-dev-audit logging again</span>
+  <span class="err">❌ Guardrail SCP protects detection + audit tooling</span>
+
+🐙  2 tentacle(s) still twitching. Keep going.</pre></div>
+            <p>All six ✅ prints the flag. Waiting out the session's expiry instead of revoking it won't pass. The verifier checks for that.</p>
+          </li>
+        </ol>
+        <details class="hint solution"><summary>Solution: full command sequence</summary>
+<pre data-title="CloudShell"><code class="language-bash">export AWS_PROFILE=sky-dev
+NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+jq --arg t "$NOW" '.Statement[0].Condition.DateLessThan["aws:TokenIssueTime"]=$t' ../lab1-burned-keys/revoke-older-sessions.json &gt; /tmp/r.json
+# contain (together)
+aws iam put-role-policy --role-name nimbus-ci-deployer --policy-name AWSRevokeOlderSessions --policy-document file:///tmp/r.json
+for k in $(aws iam list-access-keys --user-name svc-telemetry --query 'AccessKeyMetadata[].AccessKeyId' --output text); do
+  aws iam update-access-key --user-name svc-telemetry --access-key-id $k --status Inactive; done
+aws iam put-role-policy --role-name AWSSupportDiagnostics-Helper --policy-name AWSRevokeOlderSessions --policy-document file:///tmp/r.json
+# eradicate
+for k in $(aws iam list-access-keys --user-name svc-telemetry --query 'AccessKeyMetadata[].AccessKeyId' --output text); do
+  aws iam delete-access-key --user-name svc-telemetry --access-key-id $k; done
+aws iam detach-user-policy --user-name svc-telemetry --policy-arn arn:aws:iam::aws:policy/AdministratorAccess
+aws iam delete-user --user-name svc-telemetry
+aws iam delete-role-policy --role-name AWSSupportDiagnostics-Helper --policy-name AWSRevokeOlderSessions
+aws iam detach-role-policy --role-name AWSSupportDiagnostics-Helper --policy-arn arn:aws:iam::aws:policy/AdministratorAccess
+aws iam delete-role --role-name AWSSupportDiagnostics-Helper
+# restore
+DET=$(aws guardduty list-detectors --query 'DetectorIds[0]' --output text)
+aws guardduty update-detector --detector-id $DET --enable
+aws guardduty delete-filter --detector-id $DET --filter-name noise-reduction-ec2
+aws cloudtrail start-logging --name nimbus-dev-audit
+unset AWS_PROFILE   # back to management for the SCP (step 6), then:
+python3 verify.py --profile sky-dev</code></pre>
+        </details>
+<h4>Troubleshooting</h4><div class="table-wrap"><table><thead><tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr></thead><tbody><tr><td><code>setup.sh</code>: <code>EntityAlreadyExists</code></td><td>A previous run wasn't cleaned up</td><td>Run <code>DEV_PROFILE=sky-dev ./cleanup.sh</code>, then <code>setup.sh</code> again</td></tr><tr><td><code>verify.py</code> says the session still works after revoking</td><td>IAM propagation</td><td>Wait 15–30 seconds and re-run. Check that the inline policy is on <code>nimbus-ci-deployer</code></td></tr><tr><td>Can't delete <code>AWSSupportDiagnostics-Helper</code></td><td>It still has an attached or inline policy</td><td>Detach the managed policy and delete the inline one first</td></tr><tr><td>SCP check stays ❌</td><td>SCP attached to the wrong target, or created from the dev profile</td><td>Create and attach it from the <b>management</b> account to <code>$SKY_DEV</code> or its OU</td></tr><tr><td><code>create-policy</code>: policy type not enabled</td><td>SCPs aren't enabled on the root</td><td>Re-run Lab 0's bootstrap, or run <code>enable-policy-type</code></td></tr></tbody></table></div>
+        <form class="flag" data-id="d5-boss" data-hash="748a88f7cb4f26f0346e665d05f9dfff2adc3e9a44e9c7e4c4e4a74980a296b7" data-xp="400" data-badge="day5" data-label="Boss flag · The Kraken sleeps"></form>
+        <div class="cleanup"><pre><code class="language-bash">DEV_PROFILE=sky-dev ./cleanup.sh
+aws organizations detach-policy --policy-id $PID --target-id $DEV_ID &amp;&amp; aws organizations delete-policy --policy-id $PID   # or keep it — it's a good guardrail!</code></pre></div>
+      </div>
+    </section>
+
+
+    <!-- ============ FIELD KIT ============ -->
+    <section id="field-kit">
+      <div class="eyebrow">Take-home</div>
+      <h2>IR field kit: copy, paste, contain</h2>
+      <p>The commands you used today, collected in one place. Print it, pin it, or paste it into your runbook repo. Every command is read-only or reversible unless it's marked ⚠️.</p>
+      <div class="tabs">
+        <div class="tab-list"><button>Identity</button><button>Workloads</button><button>Logs &amp; hunting</button><button>Org guardrails</button></div>
+        <div class="tab-panel">
+<pre data-title="identity triage + containment"><code class="language-bash"># whose key is this?
+aws sts get-access-key-info --access-key-id AKIA...
+aws iam get-access-key-last-used --access-key-id AKIA...
+# everything it did (per Region; repeat in each Region you use)
+aws cloudtrail lookup-events --lookup-attributes AttributeKey=AccessKeyId,AttributeValue=AKIA... --max-results 50
+# ⚠️ contain: deactivate + revoke sessions (user AND every role it assumed)
+aws iam update-access-key --user-name U --access-key-id AKIA... --status Inactive
+aws iam put-role-policy --role-name R --policy-name AWSRevokeOlderSessions --policy-document file://revoke.json
+# who else has old keys? (credential report is CSV, base64-encoded)
+aws iam generate-credential-report &gt;/dev/null; sleep 5
+aws iam get-credential-report --query Content --output text | base64 -d | cut -d, -f1,9,10,11 | column -t -s,</code></pre>
+        </div>
+        <div class="tab-panel">
+<pre data-title="EC2 preserve + isolate + collect"><code class="language-bash">I=i-0123456789abcdef0
+aws ec2 modify-instance-attribute --instance-id $I --disable-api-termination
+aws ec2 modify-instance-attribute --instance-id $I --instance-initiated-shutdown-behavior Value=stop
+aws ec2 get-console-output --instance-id $I --latest --output text &gt; console-$I.txt
+aws ec2 get-console-screenshot --instance-id $I --query ImageData --output text | base64 -d &gt; screen-$I.jpg
+aws ec2 modify-instance-attribute --instance-id $I --groups sg-FLUSH        # ⚠️ step 1
+aws ec2 modify-instance-attribute --instance-id $I --groups sg-QUARANTINE   # ⚠️ step 2
+aws ec2 create-snapshots --instance-specification InstanceId=$I --copy-tags-from-source volume \
+  --tag-specifications 'ResourceType=snapshot,Tags=[{Key=ir-case,Value=IR-XXXX}]'
+aws ec2 describe-instances --instance-ids $I &gt; describe-$I.json   # metadata snapshot for the case file</code></pre>
+        </div>
+        <div class="tab-panel">
+<pre data-title="Athena over the org trail — hunt for defense evasion org-wide"><code class="language-sql">-- Who tried to blind us in the last 7 days? (table from Day 2's org trail)
+SELECT eventtime, recipientaccountid, useridentity.arn, eventname, errorcode
+FROM   cloudtrail_logs
+WHERE  eventtime &gt; to_iso8601(current_timestamp - interval '7' day)
+  AND  eventname IN ('StopLogging','DeleteTrail','PutEventSelectors','UpdateDetector',
+                     'DeleteDetector','CreateFilter','DisableSecurityHub','DeleteFlowLogs')
+ORDER  BY eventtime DESC;
+
+-- Which temporary keys did a leaked AKIA mint? (follow the pivots)
+SELECT eventtime,
+       json_extract_scalar(requestparameters, '$.roleArn')                    AS role,
+       json_extract_scalar(responseelements, '$.credentials.accessKeyId')     AS new_key
+FROM   cloudtrail_logs
+WHERE  eventname = 'AssumeRole' AND useridentity.accesskeyid = 'AKIA...';</code></pre>
+          <p class="muted">In the Athena CloudTrail table, <code>requestparameters</code> and <code>responseelements</code> are JSON strings, so use <code>json_extract_scalar</code>. Security Lake (OCSF) uses different field names (<code>api.operation</code>, <code>actor.user.uid</code>). Day 2 covered both. CloudTrail Lake closed to new customers on May 31, 2026; existing customers can keep using it.</p>
+        </div>
+        <div class="tab-panel">
+<pre data-title="guardrails that make today's techniques impossible"><code class="language-bash"># the boss SCP (detection + audit tooling, no long-term IAM users)
+aws organizations create-policy --type SERVICE_CONTROL_POLICY --name protect-security-tooling \
+  --content file://labs/day5/boss/protect-security-tooling.scp.json --description "IR guardrail"
+# 2026: enforce GuardDuty + Security Hub CSPM enablement with declarative policies (console:
+# Organizations → Policies). Member accounts can't override what a policy enables.
+# Centralized root access: remove member-account root credentials entirely
+aws organizations enable-aws-service-access --service-principal iam.amazonaws.com   # trusted access first
+aws iam enable-organizations-root-credentials-management
+aws iam enable-organizations-root-sessions      # privileged tasks via short sts:AssumeRoot sessions
+aws iam list-organizations-features             # → RootCredentialsManagement, RootSessions</code></pre>
+          <div class="callout new"><strong class="ct">2026 guardrail upgrades worth knowing</strong><p>Organizations now lets you attach up to <b>10 SCPs per node</b>, each up to <b>10,240 characters</b> (May 2026). Declarative policies can enforce <b>GuardDuty</b> (Oct 2026) and <b>Security Hub CSPM</b> (Nov 2026) enablement org-wide. New organizations created in the console get SCPs that block member accounts from leaving or closing themselves, by default (July 2026).</p></div>
+        </div>
+      </div>
+
+      <h3 style="margin-top:40px">The ten commandments of cloud IR</h3>
+      <div class="grid g2">
+        <div class="card"><ol>
+          <li><b>Revoke sessions, not just keys.</b> ASIA outlives AKIA.</li>
+          <li><b>Contain all at once.</b> Partial containment warns the attacker.</li>
+          <li><b>Never stop, reboot or terminate</b> before memory is captured.</li>
+          <li><b>Flush, then quarantine.</b> Tracked connections survive SG swaps.</li>
+          <li><b>Analyze copies, read-only.</b> <code>ro,norecovery,nouuid</code>.</li>
+        </ol></div>
+        <div class="card"><ol start="6">
+          <li><b>Hash at capture, verify at analysis.</b> Store WORM.</li>
+          <li><b>Automate the reversible; gate the irreversible</b> with task tokens.</li>
+          <li><b>Telemetry is untrusted input,</b> for humans and AIs alike.</li>
+          <li><b>Every retro ships a guardrail</b>, a detection and a playbook change.</li>
+          <li><b>Rehearse.</b> You'll do what you've practiced, and no more.</li>
+        </ol></div>
+      </div>
+    </section>
+
+    <!-- ============ RUNBOOK CARD ============ -->
+    <section id="runbook-card" data-toc="Printable IR runbook card">
+      <div class="eyebrow">Print me</div>
+      <h2>The one-page IR runbook card</h2>
+      <p>Everything from today on one sheet. Print it, laminate it, and tape it next to the on-call laptop. At 3 a.m. nobody reads a wiki.</p>
+      <p><button class="btn sm" type="button" onclick="document.body.classList.add('print-card'); window.print(); setTimeout(function(){document.body.classList.remove('print-card')}, 500);">🖨 Print just this card</button></p>
+      <div class="rb-card">
+        <div class="rb-head"><b>🐙 Nimbus IR · first 30 minutes</b><span class="mono" style="font-size:.8rem">case ID: ________ · IC: ________ · scribe: ________ · T0 (UTC): ________</span></div>
+        <div>
+          <h3>🔑 Credential compromise</h3>
+          <ol>
+            <li>Owner: <code>sts get-access-key-info</code> · <code>iam get-access-key-last-used</code></li>
+            <li>Scope: <code>cloudtrail lookup-events</code> by AccessKeyId, <b>in every Region</b></li>
+            <li>Pivots: AssumeRole → <code>responseElements.credentials.accessKeyId</code>; repeat for each new key</li>
+            <li>Save the evidence (parameters, policies, new users) <b>before</b> deleting anything</li>
+            <li>Contain together: key → Inactive · <code>AWSRevokeOlderSessions</code> on the user and <b>every</b> role in the chain</li>
+            <li>Verify by replaying the stolen credentials: a ⛔ on anything other than <code>GetCallerIdentity</code></li>
+            <li>Hunt persistence: users, keys, roles, trust policies, Lambda, EventBridge, shared snapshots</li>
+          </ol>
+        </div>
+        <div>
+          <h3>🖥 Compromised EC2</h3>
+          <ol>
+            <li>Don't stop, reboot or terminate it</li>
+            <li>Termination protection on · shutdown = stop · tag <code>ir-case</code> · detach from the ASG</li>
+            <li>SG swap: <b>flush</b> (allow-all) → <b>quarantine</b> (443 to the SSM endpoints only)</li>
+            <li>Memory first: AVML onto a <b>new</b> volume · sha256 into your notes</li>
+            <li><code>create-snapshots</code> (all volumes, one moment) · tag with the case ID</li>
+            <li>Analyze copies in the forensic subnet: <code>ro,norecovery,nouuid</code></li>
+            <li>Evidence → Object Lock bucket · chain-of-custody entry for every handoff</li>
+          </ol>
+        </div>
+        <div class="rb-foot">Never: delete before saving · partial containment · run tools from the evidence disk · trust strings from findings · let automation terminate without a human. Escalate: AWS Security Incident Response / AWS CIRT · legal at first sign of data exposure.</div>
+      </div>
+    </section>
+
+    <!-- ============ QUIZ ============ -->
+    <section id="quiz">
+      <div class="eyebrow">Knowledge check</div>
+      <h2>Quiz <span class="quiz-score" style="font-size:1rem"></span></h2>
+      <p class="muted">Ten scenario questions. Each is the kind of decision you'd have to make during an incident. Each correct answer is worth +20 XP.</p>
+      <div class="quiz" data-id="d5-quiz">
+        <div class="q" data-answer="c">
+          <p>You deactivated a leaked <code>AKIA</code> key 10 minutes ago. CloudTrail shows the attacker made <code>ssm:GetParameter</code> calls <i>2 minutes ago</i> with access key <code>ASIA…</code>. What happened?</p>
+          <div class="opts"><button data-k="a">Deactivation takes up to an hour to propagate globally</button><button data-k="b">The attacker created a second long-term key</button><button data-k="c">The attacker had already used the AKIA to mint temporary credentials (e.g. AssumeRole), which stay valid until expiry or revocation</button><button data-k="d">CloudTrail timestamps are in local time</button></div>
+          <div class="explain"><code>ASIA</code> means temporary STS credentials. Deactivating the parent key doesn't invalidate sessions it already created. Find the <code>AssumeRole</code> (or <code>GetSessionToken</code>) event, then revoke with a Deny on <code>aws:TokenIssueTime</code>.</div>
+        </div>
+        <div class="q" data-answer="b">
+          <p>After you attach <code>AWSRevokeOlderSessions</code>, the attacker's stolen session still succeeds at one call. Which one?</p>
+          <div class="opts"><button data-k="a"><code>s3:ListAllMyBuckets</code></button><button data-k="b"><code>sts:GetCallerIdentity</code></button><button data-k="c"><code>iam:GetUser</code></button><button data-k="d"><code>ssm:GetParameter</code></button></div>
+          <div class="explain"><code>GetCallerIdentity</code> needs no permissions and can't be denied by any policy. It "working" says nothing about whether containment succeeded. Test with a real action.</div>
+        </div>
+        <div class="q" data-answer="d">
+          <p>You swap a compromised instance's SG directly from <code>web-sg</code> to a no-rules quarantine SG. The attacker's reverse shell <i>stays connected</i>. Why?</p>
+          <div class="opts"><button data-k="a">SG changes take 15 minutes to apply</button><button data-k="b">Quarantine SGs need an explicit DENY rule</button><button data-k="c">The shell runs over ICMP, which SGs ignore</button><button data-k="d">The established flow was tracked; SG changes don't terminate tracked connections</button></div>
+          <div class="explain">Security groups are stateful. Existing tracked flows keep going until they idle out (the default TCP established timeout is 5 days). Swap to an allow-all SG first so flows become untracked, then to quarantine. Or add a NACL deny, which is stateless and immediate but affects the whole subnet.</div>
+        </div>
+        <div class="q" data-answer="a">
+          <p>The forensic workstation is in a subnet with no internet route, and you quarantined the victim with egress only to 443 on an endpoint SG. Why can SSM Run Command still reach both?</p>
+          <div class="opts"><button data-k="a">SSM, SSMMessages and EC2Messages interface endpoints with private DNS resolve the public service names to private IPs inside the VPC</button><button data-k="b">SSM uses the instance's serial console</button><button data-k="c">SSM Agent tunnels over IMDS</button><button data-k="d">SSM traffic is exempt from security groups</button></div>
+          <div class="explain">With private DNS enabled on interface endpoints, <code>ssm.us-east-1.amazonaws.com</code> resolves to ENIs in your VPC. Design your quarantine SG and endpoints <b>together</b>, before the incident.</div>
+        </div>
+        <div class="q" data-answer="c">
+          <p>Mounting a volume restored from the victim's root snapshot fails on your AL2023 forensic workstation with a duplicate-UUID error. Which mount options are correct <i>and</i> forensically sound?</p>
+          <div class="opts"><button data-k="a"><code>-o rw,nouuid</code></button><button data-k="b"><code>-o ro</code> after running <code>xfs_admin -U generate</code> on the evidence</button><button data-k="c"><code>-o ro,norecovery,nouuid</code></button><button data-k="d"><code>-o ro,remount</code></button></div>
+          <div class="explain"><code>nouuid</code> gets around the duplicate UUID without modifying anything. <code>norecovery</code> stops XFS from replaying the log, which would write to the evidence. Changing the UUID (b) <b>modifies</b> the evidence.</div>
+        </div>
+        <div class="q" data-answer="b">
+          <p><code>stat /etc/cron.d/kraken-sync</code> shows Modify <code>2026-11-30 03:14:15</code> and Change <code>2026-12-04 09:02:11</code>. The instance launched on Dec 4. What's the most likely explanation?</p>
+          <div class="opts"><button data-k="a">The snapshot restore reset ctime</button><button data-k="b">Timestomping: mtime was forged (e.g. <code>touch -d</code>); ctime can't be set from userland and shows the real time</button><button data-k="c">The cron daemon touched the file</button><button data-k="d">Clock skew between the AZs</button></div>
+          <div class="explain">Ordinary tools can't set ctime. A file whose mtime is <i>earlier</i> than the instance's launch time is a red flag for anti-forensics.</div>
+        </div>
+        <div class="q" data-answer="d">
+          <p>You need to share an EBS snapshot with your forensic account. It's encrypted with <code>aws/ebs</code>. What's the correct sequence?</p>
+          <div class="opts"><button data-k="a"><code>modify-snapshot-attribute</code> to add the account. AWS re-encrypts automatically</button><button data-k="b">Share the <code>aws/ebs</code> key with the forensic account</button><button data-k="c">Decrypt the snapshot, then share</button><button data-k="d"><code>copy-snapshot</code> re-encrypting with a customer managed key, grant the forensic account use of that key, then share the copy</button></div>
+          <div class="explain">AWS managed keys can't be shared across accounts, so snapshots encrypted with them can't be shared either. Re-encrypt with a CMK. Build and test this path as preparation work.</div>
+        </div>
+        <div class="q" data-answer="a">
+          <p>In the Lab 5.3 playbook, what happens if nobody responds to the approval request within an hour?</p>
+          <div class="opts"><button data-k="a"><code>States.Timeout</code> is caught, the instance stays isolated with its evidence, and a receipt is issued with no termination</button><button data-k="b">The instance is terminated automatically</button><button data-k="c">The execution retries the approval indefinitely</button><button data-k="d">The quarantine is rolled back</button></div>
+          <div class="explain">Fail-safe defaults: when a human doesn't decide, nothing irreversible happens. A timeout routed to "terminate" would quietly turn your human approval into "approved by default".</div>
+        </div>
+        <div class="q" data-answer="c">
+          <p>Your new AI triage agent reads a GuardDuty suppression filter described as <i>"approved by SecOps"</i> and recommends closing the related findings. What's the most important design flaw this reveals?</p>
+          <div class="opts"><button data-k="a">The agent uses the wrong model</button><button data-k="b">GuardDuty filters shouldn't have descriptions</button><button data-k="c">Attacker-controllable strings were treated as instructions or authority; finding content must be untrusted data, and suppression must need a human or a policy-checked action</button><button data-k="d">The agent should run in a different Region</button></div>
+          <div class="explain">This is prompt injection by way of telemetry. Put the agent on least privilege with Cedar policy (AgentCore Policy) on each tool, give it no authority to suppress or whitelist, and require approval for any action that reduces visibility.</div>
+        </div>
+        <div class="q" data-answer="b">
+          <p>You attach the "protect security tooling" SCP to the organization root, but the Kraken can still run <code>cloudtrail:StopLogging</code> in one account. Which account?</p>
+          <div class="opts"><button data-k="a">Any account in a nested OU</button><button data-k="b">The management account. SCPs never apply to it</button><button data-k="c">The delegated administrator account for GuardDuty</button><button data-k="d">Accounts created after the SCP was attached</button></div>
+          <div class="explain">SCPs don't restrict principals in the management account. Keep workloads, CI and humans out of it. Protect it with tight access, alarms and centralized root access management.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ GRADUATION ============ -->
+    <section id="graduation">
+      <div class="eyebrow">Graduation 🎓</div>
+      <h2>You survived the week. Now take it home.</h2>
+      <div class="story reveal">
+        <img class="avatar" src="assets/img/owlsley.svg" alt="Owlsley">
+        <div>
+          <div class="who">OWLSLEY · after GameDay, slightly singed</div>
+          <p>Five days ago, "least privilege" was something you nodded along to. Today you followed an AKIA through three pivots, cut a reverse shell without the attacker noticing, pulled a flag out of RAM, and built a robot that knows when to stop and ask. The Kraken will be back. It always is. But now Nimbus has people who've done this before. Go make your own company a little more like the Skyfortress. 🦉</p>
+        </div>
+      </div>
+      <figure class="figure reveal"><img src="assets/img/day5/roadmap.svg" alt="30/60/90 day plan: foundations, automation, resilience."><figcaption><b>FIG 5.7</b> Your 30/60/90 plan. Each column has four items; pick one from each and put a date on it.</figcaption></figure>
+      <div class="grid g3">
+        <div class="card lift"><h4 style="color:var(--accent)">Monday, 9 a.m.</h4><ul>
+          <li>Check that every account has a <b>security alternate contact</b></li>
+          <li>Search your repos for <code>AKIA</code>, then turn on secret scanning</li>
+          <li>Find your org's oldest active access key: <code>iam generate-credential-report</code></li>
+        </ul></div>
+        <div class="card lift"><h4 style="color:var(--accent)">This sprint</h4><ul>
+          <li>Ship the <a href="labs/day5/boss/protect-security-tooling.scp.json">protect-security-tooling</a> SCP to a sandbox OU</li>
+          <li>Copy the <a href="labs/day5/index.html#runbooks">runbooks</a> into your wiki and change the names</li>
+          <li>Move one CI pipeline from keys to OIDC roles</li>
+        </ul></div>
+        <div class="card lift"><h4 style="color:var(--accent)">This quarter</h4><ul>
+          <li>Run a 60-minute <b>tabletop</b> using the injects from Module 5.5</li>
+          <li>Put one Step Functions playbook into production, with a human approval step</li>
+          <li>Schedule your first internal GameDay, and invite the Kraken</li>
+        </ul></div>
+      </div>
+
+      <h3 style="margin-top:44px">Your badge shelf</h3>
+      <div class="badge-shelf">
+        <div class="badge" data-badge="day1"><img src="assets/img/badges/day1.svg" alt=""><b>Identity Warden</b><span>Day 1 boss</span></div>
+        <div class="badge" data-badge="day2"><img src="assets/img/badges/day2.svg" alt=""><b>Threat Hunter</b><span>Day 2 boss</span></div>
+        <div class="badge" data-badge="day3"><img src="assets/img/badges/day3.svg" alt=""><b>Moat Builder</b><span>Day 3 boss</span></div>
+        <div class="badge" data-badge="day4"><img src="assets/img/badges/day4.svg" alt=""><b>Vault Keeper</b><span>Day 4 boss</span></div>
+        <div class="badge" data-badge="day5"><img src="assets/img/badges/day5.svg" alt=""><b>Kraken Tamer</b><span>Day 5 boss</span></div>
+        <div class="badge" data-badge="gameday"><img src="assets/img/badges/gameday.svg" alt=""><b>Skyfortress Legend</b><span>GameDay</span></div>
+      </div>
+      <p class="center muted" style="margin-top:20px">⚡ <span class="xp-val">0</span> XP · rank <b class="xp-level">Cadet</b></p>
+
+      <div class="callout info"><strong class="ct">Keep learning</strong><p>re:Invent 2026's security day is <b>December 3</b>, less than two weeks after this course. Watch the AWS Security Blog's monthly <i>ICYMI</i> roundups, the <a href="https://aws.amazon.com/security/post-quantum-cryptography/">post-quantum migration guide</a> (Day 4), and the AWS Security Incident Response user guide. Then run this course's <a href="gameday.html">GameDay</a> again with your own team.</p></div>
+    </section>
+
+    <div class="pager"><a class="prev" href="day4.html"><small>← Previous</small>Day 4 · Vaults &amp; Thinking Machines</a><a class="next" href="gameday.html"><small>Next →</small>GameDay · Kraken Rising</a></div>
+  </main>
+</div>
+
+<footer id="site-footer"></footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+<script src="assets/js/site.js"></script>
+</body>
+</html>

@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 760">
+<title>Illustrative console mock-up: IAM</title>
+<rect width="1400" height="760" fill="#0d1226"/>
+<rect width="1400" height="52" fill="#151b38"/>
+<rect x="20" y="15" width="22" height="22" rx="6" fill="#a78bfa"/>
+<text x="56" y="33" font-family="Space Grotesk, Inter, sans-serif" font-size="16" font-weight="700" fill="#fff">Cloud Console</text>
+<rect x="400" y="12" width="420" height="28" rx="8" fill="#0d1226" stroke="#2b3463"/>
+<text x="416" y="31" font-family="Space Grotesk, Inter, sans-serif" font-size="14" fill="#6b76a8">Search services, features, docs</text>
+<text x="1100" y="32" font-family="Space Grotesk, Inter, sans-serif" font-size="14" fill="#c7d2fe">N. Virginia ▾</text>
+<text x="1215" y="32" font-family="JetBrains Mono, ui-monospace, monospace" font-size="13" fill="#c7d2fe">1111-2222-3333 ▾</text>
+<rect x="0" y="52" width="250" height="708" fill="#10162f"/>
+<text x="28" y="100" font-family="Space Grotesk, Inter, sans-serif" font-size="17" font-weight="700" fill="#fff">IAM</text>
+<line x1="20" y1="116" x2="230" y2="116" stroke="#232b52"/>
+<text x="28" y="150" font-family="Space Grotesk, Inter, sans-serif" font-size="15" fill="#9aa6d1" font-weight="400">Dashboard</text><text x="28" y="184" font-family="Space Grotesk, Inter, sans-serif" font-size="15" fill="#9aa6d1" font-weight="400">Roles</text><text x="28" y="218" font-family="Space Grotesk, Inter, sans-serif" font-size="15" fill="#9aa6d1" font-weight="400">Policies</text><text x="28" y="252" font-family="Space Grotesk, Inter, sans-serif" font-size="15" fill="#ffffff" font-weight="600">Policy simulator</text><rect x="12" y="234" width="4" height="24" rx="2" fill="#a78bfa"/><text x="28" y="286" font-family="Space Grotesk, Inter, sans-serif" font-size="15" fill="#9aa6d1" font-weight="400">Access Analyzer</text>
+<text x="280" y="92" font-family="Space Grotesk, Inter, sans-serif" font-size="13" fill="#7f8bbd">IAM  ›  Policy simulator  ›  Role</text>
+
+<text x="280" y="134" font-family="Space Grotesk, Inter, sans-serif" font-size="26" font-weight="700" fill="#fff">Policy simulator</text>
+<rect x="280" y="158" width="330" height="560" rx="12" fill="#111833" stroke="#262f5a"/>
+<text x="300" y="190" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="600" fill="#c7d2fe">Roles</text>
+<rect x="296" y="204" width="298" height="36" rx="8" fill="#241a55" stroke="#a78bfa"/>
+<text x="310" y="228" font-family="JetBrains Mono, ui-monospace, monospace" font-size="13" fill="#fff">SkyfortressArenaContestant</text>
+<text x="300" y="276" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="600" fill="#c7d2fe">Policies</text>
+<g font-family="Space Grotesk, Inter, sans-serif" font-size="14" fill="#dbe2ff">
+  <rect x="300" y="292" width="16" height="16" rx="3" fill="#a78bfa"/><text x="326" y="305">ArenaIdentityPolicy (inline)</text>
+  <rect x="300" y="322" width="16" height="16" rx="3" fill="#a78bfa"/><text x="326" y="335">SkyfortressArenaBoundary (boundary)</text>
+</g>
+<text x="300" y="384" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="600" fill="#c7d2fe">Global settings · context keys</text>
+<rect x="296" y="398" width="298" height="70" rx="8" fill="#0d1226" stroke="#262f5a"/>
+<text x="310" y="424" font-family="JetBrains Mono, ui-monospace, monospace" font-size="12" fill="#93c5fd">aws:PrincipalTag/clearance</text>
+<text x="310" y="450" font-family="JetBrains Mono, ui-monospace, monospace" font-size="13" fill="#86efac">"orbital"</text>
+<rect x="296" y="660" width="140" height="38" rx="8" fill="#ff9900"/><text x="366" y="685" text-anchor="middle" font-family="Space Grotesk, Inter, sans-serif" font-size="15" font-weight="700" fill="#0a0d1f">Run simulation</text>
+<text x="640" y="190" font-family="Space Grotesk, Inter, sans-serif" font-size="18" font-weight="700" fill="#fff">Action settings and results</text>
+<rect x="640" y="210" width="730" height="230" rx="10" fill="#111833" stroke="#262f5a"/>
+<rect x="640" y="210" width="730" height="46" rx="10" fill="#172042"/>
+<text x="656" y="239" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="600" fill="#c7d2fe">Service</text>
+<text x="806" y="239" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="600" fill="#c7d2fe">Action</text>
+<text x="976" y="239" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="600" fill="#c7d2fe">Resource</text>
+<text x="1196" y="239" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="600" fill="#c7d2fe">Permission</text>
+<line x1="640" y1="256" x2="1370" y2="256" stroke="#222a52"/>
+<text x="656" y="285" font-family="Space Grotesk, Inter, sans-serif" font-size="14" fill="#dbe2ff">Amazon S3</text>
+<text x="806" y="285" font-family="JetBrains Mono, ui-monospace, monospace" font-size="14" fill="#dbe2ff">GetObject</text>
+<text x="976" y="285" font-family="JetBrains Mono, ui-monospace, monospace" font-size="14" fill="#9aa6d1">…/briefing.txt</text>
+<text x="1196" y="285" font-family="Space Grotesk, Inter, sans-serif" font-size="14" fill="#34d399">✓ allowed</text>
+<line x1="640" y1="302" x2="1370" y2="302" stroke="#222a52"/>
+<text x="656" y="331" font-family="Space Grotesk, Inter, sans-serif" font-size="14" fill="#dbe2ff">Amazon S3</text>
+<text x="806" y="331" font-family="JetBrains Mono, ui-monospace, monospace" font-size="14" fill="#dbe2ff">PutObject</text>
+<text x="976" y="331" font-family="JetBrains Mono, ui-monospace, monospace" font-size="14" fill="#9aa6d1">…/briefing.txt</text>
+<text x="1196" y="331" font-family="Space Grotesk, Inter, sans-serif" font-size="14" fill="#fbbf24">✕ implicitly denied</text>
+<line x1="640" y1="348" x2="1370" y2="348" stroke="#222a52"/>
+<text x="656" y="377" font-family="Space Grotesk, Inter, sans-serif" font-size="14" fill="#dbe2ff">Amazon S3</text>
+<text x="806" y="377" font-family="JetBrains Mono, ui-monospace, monospace" font-size="14" fill="#dbe2ff">DeleteObject</text>
+<text x="976" y="377" font-family="JetBrains Mono, ui-monospace, monospace" font-size="14" fill="#9aa6d1">…/briefing.txt</text>
+<text x="1196" y="377" font-family="Space Grotesk, Inter, sans-serif" font-size="14" fill="#34d399">✓ allowed *</text>
+<line x1="640" y1="394" x2="1370" y2="394" stroke="#222a52"/>
+<text x="656" y="423" font-family="Space Grotesk, Inter, sans-serif" font-size="14" fill="#dbe2ff">Systems Manager</text>
+<text x="806" y="423" font-family="JetBrains Mono, ui-monospace, monospace" font-size="14" fill="#dbe2ff">GetParameter</text>
+<text x="976" y="423" font-family="JetBrains Mono, ui-monospace, monospace" font-size="14" fill="#9aa6d1">/skyfortress/arena/…</text>
+<text x="1196" y="423" font-family="Space Grotesk, Inter, sans-serif" font-size="14" fill="#34d399">✓ allowed</text>
+<rect x="640" y="460" width="730" height="250" rx="12" fill="#111833" stroke="#262f5a"/>
+<text x="660" y="492" font-family="Space Grotesk, Inter, sans-serif" font-size="15" font-weight="700" fill="#fbbf24">Why "allowed" on DeleteObject?</text>
+<text x="660" y="522" font-family="Space Grotesk, Inter, sans-serif" font-size="14" fill="#dbe2ff">* simulate-principal-policy only evaluates the policies you select.</text>
+<text x="660" y="548" font-family="Space Grotesk, Inter, sans-serif" font-size="14" fill="#dbe2ff">The bucket's explicit deny is a resource policy — include it with</text>
+<text x="660" y="574" font-family="JetBrains Mono, ui-monospace, monospace" font-size="13" fill="#93c5fd">--resource-policy file://bucket-policy.json</text>
+<text x="660" y="600" font-family="Space Grotesk, Inter, sans-serif" font-size="14" fill="#dbe2ff">and the result flips to "explicitly denied". The simulator never</text>
+<text x="660" y="626" font-family="Space Grotesk, Inter, sans-serif" font-size="14" fill="#dbe2ff">evaluates SCPs or RCPs from your org: real calls are the final word.</text>
+<text x="660" y="676" font-family="Space Grotesk, Inter, sans-serif" font-size="13" fill="#7f8bbd">GetParameter is allowed only because the context key above was injected.</text>
+
+</svg>

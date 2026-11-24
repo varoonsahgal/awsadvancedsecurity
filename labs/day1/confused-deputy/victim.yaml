@@ -1,0 +1,43 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  Operation Skyfortress - Boss Fight "The Confused Deputy" - CUSTOMER (victim) side.
+  Nimbus Interstellar onboarded Orbital Insights by pasting a role trust policy from a
+  blog post... that forgot sts:ExternalId. Deploy in skyfortress-dev. Cost: ~$0.40/mo secret.
+
+Parameters:
+  VendorScannerRoleArn:
+    Type: String
+    Description: Output ScannerRoleArn from vendor.yaml
+
+Resources:
+  TelemetryReport:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: skyfortress/boss/telemetry-report
+      SecretString: '{"fleet":"NIMBUS","orbits":42,"flag_b64":"U0tZe2Fsd2F5c19kZW1hbmRfYW5fZXh0ZXJuYWxfaWR9"}'
+      Tags: [{ Key: skyfortress, Value: boss-1 }]
+
+  OrbitalInsightsReadRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: OrbitalInsightsReadRole
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: TrustTheVendor
+            Effect: Allow
+            Principal: { AWS: !Ref VendorScannerRoleArn }
+            Action: sts:AssumeRole
+            # BUG: no Condition on sts:ExternalId. Any tenant of the vendor can point it here.
+      Policies:
+        - PolicyName: ReadTelemetryReport
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: secretsmanager:GetSecretValue
+                Resource: !Ref TelemetryReport
+
+Outputs:
+  VictimRoleArn:
+    Value: !GetAtt OrbitalInsightsReadRole.Arn

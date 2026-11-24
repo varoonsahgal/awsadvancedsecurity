@@ -1,0 +1,180 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  Operation Skyfortress - Lab 1.3 "Build the Data Perimeter".
+  A private VPC with an S3 gateway endpoint, an endpoint policy that only reaches
+  org-owned buckets, and a vault bucket whose objects can ONLY be read through that endpoint.
+  Deploy in skyfortress-dev (us-east-1). Cost: ~$0 (gateway endpoints are free; tiny Lambda).
+
+Parameters:
+  OrgId:
+    Type: String
+    AllowedPattern: "^o-[a-z0-9]{10,32}$"
+    Description: Your AWS Organizations ID (aws organizations describe-organization)
+
+Resources:
+  Vpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.42.0.0/16
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+      Tags: [{ Key: Name, Value: skyfortress-perimeter }]
+
+  PrivateSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc
+      CidrBlock: 10.42.1.0/24
+      AvailabilityZone: !Select [0, !GetAZs ""]
+      Tags: [{ Key: Name, Value: skyfortress-perimeter-private }]
+
+  PrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref Vpc
+      Tags: [{ Key: Name, Value: skyfortress-perimeter-private }]
+
+  SubnetRta:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet
+      RouteTableId: !Ref PrivateRouteTable
+
+  CloudShellSg:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: CloudShell VPC environment - HTTPS egress only
+      VpcId: !Ref Vpc
+      SecurityGroupEgress:
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+      Tags: [{ Key: Name, Value: skyfortress-cloudshell }]
+
+  # NETWORK PERIMETER, layer 1: the endpoint policy.
+  # Only principals in our org, only resources in our org.
+  S3Endpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcId: !Ref Vpc
+      ServiceName: !Sub "com.amazonaws.${AWS::Region}.s3"
+      VpcEndpointType: Gateway
+      RouteTableIds: [!Ref PrivateRouteTable]
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: OnlyOurPrincipalsToOurResources
+            Effect: Allow
+            Principal: "*"
+            Action: "s3:*"
+            Resource: "*"
+            Condition:
+              StringEquals:
+                "aws:PrincipalOrgID": !Ref OrgId
+                "aws:ResourceOrgID": !Ref OrgId
+
+  VaultBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "skyfortress-vault-${AWS::AccountId}"
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      OwnershipControls:
+        Rules: [{ ObjectOwnership: BucketOwnerEnforced }]
+      Tags: [{ Key: skyfortress, Value: lab-1-3 }]
+
+  # RESOURCE PERIMETER on the bucket itself: vault/* readable only via our endpoint.
+  VaultBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref VaultBucket
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: VaultReadsOnlyThroughOurEndpoint
+            Effect: Deny
+            Principal: "*"
+            Action: "s3:GetObject"
+            Resource: !Sub "${VaultBucket.Arn}/vault/*"
+            Condition:
+              StringNotEquals:
+                "aws:SourceVpce": !Ref S3Endpoint
+          - Sid: TlsOnly
+            Effect: Deny
+            Principal: "*"
+            Action: "s3:*"
+            Resource: [!GetAtt VaultBucket.Arn, !Sub "${VaultBucket.Arn}/*"]
+            Condition: { Bool: { "aws:SecureTransport": "false" } }
+
+  # Custom resource that writes the flag object (CloudFormation can't create S3 objects natively).
+  SeederRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: { Service: lambda.amazonaws.com }
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: SeedVault
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: ["s3:PutObject", "s3:DeleteObject"]
+                Resource: !Sub "${VaultBucket.Arn}/*"
+
+  Seeder:
+    Type: AWS::Lambda::Function
+    Properties:
+      Runtime: python3.12
+      Handler: index.handler
+      Timeout: 30
+      Role: !GetAtt SeederRole.Arn
+      Code:
+        ZipFile: |
+          import boto3, cfnresponse
+          s3 = boto3.client("s3")
+          FILES = {
+            "vault/flag.txt": "U0tZe3BlcmltZXRlcl9ob2xkc190aGVfbGluZX0=\n",
+            "public-notes/readme.txt": "Nothing to see here. The good stuff is in vault/.\n",
+          }
+          def handler(event, context):
+              bucket = event["ResourceProperties"]["Bucket"]
+              try:
+                  if event["RequestType"] in ("Create", "Update"):
+                      for k, v in FILES.items():
+                          s3.put_object(Bucket=bucket, Key=k, Body=v.encode())
+                  elif event["RequestType"] == "Delete":
+                      for k in FILES:
+                          s3.delete_object(Bucket=bucket, Key=k)
+                  cfnresponse.send(event, context, cfnresponse.SUCCESS, {})
+              except Exception as e:
+                  print(e)
+                  cfnresponse.send(event, context, cfnresponse.FAILED, {"Error": str(e)})
+
+  SeedObjects:
+    Type: Custom::SeedVault
+    DependsOn: VaultBucketPolicy
+    Properties:
+      ServiceToken: !GetAtt Seeder.Arn
+      Bucket: !Ref VaultBucket
+
+Outputs:
+  VpcId:
+    Value: !Ref Vpc
+  PrivateSubnetId:
+    Value: !Ref PrivateSubnet
+  CloudShellSecurityGroupId:
+    Value: !Ref CloudShellSg
+  S3EndpointId:
+    Value: !Ref S3Endpoint
+  VaultBucket:
+    Value: !Ref VaultBucket

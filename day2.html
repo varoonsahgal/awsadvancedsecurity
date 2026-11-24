@@ -1,0 +1,1246 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Day 2 · Eyes in the Sky — Operation Skyfortress</title>
+  <meta name="description" content="Day 2 of the Skyfortress advanced AWS security bootcamp: org-wide logging, GuardDuty Extended Threat Detection, the unified Security Hub, OCSF threat hunting in Security Lake and Athena, and detection-as-code.">
+  <link rel="icon" href="assets/img/logo.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/site.css">
+  <style>
+    .signal-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 14px; margin: 22px 0; }
+    .signal { padding: 16px 18px; border-radius: 14px; background: var(--panel); border: 1px solid var(--border); }
+    .signal > b { display: block; font-family: var(--display); color: #fff; margin-bottom: 4px; }
+    .signal > .chip.new { margin: 0 0 6px; }
+    .figure figcaption code, .term-caption code { overflow-wrap: anywhere; word-break: break-all; }
+    .signal span { font-size: 0.88rem; color: var(--text-dim); }
+    .signal .chip { margin-top: 8px; }
+    .verdict { display: inline-block; font-family: var(--mono); font-size: 0.75rem; padding: 2px 8px; border-radius: 6px; }
+    .verdict.ok { background: rgba(52, 211, 153, .15); color: var(--green); }
+    .verdict.no { background: rgba(251, 113, 133, .15); color: var(--red); }
+    .verdict.meh { background: rgba(251, 191, 36, .15); color: var(--gold); }
+    .boss > img.boss-cover { display: block; width: calc(100% + 68px); max-width: none; margin: -34px -34px 28px; aspect-ratio: 16 / 5; object-fit: cover; border-bottom: 1px solid rgba(251, 113, 133, .45); }
+    .path ul { margin: 0 0 8px; padding-left: 1.1em; } .path li { margin: 2px 0; }
+    .timing { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 18px 0; }
+    .timing div { padding: 12px 14px; border-radius: 12px; background: var(--panel); border: 1px solid var(--border); font-size: .9rem; }
+    .timing b { display: block; font-family: var(--mono); font-size: .78rem; color: var(--accent); letter-spacing: .1em; }
+    .boss .boss-grid > div { min-width: 0; }
+    @media (max-width: 700px) { .timing { grid-template-columns: 1fr; } }
+    .report-card { font-family: var(--mono); font-size: 0.86rem; white-space: pre-wrap; padding: 18px 20px; border-radius: 14px; background: #050816; border: 1px dashed var(--border-strong); color: var(--text-dim); }
+  </style>
+</head>
+<body class="day-2">
+<header id="site-nav"></header>
+
+<!-- ============ DAY HERO ============ -->
+<section class="day-hero">
+  <div class="container">
+    <div class="reveal">
+      <div class="day-num">02</div>
+      <div class="eyebrow">Day 2 · Tuesday</div>
+      <h1>Eyes in the <span class="grad">Sky</span></h1>
+      <p class="lead">Detection &amp; threat hunting at organization scale. Light up every account, let GuardDuty stitch weak signals into one critical story, hunt the Kraken through OCSF data with SQL, and ship detections the way you ship code: versioned and tested.</p>
+      <div class="chips"><span class="chip accent">4 labs + boss</span><span class="chip">~5 hrs hands-on</span><span class="chip">7 flags</span><span class="chip new">2026 NEW</span></div>
+    </div>
+    <div class="banner reveal"><img src="assets/img/day2/banner.svg" alt="A glowing observatory on a floating cloud city sweeps a radar beam across the night sky, locking onto Kraken tentacles rising from the clouds below"></div>
+  </div>
+</section>
+
+<div class="container day-layout">
+  <nav class="toc" data-auto></nav>
+  <main class="day-content">
+
+    <!-- ============ BRIEFING ============ -->
+    <section id="briefing">
+      <div class="eyebrow">Mission briefing</div>
+      <h2>You can't fight what you can't see</h2>
+      <div class="story reveal">
+        <img class="avatar" src="assets/img/owlsley.svg" alt="Owlsley">
+        <div>
+          <div class="who">OWLSLEY · CISO-in-residence, Nimbus Interstellar · 07:42 station time</div>
+          <p>Good morning, operators. Yesterday you locked the doors: guardrails, least privilege, data perimeters. Here's the uncomfortable part. <b>Every door gets opened eventually</b>, sometimes by a stolen key, sometimes by a well-meaning intern, sometimes by a dependency nobody has read since 2023.</p>
+          <p>Overnight our egress telemetry showed a spike to an address nobody recognizes. Something touched the cargo-manifest buckets in <code>skyfortress-prod</code>. We have 40 accounts and 17 Regions, and right now <b>we can't say what happened</b>, because half our accounts never turned on the right logs.</p>
+          <p>Today we become the eyes in the sky. By sunset, I want three things: every account wired into one detection backbone, a hunt that names the intruder from logs alone, and tripwires that page us <i>before</i> the next spike.</p>
+        </div>
+      </div>
+      <div class="story villain reveal" style="margin-top:18px">
+        <img class="avatar" src="assets/img/kraken.svg" alt="The Kraken">
+        <div>
+          <div class="who">INTERCEPTED · The Kraken Collective · #deep-ops channel</div>
+          <p>lol. owl thinks logs will save it. we live <b>between</b> your log lines: unused Regions, data events nobody pays for, the 6-hour gap before anyone reads a finding. light all the beacons you like, little bird. 🐙 we only need one dark corner.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ OBJECTIVES + SCHEDULE ============ -->
+    <section id="objectives">
+      <div class="eyebrow">Outcomes</div>
+      <h2>By the end of today you will…</h2>
+      <ul class="objectives">
+        <li>Design an <b>org-wide logging architecture</b> and explain exactly what management, data, network activity and Insights events can and can't show you.</li>
+        <li>Run GuardDuty and Security Hub from a <b>delegated admin</b> account, and compare org auto-enable with the 2026 <b>declarative-policy</b> approach.</li>
+        <li>Detonate real ATT&amp;CK techniques with <b>Stratus Red Team</b> and read the resulting findings and <b>attack sequences</b> like a responder.</li>
+        <li>Explain how the <b>unified Security Hub</b> turns thousands of findings into a short list of exposure findings, ranked by risk.</li>
+        <li>Run <b>hypothesis-driven hunts</b> in SQL over raw CloudTrail and <b>OCSF</b> data in Security Lake, and name an intruder from logs alone.</li>
+        <li>Ship <b>detection-as-code</b>: EventBridge patterns, a Lambda detector, unit tests, Terraform, and Security Hub automation rules.</li>
+        <li>Map every detection to <b>MITRE ATT&amp;CK</b> technique IDs, and find the blind spots you haven't mapped yet.</li>
+        <li>Find, scope and time a <b>persistence backdoor</b> in under 30 minutes in the boss fight.</li>
+      </ul>
+
+      <h3 style="margin-top:40px">Schedule</h3>
+      <div class="timeline">
+        <div class="slot"><div class="time">09:00</div><div class="what"><b>Briefing</b>: Day 1 recap, and the Kraken's overnight spike</div></div>
+        <div class="slot"><div class="time">09:15</div><div class="what"><b>Module 2.1</b>: The logging foundation</div></div>
+        <div class="slot lab-slot"><div class="time">09:55</div><div class="what"><b>Lab 2.1</b>: Light the Beacons <span class="chip accent">60 min</span></div></div>
+        <div class="slot break-slot"><div class="time">10:55</div><div class="what">Break ☕</div></div>
+        <div class="slot"><div class="time">11:05</div><div class="what"><b>Modules 2.2 + 2.3</b>: GuardDuty in 2026 and the new Security Hub</div></div>
+        <div class="slot lab-slot"><div class="time">11:55</div><div class="what"><b>Lab 2.2 · part 1</b>: Summon the Kraken (detonate) <span class="chip accent">25 min</span></div></div>
+        <div class="slot break-slot"><div class="time">12:20</div><div class="what">Lunch 🍜 · findings bake while you eat · <b>run <code>seed-hunt.py</code> before you leave</b></div></div>
+        <div class="slot lab-slot"><div class="time">13:05</div><div class="what"><b>Lab 2.2 · part 2</b>: Investigate <span class="chip accent">45 min</span></div></div>
+        <div class="slot"><div class="time">13:50</div><div class="what"><b>Module 2.4</b>: Threat hunting methodology</div></div>
+        <div class="slot lab-slot"><div class="time">14:20</div><div class="what"><b>Lab 2.3</b>: Hunt the Deep <span class="chip accent">60 min</span></div></div>
+        <div class="slot break-slot"><div class="time">15:20</div><div class="what">Break · <i>instructor quietly runs the boss planter</i> 🐙</div></div>
+        <div class="slot"><div class="time">15:30</div><div class="what"><b>Module 2.5</b>: Detection-as-code</div></div>
+        <div class="slot lab-slot"><div class="time">15:50</div><div class="what"><b>Lab 2.4</b>: Tripwires as Code <span class="chip accent">55 min</span></div></div>
+        <div class="slot lab-slot"><div class="time">16:45</div><div class="what"><b>Boss fight</b>: The 3 A.M. Backdoor <span class="chip accent">30 min, time-boxed</span></div></div>
+        <div class="slot"><div class="time">17:15</div><div class="what"><b>Debrief</b>, quiz and badge ceremony 🏅</div></div>
+      </div>
+      <div class="callout info"><strong class="ct">Conventions (same as Lab 0)</strong><p>Every command runs in <b>CloudShell, us-east-1</b>. No <code>--profile</code> (or <code>--profile sky-mgmt</code>) means the <b>management</b> account. <code>--profile sky-dev</code> doubles as your <b>security tooling / delegated admin</b> account, and <code>--profile sky-prod</code> is where the workloads (and the Kraken) live. Run <code>source ~/.skyfortress.env</code> to get <code>$SKY_DEV</code> and <code>$SKY_PROD</code>. Lab files are in <a href="labs/day2/index.html"><code>labs/day2/</code></a> (cloned to <code>~/skyfortress/labs/day2</code>).</p></div>
+      <div class="callout cost"><strong class="ct">Two clocks to respect today</strong><p><b>CloudTrail delivery:</b> events reach the S3 trail in about 5–15 minutes. <b>GuardDuty:</b> new findings typically appear 5–20 minutes after the activity, and ML-based <code>AnomalousBehavior</code> findings may never fire in a two-day-old sandbox. Every lab that waits on either clock has a <b>fallback</b> so you're never stuck staring at an empty console.</p></div>
+    </section>
+
+    <!-- ============ CONCEPTS ============ -->
+    <section id="concepts">
+      <div class="eyebrow">Concepts</div>
+      <h2>Five ideas that make a SOC see</h2>
+
+      <!-- ---------- 2.1 ---------- -->
+      <div class="module" id="m2-1" data-toc="2.1 Logging foundation">
+        <div class="module-num">MODULE 2.1</div>
+        <h3>The logging foundation: what's recorded, where it goes, and who can erase it</h3>
+        <p>Every detection, hunt and forensic timeline this week depends on one question: <b>was it logged, and can I trust the log?</b> CloudTrail doesn't record one kind of event. It records four, and each has a different price, latency and blind spot.</p>
+
+        <figure class="figure reveal"><img src="assets/img/day2/fig-logging-arch.svg" alt="Architecture: organization accounts feed an organization trail into a locked log-archive bucket; GuardDuty reads its own streams; Security Lake and CloudWatch store and query; Security Hub, Detective, Athena and EventBridge correlate and act"><figcaption><b>FIG 2.1</b> The Skyfortress detection backbone. Member accounts can't turn off the org trail, the archive bucket can't be edited after the fact, and GuardDuty doesn't depend on any of it.</figcaption></figure>
+
+        <div class="table-wrap"><table>
+          <thead><tr><th>Event category</th><th>What it captures</th><th>Cost model</th><th>Blind spot it closes</th></tr></thead>
+          <tbody>
+            <tr><td><b>Management</b></td><td>Control-plane calls: <code>CreateUser</code>, <code>PutBucketPolicy</code>, <code>RunInstances</code>, <code>AssumeRole</code>, <code>ConsoleLogin</code>…</td><td>First copy of management events per account per Region is free</td><td>“Who changed the infrastructure?”</td></tr>
+            <tr><td><b>Data</b></td><td>Data-plane calls: S3 <code>GetObject</code>/<code>PutObject</code>, Lambda <code>Invoke</code>, DynamoDB item ops, Secrets Manager <code>GetSecretValue</code> is <i>management</i> (!)</td><td>Charged per event, so select with advanced event selectors</td><td>“Which objects were read before the bucket was wiped?”</td></tr>
+            <tr><td><b>Network activity</b></td><td>API calls that traverse a <b>VPC endpoint</b>, including calls denied by the endpoint policy (<code>VpceAccessDenied</code>)</td><td>Charged per event; filter by source and <code>errorCode</code></td><td>“Is someone using <i>our</i> endpoint with <i>foreign</i> credentials to exfiltrate?”</td></tr>
+            <tr><td><b>Insights</b></td><td>Statistical anomalies in write-API call <i>rates</i> and <i>error rates</i></td><td>Charged per analyzed event</td><td>“Why are there 4,000 <code>DeleteObject</code>s a minute?”</td></tr>
+          </tbody>
+        </table></div>
+
+        <div class="callout gotcha"><strong class="ct">Gotcha: “we have CloudTrail”</strong><p>Most organizations that say this mean <i>management events only</i>. In the most famous S3 breaches, the bucket-level calls were logged and the object-level reads were not. Attackers know this. Lab 2.2 shows you the gap firsthand.</p></div>
+
+        <h4>Where do the logs go, and how do you query them?</h4>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Option</th><th>Good at</th><th>Watch out for</th></tr></thead>
+          <tbody>
+            <tr><td><b>Org trail → S3 → Athena</b></td><td>Cheapest at rest, you control retention and Object Lock, raw fidelity. Partition projection makes it fast.</td><td>You own the schema, the partitions and query costs (scan size!). <span class="verdict ok">used in Lab 2.3</span></td></tr>
+            <tr><td><b>Amazon Security Lake</b></td><td>Normalizes CloudTrail, VPC Flow, Route 53, Security Hub, EKS audit, WAF and custom sources into <b>OCSF</b> Parquet in <i>your</i> account. One schema, many tools.</td><td>Normalization adds minutes of latency. Learn OCSF field names (FIG 2.4). <span class="verdict ok">Lab 2.3 Track A</span></td></tr>
+            <tr><td><b>CloudTrail Lake</b></td><td>Managed SQL over events, no ETL, long retention.</td><td><span class="verdict no">closed to new customers 31 May 2026</span> Existing users keep it. AWS points new users to <b>Amazon CloudWatch</b>.</td></tr>
+            <tr><td><b><code>lookup-events</code></b></td><td>Zero setup, 90 days of management events per Region. Perfect for quick triage (and the boss fight).</td><td>Management events only, one Region per call, rate limited, no SQL.</td></tr>
+          </tbody>
+        </table></div>
+
+        <div class="callout new"><strong class="ct">New in 2025–2026: network activity events</strong><p>CloudTrail can now record API calls that pass through your VPC endpoints, including calls the <b>endpoint policy denied</b>. Pair this with the data perimeter you built on Day 1. A <code>VpceAccessDenied</code> from a principal outside your org is someone using your network path with foreign credentials, which is a textbook exfiltration attempt (T1537).</p></div>
+
+        <h4>Integrity: can the Kraken edit history?</h4>
+        <ul>
+          <li><b>Organization trail.</b> It's created in the management account and applies to every member. Members can see it but can't stop, delete or modify it. That's the single most valuable property on this page.</li>
+          <li><b>Log file validation.</b> CloudTrail writes hourly <b>digest files</b> with SHA-256 hashes of each log file, signed with SHA-256 with RSA. <code>aws cloudtrail validate-logs</code> proves that nothing was modified, deleted or forged.</li>
+          <li><b>Immutable storage.</b> The archive bucket lives in a dedicated log-archive account, with <b>S3 Object Lock</b> (compliance mode in prod) and an explicit deny on deletes.</li>
+          <li><b>Preventive guardrails (Day 1).</b> An SCP denying <code>cloudtrail:StopLogging</code>, <code>DeleteTrail</code>, <code>guardduty:DeleteDetector</code> and friends for everyone except a break-glass role.</li>
+        </ul>
+        <div class="callout war"><strong class="ct">War story: Capital One, 2019</strong><p>A misconfigured WAF allowed SSRF to the EC2 metadata service (IMDSv1). The attacker took the instance role's credentials and used them to list and sync S3 buckets holding about 100 million customer records. Every step is in today's ATT&amp;CK map (<code>T1552.005</code> → <code>T1619</code> → <code>T1530</code>). Two takeaways from the public reporting are still relevant: <b>IMDSv2</b> blocks the SSRF path, and <b>role credentials used from an unexpected place</b> is a high-fidelity signal. GuardDuty now raises the <code>InstanceCredentialExfiltration</code> findings for exactly that.</p></div>
+        <p>Also in the toolbox: <b>VPC Flow Logs</b> (use custom format v5 fields like <code>pkt-srcaddr</code> and <code>flow-direction</code>), <b>Route 53 Resolver query logs</b> (DNS is where C2 and tunneling show up), and ELB/CloudFront/WAF logs for the edge.</p>
+      </div>
+
+      <!-- ---------- 2.2 ---------- -->
+      <div class="module" id="m2-2" data-toc="2.2 GuardDuty in 2026" style="margin-top:56px">
+        <div class="module-num">MODULE 2.2</div>
+        <h3>GuardDuty in 2026: from findings to stories</h3>
+        <p>GuardDuty reads <b>foundational data sources</b> through its own independent, duplicated streams: CloudTrail management events, VPC Flow Logs and DNS query logs. You <b>don't</b> need to enable flow logs or a trail for it to work, and turning yours off doesn't blind it. On top of that, you add <b>protection plans</b>:</p>
+        <div class="signal-grid">
+          <div class="signal"><b>S3 Protection</b><span>Analyzes S3 data events for anomalous access, such as discovery, exfiltration and mass deletion.</span><br><span class="chip">Discovery:S3/AnomalousBehavior</span></div>
+          <div class="signal"><b>Runtime Monitoring</b><span>A security agent on EKS, ECS (including Fargate) and EC2 that sees process, file and network events.</span><br><span class="chip">Execution:Runtime/NewBinaryExecuted</span></div>
+          <div class="signal"><b>EKS Protection</b><span>Kubernetes audit logs: anonymous access, privileged pods, suspicious exec.</span></div>
+          <div class="signal"><b>Malware Protection for EC2</b><span>Agentless scans of EBS snapshots, triggered by a finding or on demand.</span></div>
+          <div class="signal"><b>Malware Protection for S3</b><span>Scans new uploads to the buckets you choose and tags the verdict on each object.</span><br><span class="chip">Object:S3/MaliciousFile</span></div>
+          <div class="signal"><b>RDS Protection</b><span>Anomalous logins to Aurora and RDS (brute force, odd geography).</span></div>
+          <div class="signal"><b>Lambda Protection</b><span>Network activity from functions: crypto-mining, C2 callbacks.</span></div>
+          <div class="signal"><b>AI Protection</b><span class="chip new">JUL 2026</span><br><span>Threat detection for <b>Amazon Bedrock</b> and <b>SageMaker AI</b> workloads, surfaced in Security Hub.</span></div>
+        </div>
+
+        <h4>Extended Threat Detection: attack sequences</h4>
+        <p>A single <code>DescribeInstances</code> burst is noise. A stolen instance credential is worrying. Combine them with a new IAM user, a stopped trail and a bucket being drained, all tied to the same principal within the same window, and you have an incident. <b>Extended Threat Detection</b> correlates these signals into one <b>attack sequence</b> finding, maps it to ATT&amp;CK tactics and rates it <b>Critical</b>. It's on automatically when GuardDuty is enabled, at no extra cost. It covers IAM credentials, S3 data, EKS clusters, and (since 2025) EC2 instance groups and ECS clusters.</p>
+        <figure class="figure reveal"><img src="assets/img/day2/fig-attack-sequence.svg" alt="Timeline of seven signals from discovery to impact converging into one AttackSequence:S3/CompromisedData critical finding, with the five new indicator types from May 2026"><figcaption><b>FIG 2.2</b> Seven weak signals become one Critical finding. Sequence types include <code>AttackSequence:IAM/CompromisedCredentials</code>, <code>AttackSequence:S3/CompromisedData</code>, <code>AttackSequence:EKS/CompromisedCluster</code>, <code>AttackSequence:EC2/CompromisedInstanceGroup</code> and <code>AttackSequence:ECS/CompromisedCluster</code>.</figcaption></figure>
+        <div class="callout new"><strong class="ct">New in May 2026: five new sequence indicators</strong><p>Attack sequences now carry context indicators that explain <i>why</i> the sequence is dangerous: <code>MALICIOUS_PACKAGE</code>, <code>MISCONFIGURATION</code>, <code>REACHABILITY</code>, <code>SENSITIVE_DATA</code> and <code>VULNERABILITY</code>. An attack sequence marked <code>SENSITIVE_DATA</code> + <code>REACHABILITY</code> goes to the top of the queue.</p></div>
+
+
+        <h4>Anatomy of a finding: what to read first</h4>
+<pre data-title="get-findings (trimmed) · UnauthorizedAccess:IAMUser/InstanceCredentialExfiltration.InsideAWS"><code class="language-json">{
+  "AccountId": "222222222222",
+  "Region": "us-east-1",
+  "Type": "UnauthorizedAccess:IAMUser/InstanceCredentialExfiltration.InsideAWS",
+  "Severity": 8,
+  "Title": "Credentials for the EC2 instance role used from a different AWS account.",
+  "Resource": {
+    "ResourceType": "AccessKey",
+    "AccessKeyDetails": {
+      "AccessKeyId": "ASIA…",
+      "PrincipalId": "AROA…:i-0c4rg0kraken",
+      "UserName": "stratus-red-team-ec2-steal-credentials-role",
+      "UserType": "AssumedRole"
+    }
+  },
+  "Service": {
+    "Action": {
+      "ActionType": "AWS_API_CALL",
+      "AwsApiCallAction": {
+        "Api": "DescribeInstances",
+        "CallerType": "Remote IP",
+        "ServiceName": "ec2.amazonaws.com",
+        "RemoteIpDetails": { "IpAddressV4": "3.x.x.x", "Organization": { "Asn": "16509", "AsnOrg": "AMAZON-02" } }
+      }
+    },
+    "Count": 14,
+    "EventFirstSeen": "2026-11-24T11:58:12Z",
+    "EventLastSeen": "2026-11-24T12:03:40Z",
+    "Archived": false
+  }
+}</code></pre>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Read this</th><th>To answer</th></tr></thead>
+          <tbody>
+            <tr><td><code>Type</code></td><td>ThreatPurpose:ResourceType/ThreatFamily.Variant. The prefix already tells you the tactic.</td></tr>
+            <tr><td><code>Resource.AccessKeyDetails</code></td><td><b>Which identity</b> is compromised. For a role, <code>PrincipalId</code> ends with the session name (here, the instance ID).</td></tr>
+            <tr><td><code>Service.Action.*.RemoteIpDetails</code></td><td><b>From where</b>: IP, ASN, geo. ASN <code>AMAZON-02</code> is the InsideAWS tell.</td></tr>
+            <tr><td><code>Count</code>, <code>EventFirstSeen</code>/<code>LastSeen</code></td><td><b>How long</b> it's been going on. GuardDuty aggregates repeats into one finding.</td></tr>
+          </tbody>
+        </table></div>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Severity</th><th>Range</th><th>Typical response</th></tr></thead>
+          <tbody>
+            <tr><td><span class="verdict no">Critical</span></td><td>9.0 – 10.0</td><td>Attack sequences. Page someone now, open an incident.</td></tr>
+            <tr><td><span class="verdict no">High</span></td><td>7.0 – 8.9</td><td>Resource is compromised or actively being abused. Contain within the hour.</td></tr>
+            <tr><td><span class="verdict meh">Medium</span></td><td>4.0 – 6.9</td><td>Suspicious, deviates from normal. Triage within the day.</td></tr>
+            <tr><td><span class="verdict ok">Low</span></td><td>1.0 – 3.9</td><td>Attempted, not successful (port probes). Dashboard or suppression candidates.</td></tr>
+          </tbody>
+        </table></div>
+        <div class="callout tip"><strong class="ct">Pro tip: tune before you drown</strong><ul>
+          <li><b>Suppression rules</b> auto-archive future findings that match criteria, such as your vulnerability scanner's port probes. Suppressed findings aren't sent to Security Hub, Detective or EventBridge, so be precise.</li>
+          <li><b>Trusted IP lists and threat lists</b> let you add your own allow and deny intel.</li>
+          <li><b>Finding publishing frequency</b>: new findings reach EventBridge within minutes, but <i>updates</i> to recurring findings use the detector setting (15 min / 1 h / 6 h). Set it to 15 minutes in prod.</li>
+        </ul></div>
+        <div class="callout gotcha"><strong class="ct">Gotcha: GuardDuty is Regional</strong><p>An attacker who spins up crypto-miners in <code>sa-east-1</code> (T1535, unused Regions) is invisible if GuardDuty only runs where <i>you</i> work. Enable it in <b>every</b> Region and block unused Regions with an SCP. The new <b>declarative policy for GuardDuty</b> (Oct 2026) enforces enablement across accounts <i>and</i> Regions, and members can't override it from the console or API.</p></div>
+        <div class="callout new"><strong class="ct">New in 2026: AI-powered investigations (preview)</strong><p>GuardDuty can analyze its own findings and give a verdict on whether an alert looks <b>malicious or benign</b>, with the reasoning. Treat it like a sharp junior analyst: a great first pass, not the final word. In Lab 2.2 you'll compare its take with yours.</p></div>
+      </div>
+
+      <!-- ---------- 2.3 ---------- -->
+      <div class="module" id="m2-3" data-toc="2.3 The new Security Hub" style="margin-top:56px">
+        <div class="module-num">MODULE 2.3</div>
+        <h3>The new Security Hub: correlation over collection</h3>
+        <p>The old model was “ship every finding to one place and sort by severity.” With 40 accounts that's 10,000 rows, and the one that matters is on page 37. The <b>unified AWS Security Hub</b> (GA December 2025) flips this. It <b>correlates</b> signals from GuardDuty, Inspector, Macie and Security Hub CSPM into <b>exposure findings</b>: a single resource-centric story with a risk score and an attack path.</p>
+        <figure class="figure reveal"><img src="assets/img/day2/fig-security-hub.svg" alt="Six inputs (GuardDuty, Inspector, Macie, Security Hub CSPM, Azure resources, AI inventory) flow into a correlation engine that emits one exposure finding combining reachability, vulnerability, misconfiguration, sensitive data and threat"><figcaption><b>FIG 2.3</b> One EC2 instance, five independent problems, one exposure finding. Fix order: close the port, enforce IMDSv2, patch, and scope the role.</figcaption></figure>
+        <div class="grid g2">
+          <div class="card"><h3>🧭 Security Hub (unified)</h3><ul>
+            <li>Near-real-time risk analytics and <b>exposure findings</b></li>
+            <li>Findings in <b>OCSF</b> format</li>
+            <li>Attack-path visualization per resource</li>
+            <li>Automation and ticketing (Jira, ServiceNow)</li>
+            <li><span class="chip new">JUL 2026</span> <b>Azure</b> resource coverage, <b>AI inventory</b>, GuardDuty AI Protection</li>
+            <li><span class="chip new">OCT 2026</span> GuardDuty <b>Runtime Monitoring included</b> in the Threat Analytics plan</li>
+          </ul></div>
+          <div class="card"><h3>📋 Security Hub CSPM</h3><ul>
+            <li>The classic posture service, renamed</li>
+            <li>Standards: AWS FSBP, CIS, NIST 800-53, PCI DSS</li>
+            <li>Control findings in <b>ASFF</b> (e.g. <code>S3.1</code>, <code>IAM.6</code>)</li>
+            <li>Central configuration policies across the org</li>
+            <li>Automation rules on ASFF fields (Lab 2.4)</li>
+            <li><span class="chip new">NOV 2026</span> enable org-wide with <b>declarative policies</b></li>
+          </ul></div>
+        </div>
+        <div class="callout tip"><strong class="ct">Design for a single pane</strong><p>Pick one <b>delegated admin</b> (the security-tooling account) and one <b>home Region</b> for cross-Region aggregation. Use the same delegated admin for GuardDuty, Security Hub, Inspector, Macie and Detective. If they're split, your analysts end up hopping between accounts at 3 a.m.</p></div>
+      </div>
+
+      <!-- ---------- 2.4 ---------- -->
+      <div class="module" id="m2-4" data-toc="2.4 Threat hunting" style="margin-top:56px">
+        <div class="module-num">MODULE 2.4</div>
+        <h3>Threat hunting: assume breach, prove it (or disprove it)</h3>
+        <p>Detection waits for an alert. Hunting assumes the alert never fired. Good hunts are <b>hypothesis-driven</b>: you state what an attacker would do, where it would show up, and what result would prove you wrong.</p>
+        <figure class="figure reveal"><img src="assets/img/day2/fig-hunt-loop.svg" alt="Six-step hunting loop: hypothesize, scope data, query, analyze, codify, report; next to the anatomy of a good hypothesis"><figcaption><b>FIG 2.4</b> The hunting loop. A hunt that finds nothing still produces a documented null result and, often, a new detection.</figcaption></figure>
+        <h4>Four analysis moves you'll use all week</h4>
+        <div class="grid g4">
+          <div class="card"><h3>📚 Stack</h3><p class="muted">Count by a field and read the <b>bottom</b> of the list (least frequency of occurrence). Rare user agents, rare APIs, rare source ASNs.</p></div>
+          <div class="card"><h3>📈 Baseline</h3><p class="muted">“Has this principal <b>ever</b> called this API before?” First-seen events are gold.</p></div>
+          <div class="card"><h3>🔗 Pivot</h3><p class="muted">From a suspicious IP to every principal that used it, then to every resource those principals touched.</p></div>
+          <div class="card"><h3>🧩 Cluster</h3><p class="muted">Group by session and time window: many distinct APIs in five minutes looks like an attacker exploring.</p></div>
+        </div>
+        <figure class="figure reveal"><img src="assets/img/day2/fig-attack-matrix.svg" alt="MITRE ATT&amp;CK cloud matrix with techniques covered today highlighted in orange"><figcaption><b>FIG 2.5</b> Today's battlefield. Orange cells are techniques you'll detonate, detect or hunt. Blue cells are homework.</figcaption></figure>
+        <figure class="figure reveal"><img src="assets/img/day2/fig-security-lake.svg" alt="Security Lake ingests eight source types, normalizes into OCSF classes like API Activity 6003 and Detection Finding 2004, and serves Athena, subscribers and dashboards; includes a CloudTrail-to-OCSF field mapping"><figcaption><b>FIG 2.6</b> Security Lake normalizes everything to OCSF. Learn the six field mappings at the bottom and you can write hunts against either schema.</figcaption></figure>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Hypothesis</th><th>ATT&amp;CK</th><th>Data</th><th>Signal</th></tr></thead>
+          <tbody>
+            <tr><td>A stolen role session is probing for permissions</td><td><code>T1580</code></td><td>CloudTrail mgmt</td><td>Many <code>AccessDenied</code> across distinct APIs from one session</td></tr>
+            <tr><td>Someone is reading secrets they never read before</td><td><code>T1555.006</code></td><td>CloudTrail mgmt</td><td>First-seen <code>GetSecretValue</code> per principal and secret</td></tr>
+            <tr><td>Attacker tooling has a fingerprint</td><td><code>T1078.004</code></td><td>CloudTrail mgmt</td><td>Rare <code>userAgent</code> on an otherwise normal role</td></tr>
+            <tr><td>Compute in Regions we don't use</td><td><code>T1535</code>/<code>T1496</code></td><td>CloudTrail mgmt (all Regions)</td><td><code>RunInstances</code> outside the approved Region list</td></tr>
+            <tr><td>Bulk object reads before deletion</td><td><code>T1530</code>→<code>T1485</code></td><td>S3 data events</td><td>GetObject fan-out, then DeleteObjects by the same principal</td></tr>
+            <tr><td>DNS tunneling or C2</td><td><code>T1071.004</code></td><td>Resolver query logs</td><td>High-entropy subdomains, rare domains, beacon intervals</td></tr>
+          </tbody>
+        </table></div>
+        <div class="callout info"><strong class="ct">Amazon Detective</strong><p>Detective builds a <b>behavior graph</b> from CloudTrail, VPC Flow Logs, EKS audit and GuardDuty findings, and groups related findings together. It's the fastest way to answer “what else did this principal do, and is that normal for it?” without writing SQL. Use it to pivot, and use SQL to prove.</p></div>
+      </div>
+
+      <!-- ---------- 2.5 ---------- -->
+      <div class="module" id="m2-5" data-toc="2.5 Detection-as-code" style="margin-top:56px">
+        <div class="module-num">MODULE 2.5</div>
+        <h3>Detection-as-code: tripwires with unit tests</h3>
+        <p>A detection that lives only in a console is a detection nobody can review, test or roll back. Treat detections like application code: <b>git</b>, <b>pull requests</b>, <b>tests</b>, <b>CI</b>, and a <b>feedback loop</b> where every false positive becomes a new test case.</p>
+        <figure class="figure reveal"><img src="assets/img/day2/fig-detection-pipeline.svg" alt="Pipeline: git repo to CI checks to terraform apply at build time; CloudTrail to EventBridge to Lambda detector to SNS, Security Hub and tickets at run time; feedback loop from false positives back to tests"><figcaption><b>FIG 2.7</b> Build time and run time. EventBridge patterns filter coarsely and cheaply; the Lambda makes the decisions that need logic.</figcaption></figure>
+        <p>EventBridge patterns are more expressive than most people realize. Use <code>prefix</code>, <code>suffix</code>, <code>anything-but</code>, <code>numeric</code>, <code>exists</code>, <code>equals-ignore-case</code>, <code>wildcard</code> and <code>$or</code> to keep the Lambda cheap and quiet:</p>
+<pre data-title="patterns/access-key-not-by-ci.json (example)"><code class="language-json">{
+  "source": ["aws.iam"],
+  "detail-type": ["AWS API Call via CloudTrail"],
+  "detail": {
+    "eventName": ["CreateAccessKey"],
+    "errorCode": [{ "exists": false }],
+    "userIdentity": {
+      "arn": [{ "anything-but": { "prefix": "arn:aws:sts::222222222222:assumed-role/ci-deployer/" } }]
+    }
+  }
+}</code></pre>
+        <div class="callout gotcha"><strong class="ct">Gotcha: global services live in us-east-1</strong><p>IAM, STS (global endpoint) and console sign-in events are delivered to EventBridge in <b>us-east-1</b>. A beautifully tested <code>CreateAccessKey</code> rule deployed only in <code>eu-west-1</code> will never fire. Deploy tripwires in every Region you use, and always in us-east-1.</p></div>
+        <div class="callout tip"><strong class="ct">Alert hygiene checklist</strong><ul>
+          <li>Every rule has an <b>owner</b>, a <b>runbook link</b> and an <b>ATT&amp;CK ID</b> in its payload.</li>
+          <li>Measure <b>precision</b> (actionable ÷ total) per rule. Below 50% means tune it or turn it into a dashboard.</li>
+          <li>Prefer <b>enrichment</b> over noise: who is this principal, what does it normally do, what's tagged on the resource?</li>
+          <li>Portable formats like <b>Sigma</b> are worth knowing if you run more than one SIEM. Today we stay native.</li>
+        </ul></div>
+      </div>
+    </section>
+
+    <!-- ============ LABS ============ -->
+    <section id="labs">
+      <div class="eyebrow">Hands-on</div>
+      <h2>Labs</h2>
+      <p>Four labs and a boss. Labs 2.1's backbone is used by everything after it (and by Days 3–5), so <b>don't clean it up</b> tonight.</p>
+
+      <!-- ===================== LAB 2.1 ===================== -->
+      <article class="lab" id="lab-2-1" data-toc="Lab 2.1 Light the Beacons">
+        <img class="lab-cover" src="assets/img/day2/lab1-cover.svg" alt="Cover art: a chain of signal-fire towers on floating islands linked by cyan light beams">
+        <div class="lab-head">
+          <div class="lab-num">Lab 2.1</div>
+          <h3>Light the Beacons 🔥</h3>
+          <div class="chips"><span class="chip med">Intermediate</span><span class="chip">⏱ 60 min</span><span class="chip">💸 ~$0.50 (GD/SH trials)</span><span class="chip">Organizations · GuardDuty · Security Hub · CloudTrail</span></div>
+        </div>
+        <div class="lab-body">
+          <p><b>Goal:</b> build the org-wide detection backbone from FIG 2.1. You'll delegate GuardDuty and Security Hub to <code>skyfortress-dev</code>, auto-enroll every account, create a tamper-resistant organization trail with surgical data-event selectors, and prove end to end that data events actually arrive.</p>
+          <p><b>Prerequisites:</b> Lab 0 complete (org, <code>sky-mgmt</code>/<code>sky-dev</code>/<code>sky-prod</code> profiles, <code>~/.skyfortress.env</code>). Files: <a href="labs/day2/lab1/index.html"><code>labs/day2/lab1/</code></a>.</p>
+          <div class="paths">
+            <div class="path guided"><p>Follow the 12 numbered steps. Each one ends with a command whose output you can check against the screenshots. About 60 minutes.</p><ul><li>☐ Delegate GuardDuty and Security Hub (steps 1–2)</li><li>☐ Enroll every account, then lock it with a policy (3–4)</li><li>☐ Unified Security Hub on, home Region set (5)</li><li>☐ Immutable bucket, org trail, surgical selectors (6–8)</li><li>☐ Prove members can't blind you (9)</li><li>☐ Beacon lit and found: flag (10–11), integrity later (12)</li></ul></div>
+            <div class="path challenge"><p><b>Goal:</b> every current and future account reports GuardDuty and Security Hub findings to <code>skyfortress-dev</code>, and an immutable org trail records management events plus S3 data events for the crown-jewels buckets.</p>
+              <ul><li><b>Constraints:</b> the management account is not the admin of anything; data events only for <code>skyfortress-crown-jewels-*</code>; no member can stop logging.</li>
+              <li><b>Done when:</b> <code>list-delegated-administrators</code> shows <code>$SKY_DEV</code> twice, every member is <code>Enabled</code>, the trail has three advanced selectors, and <code>stop-logging</code> from <code>sky-prod</code> fails. Then run steps 10–11 for the flag.</li></ul></div>
+          </div>
+          <h4>Steps</h4>
+          <ol class="steps" data-lab="d2-lab1">
+            <li><strong>Get your bearings</strong>
+<pre data-title="CloudShell · management"><code class="language-bash">source ~/.skyfortress.env
+echo "mgmt=$(aws sts get-caller-identity --query Account --output text) dev=$SKY_DEV prod=$SKY_PROD"
+cd ~/skyfortress/labs/day2/lab1 &amp;&amp; chmod +x *.sh *.py</code></pre>
+            </li>
+            <li><strong>Delegate security administration away from the management account</strong>
+              <div class="predict"><p>Why shouldn't the management account be your GuardDuty/Security Hub admin? Write down two reasons before you read on.</p></div>
+              <p>The management account can't be restricted by SCPs, and every person who logs into it is effectively an org owner. Analysts need day-to-day access to findings, and they shouldn't need the keys to the kingdom to get it. Delegate the work:</p>
+<pre data-title="CloudShell · management"><code class="language-bash">./org-detection-enable.sh "$SKY_DEV"</code></pre>
+              <p>The script trusts the GuardDuty, Security Hub and CloudTrail service principals in Organizations, then runs <code>guardduty enable-organization-admin-account</code> and <code>securityhub enable-organization-admin-account</code>. <a href="labs/day2/lab1/org-detection-enable.sh">Read it first</a>. You should never run a security script you haven't read.</p>
+              <div class="term" data-title="CloudShell · us-east-1 · management"><pre><span class="p">$</span> <span class="c">./org-detection-enable.sh "$SKY_DEV"</span>
+<span class="o">==&gt; Trusting security services at the Organizations level</span>
+    trusted: guardduty.amazonaws.com
+    trusted: securityhub.amazonaws.com
+    trusted: cloudtrail.amazonaws.com
+<span class="o">==&gt; Delegating GuardDuty administration to 222222222222 (us-east-1)</span>
+<span class="o">==&gt; Delegating Security Hub administration to 222222222222 (us-east-1)</span>
+
+Delegated admins now:
+<span class="o">----------------------------------------</span>
+<span class="o">|    ListDelegatedAdministrators       |</span>
+<span class="o">+---------------+----------------------+</span>
+<span class="o">|      Id       |        Name          |</span>
+<span class="o">+---------------+----------------------+</span>
+|  <span class="ok">222222222222</span> |  skyfortress-dev     |
+<span class="o">+---------------+----------------------+</span>
+<span class="o">-----------------------------------</span>
+<span class="o">| ListDelegatedServicesForAccount |</span>
+<span class="o">+---------------------------------+</span>
+|  <span class="ok">guardduty.amazonaws.com</span>        |
+|  <span class="ok">securityhub.amazonaws.com</span>      |
+<span class="o">+---------------------------------+</span></pre></div>
+              <p class="term-caption">Expected output (abridged). Account IDs in all screenshots are placeholders: 111111111111 management, 222222222222 dev, 333333333333 prod.</p>
+            </li>
+            <li><strong>Auto-enable GuardDuty for every account, present and future</strong>
+<pre data-title="CloudShell · delegated admin"><code class="language-bash">AWS_PROFILE=sky-dev ./org-guardduty-config.sh</code></pre>
+              <div class="term" data-title="CloudShell · us-east-1 · sky-dev"><pre><span class="o">==&gt; Admin detector: 6ec8a1b2c3d4e5f60718293a4b5c6d7e</span>
+<span class="o">==&gt; Org configuration now:</span>
+{
+    <span class="k">"AutoEnable"</span>: <span class="s">"ALL"</span>,
+    <span class="k">"Features"</span>: [
+        { <span class="k">"Name"</span>: <span class="s">"S3_DATA_EVENTS"</span>, <span class="k">"Auto"</span>: <span class="s">"ALL"</span> },
+        { <span class="k">"Name"</span>: <span class="s">"EBS_MALWARE_PROTECTION"</span>, <span class="k">"Auto"</span>: <span class="s">"ALL"</span> },
+        { <span class="k">"Name"</span>: <span class="s">"RUNTIME_MONITORING"</span>, <span class="k">"Auto"</span>: <span class="s">"ALL"</span> }
+    ]
+}
+<span class="o">==&gt; Member accounts (may take a few minutes to show 'Enabled'):</span>
+<span class="o">-------------------------------</span>
+<span class="o">|         ListMembers         |</span>
+<span class="o">+---------------+-------------+</span>
+<span class="o">|    Account    |   Status    |</span>
+<span class="o">+---------------+-------------+</span>
+|  333333333333 |  <span class="ok">Enabled</span>    |
+<span class="o">+---------------+-------------+</span></pre></div>
+              <p class="term-caption">A member may show <code>Created</code> or be missing for a few minutes. That's normal; the hint below covers it.</p>
+              <p>This calls <code>update-organization-configuration</code> with <code>--auto-enable-organization-members ALL</code> and turns on S3 Protection, EBS Malware Protection and Runtime Monitoring (with automated agent management) org-wide. <code>ALL</code> covers existing members; <code>NEW</code> would cover only future joiners. The management account is never auto-enrolled, so add it explicitly with <code>create-members</code> as the script reminds you.</p>
+              <details class="hint"><summary>Hint: list-members shows nothing</summary><p>Auto-enrollment is asynchronous. Wait 2–5 minutes. If it's still empty, confirm in the management account that <code>aws guardduty list-organization-admin-accounts</code> shows <code>$SKY_DEV</code> as <code>ENABLED</code>.</p></details>
+            </li>
+            <li><strong>The 2026 way: make enablement a policy, not a setting</strong>
+              <p>Auto-enable is a <i>setting</i>. A determined admin in a member account (or the Kraken with that admin's keys) can still suspend a detector in an obscure Region. Since October 2026, an AWS Organizations <b>GuardDuty policy</b> (policy type <code>GUARDDUTY_POLICY</code>) moves enablement into the org, where members can't override it from the console or API.</p>
+              <div class="predict"><p>You enable the <code>GUARDDUTY_POLICY</code> type on the root but haven't attached a policy yet. Next week a new account joins the org. Does step 3's auto-enable still enroll it?</p>
+                <details><summary>Reveal</summary><p><b>No, not reliably.</b> AWS documents that once the GuardDuty policy type is enabled, the Regional auto-enablement settings <b>stop applying</b>, even before you attach a policy. Enabling the type and attaching a policy is therefore one change, not two. Do them back to back.</p></details></div>
+              <ol>
+                <li><b>Prerequisites</b> (done in steps 2–3): trusted access for GuardDuty and <code>$SKY_DEV</code> as delegated admin. The delegated admin also needs the Organizations <b>delegation policy</b> that lets it manage GuardDuty policies. The GuardDuty console offers to create it for you.</li>
+                <li>In <code>sky-dev</code> → <b>GuardDuty → Accounts</b> (or <b>Settings</b>), find the organization-policy option and create a policy that enables GuardDuty in <b>all Regions</b> with the protection plans from step 3. Creating the first policy there enables the <code>GUARDDUTY_POLICY</code> type for you. The CLI equivalent from the management account is <code>aws organizations enable-policy-type --root-id "$SKY_ROOT_ID" --policy-type GUARDDUTY_POLICY</code>.</li>
+                <li>Attach the policy to the <b>Root</b>.</li>
+                <li>In <code>sky-prod</code>, try to suspend the detector and record the error: <code>aws guardduty update-detector --detector-id "$(aws guardduty list-detectors --profile sky-prod --query 'DetectorIds[0]' --output text)" --no-enable --profile sky-prod</code></li>
+              </ol>
+              <figure class="shot" data-url="console.aws.amazon.com/guardduty/home?region=us-east-1#/accounts">
+                <img src="assets/img/day2/shot-gd-accounts.svg" alt="Illustrative mock-up of the GuardDuty Accounts page in the delegated admin: three accounts Enabled, auto-enable ALL, and an organization policy attached to the root">
+                <figcaption><b>SCREEN 2.1</b> What “done” looks like from the delegated admin. Illustrative mock-up; the live console layout may differ.</figcaption>
+              </figure>
+              <p>Belt and braces: keep a Day 1-style SCP too, because SCPs also cover the API calls a declarative policy doesn't model:</p>
+<pre data-title="scp-protect-detection.json"><code class="language-json">{
+  "Version": "2012-10-17",
+  "Statement": [{
+    "Sid": "ProtectDetectionPlane",
+    "Effect": "Deny",
+    "Action": [
+      "guardduty:DeleteDetector", "guardduty:DisassociateFromAdministratorAccount",
+      "guardduty:UpdateDetector", "guardduty:CreateFilter", "guardduty:UpdateFilter",
+      "securityhub:DisableSecurityHub", "securityhub:DisassociateFromAdministratorAccount",
+      "cloudtrail:StopLogging", "cloudtrail:DeleteTrail", "cloudtrail:PutEventSelectors"
+    ],
+    "Resource": "*",
+    "Condition": { "ArnNotLike": { "aws:PrincipalArn": "arn:aws:iam::*:role/skyfortress-security-breakglass" } }
+  }]
+}</code></pre>
+              <div class="callout gotcha"><strong class="ct">Why deny CreateFilter?</strong><p>A GuardDuty <i>filter</i> with action <code>ARCHIVE</code> is a suppression rule. An attacker who can create one can silently archive every future finding about themselves. That's defense evasion without ever touching the detector.</p></div>
+            </li>
+            <li><strong>Turn on the unified Security Hub org-wide</strong>
+              <p>The unified Security Hub is set up in two hops. <b>(1) Management account</b> → <b>Security Hub</b> → <b>Get started</b> → choose <code>skyfortress-dev</code> as the delegated administrator and let the console create the Organizations delegation policy. <b>(2) In <code>skyfortress-dev</code></b>, enable Security Hub, choose <b>us-east-1</b> as the home Region, and include all accounts and the Regions you use. Then, under <b>Security Hub CSPM</b>, enable the <b>AWS Foundational Security Best Practices</b> standard through a central configuration policy (central configuration also lives in the home Region).</p>
+              <div class="callout gotcha"><strong class="ct">Don't make the management account an admin</strong><p>AWS documents that if the management account is the delegated admin for Security Hub CSPM, it <b>can't</b> also be the delegated admin for the unified Security Hub. One more reason step 2 delegated everything to <code>sky-dev</code>.</p></div>
+              <p>Note the plan options. With Security Hub enabled, the <b>Threat Analytics</b> plan includes GuardDuty Runtime Monitoring (Oct 2026), so you're not billed separately for Runtime Monitoring.</p>
+              <div class="callout info"><strong class="ct">Console labels drift</strong><p>Security Hub's console has changed a lot since 2025. If a button name differs, follow the intent: <i>delegated admin → org-wide enablement → home Region → standards via central configuration</i>.</p></div>
+            </li>
+            <li><strong>Create the log-archive bucket (immutable by design)</strong>
+<pre data-title="CloudShell · management"><code class="language-bash">MGMT=$(aws sts get-caller-identity --query Account --output text)
+ORG=$(aws organizations describe-organization --query Organization.Id --output text)
+TRAIL_BUCKET="skyfortress-org-trail-$MGMT"
+
+aws s3api create-bucket --bucket "$TRAIL_BUCKET" --object-lock-enabled-for-bucket
+aws s3api put-public-access-block --bucket "$TRAIL_BUCKET" --public-access-block-configuration \
+  BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
+# sandbox: GOVERNANCE 1 day (deletable with bypass). Production: COMPLIANCE, 365+ days.
+aws s3api put-object-lock-configuration --bucket "$TRAIL_BUCKET" --object-lock-configuration \
+  '{"ObjectLockEnabled":"Enabled","Rule":{"DefaultRetention":{"Mode":"GOVERNANCE","Days":1}}}'
+
+sed -e "s/__BUCKET__/$TRAIL_BUCKET/g" -e "s/__MGMT_ACCT__/$MGMT/g" -e "s/__ORG_ID__/$ORG/g" \
+  org-trail-bucket-policy.json &gt; /tmp/trail-policy.json
+aws s3api put-bucket-policy --bucket "$TRAIL_BUCKET" --policy file:///tmp/trail-policy.json
+echo "export TRAIL_BUCKET=$TRAIL_BUCKET" &gt;&gt; ~/.skyfortress.env</code></pre>
+              <p>Read <a href="labs/day2/lab1/org-trail-bucket-policy.json">the policy</a>. The <code>aws:SourceArn</code> conditions stop <i>other</i> accounts' trails from writing into your bucket (confused deputy, Day 1 callback). The final statement denies deletes to everyone except a log-steward role that doesn't even exist yet.</p>
+            </li>
+            <li><strong>Create the organization trail</strong>
+<pre data-title="CloudShell · management"><code class="language-bash">aws cloudtrail create-trail --name skyfortress-org-trail \
+  --s3-bucket-name "$TRAIL_BUCKET" \
+  --is-organization-trail --is-multi-region-trail \
+  --enable-log-file-validation
+aws cloudtrail start-logging --name skyfortress-org-trail
+aws cloudtrail get-trail-status --name skyfortress-org-trail --query '{Logging:IsLogging,LastDelivery:LatestDeliveryTime}'</code></pre>
+              <div class="term" data-title="CloudShell · us-east-1 · management"><pre><span class="p">$</span> <span class="c">aws cloudtrail get-trail-status --name skyfortress-org-trail --query '{Logging:IsLogging,LastDelivery:LatestDeliveryTime}'</span>
+{
+    <span class="k">"Logging"</span>: <span class="ok">true</span>,
+    <span class="k">"LastDelivery"</span>: <span class="warn">null</span>
+}</pre></div>
+              <p class="term-caption"><code>LastDelivery</code> stays <code>null</code> until the first log file lands, usually within 5–15 minutes. Re-run it before step 11.</p>
+            </li>
+            <li><strong>Add surgical event selectors</strong>
+              <p>Logging <i>every</i> S3 data event in a busy org can cost more than the workloads themselves. Advanced event selectors let you pay only for what matters: all management events, data events for the <b>crown-jewels</b> buckets only, and network activity events only when a <b>VPC endpoint policy denies</b> a call.</p>
+<pre data-title="CloudShell · management"><code class="language-bash">aws cloudtrail put-event-selectors --trail-name skyfortress-org-trail \
+  --advanced-event-selectors file://advanced-event-selectors.json
+aws cloudtrail get-event-selectors --trail-name skyfortress-org-trail \
+  --query 'AdvancedEventSelectors[].Name'</code></pre>
+              <div class="term" data-title="CloudShell · us-east-1 · management"><pre><span class="p">$</span> <span class="c">aws cloudtrail get-event-selectors --trail-name skyfortress-org-trail --query 'AdvancedEventSelectors[].Name'</span>
+[
+    <span class="s">"All management events (read + write)"</span>,
+    <span class="s">"S3 data events - crown jewels only"</span>,
+    <span class="s">"Network activity - VPC endpoint policy denials"</span>
+]</pre></div>
+              <div class="predict"><p>Secrets Manager <code>GetSecretValue</code> and S3 <code>GetBucketPolicy</code>: management or data events? Will they be logged with these selectors?</p>
+                <details><summary>Reveal</summary><p>Both are <b>management</b> events (Secrets Manager's value reads are deliberately classified as management events, and <code>GetBucketPolicy</code> is bucket-level, not object-level), so both are logged. That's why Lab 2.3 can hunt secret theft with no extra cost.</p></details></div>
+            </li>
+            <li><strong>Prove a member can't blind you</strong>
+              <div class="predict"><p>You're an admin in <code>skyfortress-prod</code>, which holds a copy of the org trail. Can you stop it? Predict the result, then try it.</p>
+                <details><summary>Reveal</summary><p>No. Members can see an organization trail but can't stop, update or delete it. Copy the exact error message into your notes; it's evidence for your auditors that the control works.</p></details></div>
+<pre data-title="CloudShell · prod"><code class="language-bash">TRAIL_ARN=$(aws cloudtrail describe-trails --trail-name-list skyfortress-org-trail \
+  --query 'trailList[0].TrailARN' --output text)
+aws cloudtrail stop-logging --name "$TRAIL_ARN" --profile sky-prod</code></pre>
+              <p>It fails. Organization trails can only be changed from the management account (or a CloudTrail delegated admin). Note the exact error. In Lab 2.2, Stratus's <code>cloudtrail-stop</code> technique will create and stop its <i>own</i> local trail, while yours keeps recording.</p>
+            </li>
+            <li><strong>Light a beacon in prod and watch it arrive</strong>
+<pre data-title="CloudShell · prod"><code class="language-bash">AWS_PROFILE=sky-prod python3 beacon-ping.py
+aws guardduty create-sample-findings --profile sky-prod \
+  --detector-id $(aws guardduty list-detectors --profile sky-prod --query 'DetectorIds[0]' --output text) \
+  --finding-types 'Recon:EC2/PortProbeUnprotectedPort' 'Backdoor:EC2/C&amp;CActivity.B!DNS'</code></pre>
+              <p>The beacon script writes and reads an object in <code>skyfortress-crown-jewels-&lt;prod&gt;</code>, then knocks on a secret key that doesn't exist. The sample findings should show up in <code>sky-dev</code>'s GuardDuty console within a minute, and in Security Hub shortly after.</p>
+            </li>
+            <li><strong>Find the beacon in the org trail</strong>
+              <p>Wait 5–15 minutes for delivery (a good moment for coffee), then:</p>
+<pre data-title="CloudShell · management"><code class="language-bash">./find-beacon.sh "$TRAIL_BUCKET" "$SKY_PROD"</code></pre>
+              <p>You'll see a tab-separated list of S3 <b>data</b> events: two successful calls from <code>Owlsley-Beacon/1.0</code> and one failed <code>GetObject</code>. The key of the failed knock is your flag (drop the <code>beacons/</code> prefix).</p>
+              <div class="term" data-title="CloudShell · us-east-1 · management"><pre><span class="p">$</span> <span class="c">./find-beacon.sh "$TRAIL_BUCKET" "$SKY_PROD"</span>
+<span class="o">==&gt; syncing s3://skyfortress-org-trail-111111111111/AWSLogs/o-sky123abc/333333333333/CloudTrail/us-east-1/2026/11/24/</span>
+<span class="o">==&gt; 14 log files</span>
+
+eventTime              eventName  errorCode  key                               userAgent
+2026-11-24T10:41:07Z   PutObject  -          beacons/hello-from-owlsley.txt    Boto3/1.x … Owlsley-Beacon/1.0
+2026-11-24T10:41:08Z   GetObject  -          beacons/hello-from-owlsley.txt    Boto3/1.x … Owlsley-Beacon/1.0
+2026-11-24T10:41:09Z   GetObject  <span class="err">NoSuchKey</span>  <span class="hl">beacons/▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓</span>         Boto3/1.x … Owlsley-Beacon/1.0</pre></div>
+              <p class="term-caption">The highlighted key is the flag, masked here. Object names and times will differ slightly.</p>
+              <details class="hint"><summary>Hint: nothing shows up</summary><p>(1) Is <code>get-trail-status</code> showing <code>IsLogging: true</code> with a recent delivery time? (2) Org-trail paths include the org ID: <code>AWSLogs/o-xxxx/&lt;acct&gt;/CloudTrail/us-east-1/YYYY/MM/DD/</code>. (3) Did the selectors go in <i>before</i> you ran the beacon? Events that happened earlier aren't backfilled.</p></details>
+            </li>
+            <li><strong>Prove integrity (do this at end of day)</strong>
+              <p>Digest files are delivered <b>hourly</b>, so come back after lunch:</p>
+<pre data-title="CloudShell · management"><code class="language-bash">aws cloudtrail validate-logs --trail-arn "$TRAIL_ARN" \
+  --start-time "$(date -u -d '-3 hours' +%Y-%m-%dT%H:%M:%SZ)" --verbose | tail -5</code></pre>
+              <p>Every file should report <code>valid</code>. In a real investigation, this output goes into your evidence package. It's how you show a court (or an auditor) that the timeline wasn't edited.</p>
+            </li>
+          </ol>
+          <div class="checkpoint"><p><code>list-delegated-administrators</code> shows <code>$SKY_DEV</code> for GuardDuty and Security Hub. Every member reports <code>Enabled</code> in GuardDuty. The org trail is logging with three advanced selectors. The beacon appears as a <b>Data</b> event in prod's log path. A member account can't stop the trail.</p></div>
+          <h4>Troubleshooting</h4>
+          <div class="table-wrap"><table><thead><tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr></thead><tbody>
+            <tr><td><code>enable-organization-admin-account</code> → <code>AccessDenied</code></td><td>Run from a member profile, or trusted access missing</td><td>Run step 2 with <b>no</b> profile (management). Re-run the script; it's idempotent.</td></tr>
+            <tr><td><code>list-members</code> empty after 5 min</td><td>Auto-enable is asynchronous, or the admin detector was created after the members joined</td><td>Re-run <code>org-guardduty-config.sh</code>, or add members explicitly with <code>create-members</code>.</td></tr>
+            <tr><td><code>put-bucket-policy</code> → <code>MalformedPolicy</code></td><td>A placeholder wasn't substituted</td><td><code>grep __ /tmp/trail-policy.json</code> should print nothing. Check <code>$ORG</code> and <code>$MGMT</code>.</td></tr>
+            <tr><td><code>create-trail</code> → <code>InsufficientS3BucketPolicyException</code></td><td>Bucket policy missing the org-path statement</td><td>Re-apply step 6. The org path is <code>AWSLogs/o-xxxx/*</code>, not just <code>AWSLogs/&lt;acct&gt;/*</code>.</td></tr>
+            <tr><td><code>find-beacon.sh</code> prints 0 files</td><td>Delivery lag, or the beacon ran before the selectors</td><td>Wait 10 minutes, then re-run <code>beacon-ping.py</code> (events aren't backfilled).</td></tr>
+          </tbody></table></div>
+          <form class="flag" data-id="d2-flag1" data-hash="a22f5446f6493fe71949ba9124c923b2337f95b319fac97713ab3bd844f48884" data-xp="150" data-label="Flag 2.1 · the secret beacon"></form>
+          <div class="stretch"><p><b>Network activity events for real.</b> Create an S3 gateway or interface endpoint in a prod VPC with an endpoint policy that allows only principals where <code>aws:PrincipalOrgID</code> equals your org. Then call S3 through it with credentials from a <i>different</i> account (a friend's sandbox works). Find the <code>VpceAccessDenied</code> network activity event in the trail. That event is the one that catches foreign-credential exfiltration.</p></div>
+          <div class="cleanup"><p><b>Keep everything.</b> Days 3–5 and the GameDay depend on this backbone. GuardDuty and Security Hub run on free trials for 30 days. After the course: <code>aws cloudtrail delete-trail --name skyfortress-org-trail</code>, empty the bucket (<code>aws s3api delete-objects … --bypass-governance-retention</code> once the 1-day retention lapses), then <code>guardduty disable-organization-admin-account</code> and <code>securityhub disable-organization-admin-account</code>.</p></div>
+        </div>
+      </article>
+
+      <!-- ===================== LAB 2.2 ===================== -->
+      <article class="lab" id="lab-2-2" data-toc="Lab 2.2 Summon the Kraken">
+        <img class="lab-cover" src="assets/img/day2/lab2-cover.svg" alt="Cover art: kraken tentacles rising from a glowing summoning portal while a radar locks onto ATT&amp;CK technique IDs">
+        <div class="lab-head">
+          <div class="lab-num">Lab 2.2</div>
+          <h3>Summon the Kraken 🐙</h3>
+          <div class="chips"><span class="chip hard">Advanced</span><span class="chip">⏱ 25 + 45 min</span><span class="chip">💸 ~$0.30 (t3.micro + S3)</span><span class="chip">Stratus Red Team · GuardDuty · Security Hub · Detective</span></div>
+        </div>
+        <div class="lab-body">
+          <p><b>Goal:</b> play both sides. Detonate real ATT&amp;CK techniques inside your own <code>skyfortress-prod</code>: credential theft from instance metadata, a backdoor admin user, a stopped trail, and an S3 smash-and-grab. Then investigate from the delegated-admin account as if you'd just been paged.</p>
+          <figure class="figure"><img src="assets/img/day2/fig-lab-kraken.svg" alt="Red side in CloudShell runs Stratus and kraken-chain.py against an EC2 victim, an S3 bucket and IAM; blue side in the delegated admin sees GuardDuty, Security Hub and Detective"><figcaption><b>FIG 2.8</b> Lab 2.2 architecture. Everything stays inside your sandbox.</figcaption></figure>
+          <div class="callout warn"><strong class="ct">Rules of engagement</strong><p>Only detonate in <b>your</b> sandbox <code>skyfortress-prod</code>. Stratus Red Team techniques are self-contained: they create their own prerequisites and clean up after themselves. Never point them at shared or production accounts. If your sandbox belongs to an employer, get written approval first.</p></div>
+          <div class="paths">
+            <div class="path guided"><p>Detonate with the exact commands in Part 1, go to lunch, and then work through Part 2's investigation steps in order.</p><ul><li>☐ Four techniques detonated, <code>stratus status</code> shows them (Part 1)</li><li>☐ Ranked findings, or the sample fallback (Part 2: 1)</li><li>☐ One attack sequence dissected signal by signal (2–3)</li><li>☐ Exposure view and Detective pivot (4–5)</li><li>☐ The unanswerable forensic question (6)</li><li>☐ Two flags and a five-line summary (7–9)</li></ul></div>
+            <div class="path challenge"><p><b>Goal:</b> pick <b>any three</b> Stratus AWS techniques from different ATT&amp;CK tactics, detonate them in <code>sky-prod</code>, then from <code>sky-dev</code> produce the five-line incident summary (Part 2, last step) with no hints.</p>
+              <ul><li><b>Constraints:</b> only <code>sky-prod</code>; read <code>stratus show</code> for each technique first; clean up with <code>stratus cleanup --all</code>.</li>
+              <li><b>Done when:</b> every technique maps to a finding <i>or</i> a written explanation of why there isn't one, plus both flags (run <code>kraken-chain.py</code> too).</li></ul></div>
+          </div>
+          <div class="callout cost"><strong class="ct">Set expectations: GuardDuty takes its time</strong>
+            <div class="timing">
+              <div><b>T + 0</b>Detonate. CloudTrail records it within seconds; you can already see it with <code>lookup-events</code>.</div>
+              <div><b>T + 5–20 min</b>Most GuardDuty findings appear. Attack sequences can take longer, because they correlate signals over time.</div>
+              <div><b>T + 25 min, nothing?</b>Use the <b>sample-findings fallback</b> in Part 2, step 1, and keep investigating. The skills are identical.</div>
+            </div>
+          </div>
+          <h4>Part 1 · Detonate (before lunch)</h4>
+          <ol class="steps" data-lab="d2-lab2">
+            <li><strong>Arm Stratus Red Team</strong>
+<pre data-title="CloudShell · prod"><code class="language-bash">export PATH="$HOME/bin:$PATH"
+stratus version || ~/skyfortress/labs/day2/lab2/install-stratus.sh
+export AWS_PROFILE=sky-prod AWS_REGION=us-east-1
+stratus list --platform aws | head -40</code></pre>
+              <p>Stratus is an open-source adversary-emulation tool from Datadog. Each technique is atomic, documented, mapped to ATT&amp;CK, and has <code>warmup</code> → <code>detonate</code> → <code>cleanup</code> phases.</p>
+            </li>
+            <li><strong>Read the technique before you fire it</strong>
+<pre data-title="CloudShell · prod"><code class="language-bash">stratus show aws.credential-access.ec2-steal-instance-credentials</code></pre>
+              <p>Warm-up builds a VPC, an EC2 instance with an instance role, and SSM access. Detonation uses SSM to run a command <i>on</i> the instance that reads role credentials from IMDS, then uses those credentials <i>from somewhere else</i>. That's T1552.005, the first move in the Capital One story.</p>
+            </li>
+            <li><strong>Warm up and predict</strong>
+<pre data-title="CloudShell · prod"><code class="language-bash">stratus warmup aws.credential-access.ec2-steal-instance-credentials   # ~3–5 min</code></pre>
+              <div class="predict"><p>GuardDuty has two variants: <code>UnauthorizedAccess:IAMUser/InstanceCredentialExfiltration.OutsideAWS</code> and <code>…InsideAWS</code>. The stolen credentials will be used from <b>CloudShell</b>. Which one fires, and why?</p>
+                <details><summary>Reveal</summary><p><b>InsideAWS.</b> CloudShell runs on AWS infrastructure, so the credentials are used from an AWS IP address belonging to a different account. GuardDuty distinguishes “used from another AWS account” from “used from the internet.” Real attackers often run from cloud hosts to blend in, so don't dismiss InsideAWS as lower risk.</p></details></div>
+            </li>
+            <li><strong>Detonate the credential theft</strong>
+<pre data-title="CloudShell · prod"><code class="language-bash">stratus detonate aws.credential-access.ec2-steal-instance-credentials</code></pre>
+              <div class="term" data-title="CloudShell · us-east-1 · sky-prod"><pre><span class="p">$</span> <span class="c">stratus detonate aws.credential-access.ec2-steal-instance-credentials</span>
+<span class="o">2026/11/24 11:57:31 Checking your authentication against AWS</span>
+<span class="o">2026/11/24 11:57:32 Not warming up - aws.credential-access.ec2-steal-instance-credentials is already warm. Use --force-warmup to force</span>
+<span class="o">2026/11/24 11:57:33 Running a command through SSM to retrieve the instance credentials from IMDS</span>
+<span class="o">2026/11/24 11:57:41 Successfully stole credentials of the instance role</span>
+<span class="o">2026/11/24 11:57:42 Using them to call ec2:DescribeInstances from outside the instance</span>
+<span class="ok">2026/11/24 11:57:44 Done</span>
+<span class="p">$</span> <span class="c">stratus status | grep -v COLD</span>
+<span class="o">+------------------------------------------------------+---------------------------------+-----------+</span>
+<span class="o">|                          ID                          |              NAME               |  STATUS   |</span>
+<span class="o">+------------------------------------------------------+---------------------------------+-----------+</span>
+| aws.credential-access.ec2-steal-instance-credentials | Steal EC2 Instance Credentials  | <span class="warn">DETONATED</span> |
+<span class="o">+------------------------------------------------------+---------------------------------+-----------+</span></pre></div>
+              <p class="term-caption">Abridged. The wording of Stratus log lines changes between versions; what matters is that it ends in <code>DETONATED</code>.</p>
+            </li>
+            <li><strong>Plant persistence and evade defenses</strong>
+<pre data-title="CloudShell · prod"><code class="language-bash">stratus detonate aws.persistence.iam-create-admin-user
+stratus detonate aws.defense-evasion.cloudtrail-stop
+stratus status | grep -v COLD</code></pre>
+              <p><code>iam-create-admin-user</code> creates a user with <code>AdministratorAccess</code> and an access key (T1136.003). <code>cloudtrail-stop</code> creates a throwaway local trail and stops it (T1562.008). Your org trail from Lab 2.1 records the whole thing.</p>
+            </li>
+            <li><strong>Unleash the Kraken on the cargo manifests</strong>
+<pre data-title="CloudShell · prod"><code class="language-bash">python3 ~/skyfortress/labs/day2/lab2/kraken-chain.py</code></pre>
+              <div class="term" data-title="CloudShell · us-east-1 · sky-prod"><pre><span class="p">$</span> <span class="c">python3 ~/skyfortress/labs/day2/lab2/kraken-chain.py</span>
+[nimbus] creating nimbus-cargo-manifests-333333333333
+[nimbus] 60 manifests stored. Business as usual...
+<span class="err">[kraken] 🐙 tentacles in. Discovery...</span>
+<span class="err">[kraken] ooh, tags say: [{'Key': 'data-classification', 'Value': 'restricted'}, {'Key': 'owner', 'Value': 'cargo-ops'}] — jackpot</span>
+<span class="err">[kraken] Collection: downloading 60 objects</span>
+<span class="err">[kraken] Impact: deleting originals</span>
+<span class="err">[kraken] ransom note delivered. 🐙  Now go be the defender.</span></pre></div>
+              <p><a href="labs/day2/lab2/kraken-chain.py"><code>kraken-chain.py</code></a> creates <code>nimbus-cargo-manifests-&lt;acct&gt;</code> (tagged <code>data-classification=restricted</code>), fills it with 60 manifests, then switches to a <code>KrakenCollective/6.6.6</code> user agent to enumerate, download everything, delete the originals and leave a ransom note. <b>Now go to lunch.</b> GuardDuty needs time to correlate.</p>
+            </li>
+          </ol>
+          <h4>Part 2 · Investigate (after lunch)</h4>
+          <ol class="steps" data-lab="d2-lab2b">
+            <li><strong>Triage like you were paged</strong>
+<pre data-title="CloudShell · delegated admin"><code class="language-bash">cd ~/skyfortress/labs/day2/lab2
+AWS_PROFILE=sky-dev ./triage-findings.sh</code></pre>
+              <div class="term" data-title="CloudShell · us-east-1 · sky-dev"><pre><span class="p">$</span> <span class="c">AWS_PROFILE=sky-dev ./triage-findings.sh</span>
+<span class="err">8</span>  UnauthorizedAccess:IAMUser/InstanceCredentialExfiltration.InsideAWS  333333333333  AccessKey  2026-11-24T12:09:14.201Z  a2c7f0e1…
+<span class="warn">5</span>  Persistence:IAMUser/AnomalousBehavior                                 333333333333  AccessKey  2026-11-24T12:14:52.880Z  4ec81b9d…
+<span class="ok">2</span>  Stealth:IAMUser/CloudTrailLoggingDisabled                             333333333333  AccessKey  2026-11-24T12:11:03.417Z  9b0d3a52…</pre></div>
+              <p class="term-caption">Columns: severity, type, account, resource type, last updated, finding ID. Your list will differ in order and size.</p>
+              <details class="hint"><summary>Fallback: nothing after 25 minutes? Generate sample findings</summary>
+                <p>Sample findings have the real JSON structure but are marked <code>[SAMPLE]</code> and point to placeholder resources. You lose the link to <i>your</i> resources, but every triage skill in this lab still applies.</p>
+<pre data-title="CloudShell · prod"><code class="language-bash">DIDP=$(aws guardduty list-detectors --profile sky-prod --query 'DetectorIds[0]' --output text)
+aws guardduty create-sample-findings --profile sky-prod --detector-id "$DIDP" --finding-types \
+  'UnauthorizedAccess:IAMUser/InstanceCredentialExfiltration.InsideAWS' \
+  'Persistence:IAMUser/AnomalousBehavior' \
+  'Stealth:IAMUser/CloudTrailLoggingDisabled' \
+  'Discovery:S3/AnomalousBehavior' \
+  'AttackSequence:S3/CompromisedData'</code></pre>
+              </details>
+              <p>You should see a ranked list of findings from <code>$SKY_PROD</code>. Expect some (not necessarily all) of these:</p>
+              <div class="table-wrap"><table>
+                <thead><tr><th>Technique</th><th>Likely finding type</th><th>ATT&amp;CK</th></tr></thead>
+                <tbody>
+                  <tr><td>Stolen instance creds</td><td><code>UnauthorizedAccess:IAMUser/InstanceCredentialExfiltration.InsideAWS</code></td><td>T1552.005</td></tr>
+                  <tr><td>Backdoor admin user</td><td><code>Persistence:IAMUser/AnomalousBehavior</code></td><td>T1136.003</td></tr>
+                  <tr><td>Trail stopped</td><td><code>Stealth:IAMUser/CloudTrailLoggingDisabled</code></td><td>T1562.008</td></tr>
+                  <tr><td>S3 grab and wipe</td><td><code>Discovery:S3/AnomalousBehavior</code>, <code>Impact:S3/AnomalousBehavior.Delete</code></td><td>T1619 · T1485</td></tr>
+                </tbody>
+              </table></div>
+              <div class="callout gotcha"><strong class="ct">Why are some missing?</strong><p><code>AnomalousBehavior</code> findings come from ML models that need a <b>baseline</b> of normal activity for the account. A two-day-old sandbox doesn't have one. In production this is the strength of those models; in a lab it's why we keep sample findings as a backup.</p></div>
+            </li>
+            <li><strong>Find the story: attack sequences</strong>
+<pre data-title="CloudShell · delegated admin"><code class="language-bash">AWS_PROFILE=sky-dev ./triage-findings.sh AttackSequence</code></pre>
+              <p>If Extended Threat Detection correlated your chain, you'll see an <code>AttackSequence:IAM/CompromisedCredentials</code> or <code>AttackSequence:S3/CompromisedData</code> finding at severity 9+. If not (young account, short window), generate a sample in prod so you can practice reading one:</p>
+<pre data-title="CloudShell · prod"><code class="language-bash">aws guardduty create-sample-findings --profile sky-prod \
+  --detector-id $(aws guardduty list-detectors --profile sky-prod --query 'DetectorIds[0]' --output text) \
+  --finding-types 'AttackSequence:S3/CompromisedData'</code></pre>
+            </li>
+            <li><strong>Dissect the sequence</strong>
+<pre data-title="CloudShell · delegated admin"><code class="language-bash">DID=$(aws guardduty list-detectors --profile sky-dev --query 'DetectorIds[0]' --output text)
+FID=$(aws guardduty list-findings --profile sky-dev --detector-id "$DID" \
+  --finding-criteria '{"Criterion":{"type":{"Eq":["AttackSequence:S3/CompromisedData","AttackSequence:IAM/CompromisedCredentials"]}}}' \
+  --query 'FindingIds[0]' --output text)
+aws guardduty get-findings --profile sky-dev --detector-id "$DID" --finding-ids "$FID" \
+  | jq '.Findings[0] | {Type, Severity, Title, Description, detection: .Service.Detection}'</code></pre>
+              <p>Inside the detection block, find the <b>signals</b> (the individual pieces of evidence), the <b>actors</b>, <b>endpoints</b> and <b>resources</b>, the <b>MITRE tactics</b>, and any <b>indicators</b>. Then fill in this table in your notebook: signal → timestamp → tactic → would you have caught it alone?</p>
+              <figure class="shot" data-url="console.aws.amazon.com/guardduty/home?region=us-east-1#/findings?fId=…">
+                <img src="assets/img/day2/shot-attack-sequence.svg" alt="Illustrative mock-up of a GuardDuty attack sequence finding: Critical 9.2 AttackSequence:S3/CompromisedData, indicator chips, a six-signal timeline from credential access to impact, and an actors and resources table">
+                <figcaption><b>SCREEN 2.2</b> Read it left to right: each dot is a signal, each label a tactic. The chips under the title are the May 2026 indicators. Illustrative mock-up; the live console layout may differ.</figcaption>
+              </figure>
+            </li>
+            <li><strong>Zoom out in Security Hub</strong>
+              <p>In <code>skyfortress-dev</code> → <b>Security Hub</b>, open the prod account's resources: the stolen-credential instance and the cargo-manifest bucket. Look for the <b>exposure</b> view and the <b>attack path</b>. Which traits are listed (reachability, misconfiguration, sensitive data, threat)? Did the <code>restricted</code> tag change the risk rating?</p>
+              <figure class="shot" data-url="console.aws.amazon.com/securityhub/v2/home?region=us-east-1#/exposures">
+                <img src="assets/img/day2/shot-securityhub-exposure.svg" alt="Illustrative mock-up of a Security Hub exposure finding for the cargo bucket: Critical, four contributing traits (threat, sensitive data, misconfiguration, reachability) and an attack path from EC2 to role session to bucket">
+                <figcaption><b>SCREEN 2.3</b> One resource, four traits, one ranked story. Illustrative mock-up; the live console layout may differ.</figcaption>
+              </figure>
+              <div class="predict"><p>Remove the <code>data-classification=restricted</code> tag from the bucket. Which trait disappears, and would you expect the exposure's severity to drop?</p>
+                <details><summary>Reveal</summary><p>The <b>sensitive data</b> trait is driven by classification signals such as tags and Macie results. Without it, the same threat on the same bucket is a less urgent story, which is exactly why consistent data tagging (Day 1's tag policies) pays off in triage. Put the tag back afterwards: Lab 2.4's automation rule uses it.</p></details></div>
+              <p><i>Optional (preview):</i> run a GuardDuty <b>AI-powered investigation</b> on the credential-exfiltration finding. Does its malicious-or-benign verdict match yours? Where does its reasoning go wrong?</p>
+            </li>
+            <li><strong>Pivot in Detective</strong>
+              <p>If Detective is enabled (you can enable it in <code>sky-dev</code> as delegated admin, with a 30-day trial), open the credential-exfiltration finding → <b>Investigate in Detective</b>. Pivot to the role session and look at its API call volume, new geolocations and newly observed user agents. This is the no-SQL version of what you'll do in Lab 2.3.</p>
+            </li>
+            <li><strong>Ask the forensic question you can't answer</strong>
+              <div class="predict"><p><b>Which manifests did the Kraken read before deleting them?</b> Check the org trail (with <code>find-beacon.sh</code>, but filtered for the cargo bucket). What do you expect to find?</p></div>
+              <details class="hint solution"><summary>What you'll discover</summary><p>Nothing. Your data-event selector only covers <code>skyfortress-crown-jewels-*</code>, so the object-level reads on <code>nimbus-cargo-manifests</code> were <b>never logged</b>. GuardDuty S3 Protection still saw the anomaly through its own stream, but you can't produce a per-object list for the breach notification. Fix: tag-driven data classification → data events for every bucket tagged <code>restricted</code>. That's tonight's homework for your Nimbus team.</p></details>
+            </li>
+            <li><strong>Read the ransom note (flag)</strong>
+<pre data-title="CloudShell · prod"><code class="language-bash">aws s3 ls "s3://nimbus-cargo-manifests-$SKY_PROD/" --profile sky-prod
+aws s3 cp "s3://nimbus-cargo-manifests-$SKY_PROD/README_KRAKEN.txt" - --profile sky-prod</code></pre>
+              <p>The <b>proof-of-tentacle</b> line is flag 2.2a.</p>
+            </li>
+            <li><strong>Map it to ATT&amp;CK (flag)</strong>
+              <p>Every finding in your report needs a technique ID. The very first move, reading the role's credentials from the instance metadata service, is a sub-technique of <i>Unsecured Credentials</i>. Find its ID in FIG 2.5. Submit it as <code>SKY{tNNNN_NNN}</code>: lowercase <code>t</code>, with the dot replaced by an underscore.</p>
+            </li>
+            <li><strong>Write the five-line incident summary</strong>
+              <div class="report-card">WHO:    role session from i-… (stolen creds) → iam user created by Stratus
+WHAT:   creds exfil (T1552.005) → admin user (T1136.003) → trail stop (T1562.008) → S3 grab+wipe (T1530/T1485)
+WHEN:   first signal hh:mm UTC → last signal hh:mm UTC   (dwell = ?)
+IMPACT: 60 manifests in nimbus-cargo-manifests-… (restricted) — object-level reads NOT logged
+FIX:    IMDSv2 required · SCP deny iam:CreateUser outside pipeline · data events by tag · Object Lock + versioning</div>
+            </li>
+          </ol>
+          <div class="checkpoint"><p>You can list at least three real GuardDuty findings from <code>skyfortress-prod</code> in the delegated-admin account, explain one attack sequence signal by signal, and say exactly which forensic question your current logging can't answer.</p></div>
+          <h4>Troubleshooting</h4>
+          <div class="table-wrap"><table><thead><tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr></thead><tbody>
+            <tr><td><code>stratus: command not found</code></td><td><code>~/bin</code> isn't on <code>PATH</code> in this shell</td><td><code>export PATH="$HOME/bin:$PATH"</code>, or run <code>install-stratus.sh</code>.</td></tr>
+            <tr><td>Warm-up fails with an SSM or instance-profile error</td><td>The instance isn't registered with SSM yet</td><td>Wait 2 minutes, then <code>stratus detonate --force-warmup …</code>. If it still fails, <code>stratus cleanup</code> and retry.</td></tr>
+            <tr><td><code>kraken-chain.py</code> → <code>BucketAlreadyExists</code></td><td>Bucket names are global</td><td>Your account ID is in the name, so this means you ran it in the wrong profile. Check <code>AWS_PROFILE=sky-prod</code>.</td></tr>
+            <tr><td><code>triage-findings.sh</code> → “No active findings yet”</td><td>GuardDuty lag, or you're in <code>sky-prod</code> instead of the delegated admin</td><td>Run with <code>AWS_PROFILE=sky-dev</code>. After 25 minutes, use the sample-findings fallback.</td></tr>
+            <tr><td>No <code>AttackSequence</code> finding at all</td><td>Too few correlated signals in a young account</td><td>Expected in many sandboxes. Generate the sample sequence and dissect that one.</td></tr>
+          </tbody></table></div>
+          <form class="flag" data-id="d2-flag2" data-hash="b58912da508e393866f9c451b90ebf2b219927a1d3638cd2bf0eca1c36de380c" data-xp="150" data-label="Flag 2.2a · the ransom note"></form>
+          <form class="flag" data-id="d2-flag3" data-hash="b391cd7a350f3639a421ff2c88b590a01185603b9b245e0369fc0cfcadc3e3ef" data-xp="100" data-label="Flag 2.2b · name that technique"></form>
+          <div class="stretch"><p><b>DNS C2 without malware.</b> Using SSM, run <code>dig guarddutyc2activityb.com</code> on the Stratus EC2 instance <i>before</i> cleanup. That's a GuardDuty-documented test domain. Watch for <code>Backdoor:EC2/C&amp;CActivity.B!DNS</code>. Then explain why this finding would <b>not</b> fire if the instance used a third-party DNS resolver instead of the VPC resolver.</p></div>
+          <div class="cleanup">
+<pre data-title="CloudShell · prod"><code class="language-bash">~/skyfortress/labs/day2/lab2/kraken-cleanup.sh
+# then, in sky-dev: archive the lab findings (GuardDuty console → select → Archive)</code></pre>
+          </div>
+        </div>
+      </article>
+
+      <!-- ===================== LAB 2.3 ===================== -->
+      <article class="lab" id="lab-2-3" data-toc="Lab 2.3 Hunt the Deep">
+        <img class="lab-cover" src="assets/img/day2/lab3-cover.svg" alt="Cover art: a submarine named SQL-1 sweeps its searchlight through a sea of log lines and finds a glowing kraken eye">
+        <div class="lab-head">
+          <div class="lab-num">Lab 2.3</div>
+          <h3>Hunt the Deep 🔦</h3>
+          <div class="chips"><span class="chip hard">Advanced</span><span class="chip">⏱ 60 min</span><span class="chip">💸 &lt; $0.10 (Athena scans)</span><span class="chip">Athena · CloudTrail · Security Lake · OCSF</span></div>
+        </div>
+        <div class="lab-body">
+          <p><b>Goal:</b> a role in prod was used by six sessions overnight. Five are colleagues and robots. One is the Kraken. With nothing but logs and SQL, find the session name, reconstruct its timeline and decide what it stole. No GuardDuty, no Detective, no reading the seeding script.</p>
+          <div class="callout info"><strong class="ct">Two tracks, same hunt</strong><p><b>Track B (everyone):</b> Athena over the org trail you built in Lab 2.1, using raw CloudTrail JSON with partition projection. <b>Track A (if your instructor enabled Security Lake in the class org):</b> the same hunts in OCSF. Do B first, then A if you have time, and compare the two schemas. Query packs: <a href="labs/day2/lab3/hunt-pack-trail.sql">trail</a> · <a href="labs/day2/lab3/hunt-pack-securitylake.sql">Security Lake</a>.</p></div>
+          <div class="paths">
+            <div class="path guided"><p>Run hunts H0–H5 in order. Each one narrows the field, and the predict boxes tell you what a null result would look like.</p><ul><li>☐ Seeded, table created, H0 returns rows (steps 1–4)</li><li>☐ H1 denials, H2 secret reads, H3 user agents, H4 Regions (5–8)</li><li>☐ Session named, timeline rebuilt: flag 2.3a (9)</li><li>☐ Stolen secret identified: flag 2.3b (10)</li><li>☐ Optional OCSF track and a written hunt report (11–12)</li></ul></div>
+            <div class="path challenge"><p><b>Goal:</b> name the intruder session, list every API it called in time order, and identify the one secret it read.</p>
+              <ul><li><b>Constraints:</b> SQL only (no GuardDuty, Detective or reading <code>seed-hunt.py</code>); every query filters on <code>"timestamp"</code>; under 100 MB scanned in total.</li>
+              <li><b>Done when:</b> both flags accepted and your hunt report cites one query per claim.</li></ul></div>
+          </div>
+          <h4>Steps</h4>
+          <ol class="steps" data-lab="d2-lab3">
+            <li><strong>Seed the deep (ideally right before lunch)</strong>
+<pre data-title="CloudShell · prod"><code class="language-bash">AWS_PROFILE=sky-prod python3 ~/skyfortress/labs/day2/lab3/seed-hunt.py</code></pre>
+              <div class="term" data-title="CloudShell · us-east-1 · sky-prod"><pre><span class="p">$</span> <span class="c">AWS_PROFILE=sky-prod python3 ~/skyfortress/labs/day2/lab3/seed-hunt.py</span>
+created role nimbus-ops-hunt-role
+created secret prod/payments/gateway-key
+created secret prod/cargo/route-planner-token
+created secret prod/hr/payroll-api
+generating background noise...
+<span class="err">...and something else is moving in the deep.</span>
+
+<span class="ok">Seeded. CloudTrail delivers to the org trail in ~5-15 minutes</span>
+<span class="o">(Security Lake adds a few more minutes of normalization).</span></pre></div>
+              <p>This creates the role <code>nimbus-ops-hunt-role</code>, three secrets under <code>prod/</code>, and six sessions' worth of activity. Delivery to the org trail takes 5–15 minutes. If you seeded right before lunch, it's all there when you get back.</p>
+            </li>
+            <li><strong>Give Athena somewhere to write results</strong>
+<pre data-title="CloudShell · management"><code class="language-bash">MGMT=$(aws sts get-caller-identity --query Account --output text)
+aws s3api create-bucket --bucket "skyfortress-athena-$MGMT"
+export ATHENA_OUT="s3://skyfortress-athena-$MGMT/results/"
+echo "export ATHENA_OUT=$ATHENA_OUT" &gt;&gt; ~/.skyfortress.env
+cd ~/skyfortress/labs/day2/lab3 &amp;&amp; chmod +x *.sh</code></pre>
+            </li>
+            <li><strong>Create the trail table with partition projection</strong>
+<pre data-title="CloudShell · management"><code class="language-bash">source ~/.skyfortress.env
+ORG=$(aws organizations describe-organization --query Organization.Id --output text)
+./run-athena.sh "CREATE DATABASE IF NOT EXISTS skyfortress"
+sed -e "s/__BUCKET__/$TRAIL_BUCKET/g" -e "s/__ORG_ID__/$ORG/g" \
+    -e "s/__ACCOUNTS__/$MGMT,$SKY_DEV,$SKY_PROD/g" athena-cloudtrail-table.sql \
+  | sed -n '/CREATE EXTERNAL/,$p' | sed 's/;[[:space:]]*$//' &gt; /tmp/ddl.sql
+./run-athena.sh "$(cat /tmp/ddl.sql)"</code></pre>
+              <p>Partition projection computes partitions from the S3 path template, so you don't need crawlers or <code>MSCK REPAIR</code>. Every query <b>must</b> filter on <code>"timestamp"</code> (and ideally <code>account</code>), or Athena scans everything you've ever logged.</p>
+              <details class="hint"><summary>Prefer the console?</summary><p>Open <b>Athena → Query editor</b> in the management account, set the results location in <b>Settings</b>, and paste the DDL with the placeholders replaced. Everything below works the same in the editor.</p></details>
+            </li>
+            <li><strong>H0: sanity check</strong>
+<pre data-title="CloudShell · management"><code class="language-bash">./run-athena.sh -f hunt-pack-trail.sql     # runs the first statement (H0)</code></pre>
+              <div class="term" data-title="CloudShell · us-east-1 · management"><pre><span class="p">$</span> <span class="c">./run-athena.sh -f hunt-pack-trail.sql</span>
+eventsource                      n
+ec2.amazonaws.com                412
+sts.amazonaws.com                188
+s3.amazonaws.com                 131
+iam.amazonaws.com                64
+secretsmanager.amazonaws.com     19
+guardduty.amazonaws.com          17
+cloudtrail.amazonaws.com         9
+<span class="o">…</span>
+<span class="warn">-- scanned 3891204 bytes</span></pre></div>
+              <p class="term-caption">Counts depend on how much else you ran today. Zero rows means the table, partition or bucket path is wrong: see Troubleshooting.</p>
+              <p>You should see <code>ec2</code>, <code>sts</code>, <code>s3</code>, <code>secretsmanager</code> and <code>iam</code> near the top. Note the <b>bytes scanned</b> line, because cost discipline is part of hunting.</p>
+            </li>
+            <li><strong>H1: who's rattling doorknobs?</strong>
+              <div class="predict"><p>Hypothesis: “A session probing for permissions it doesn't have will generate several <code>AccessDenied</code> errors across different APIs.” What does a <i>false</i> result look like?</p>
+                <details><summary>Reveal</summary><p>Lots of denials on <b>one</b> API from <b>one</b> principal, usually a misconfigured robot retrying the same call. Probing looks like a few denials spread across <b>many different</b> APIs (<code>ListUsers</code>, <code>ListRoles</code>, <code>GetAccountAuthorizationDetails</code>…). That's why the query counts distinct APIs, not just errors.</p></details></div>
+<pre data-title="Athena"><code class="language-sql">SELECT useridentity.arn AS principal, count(*) AS denied,
+       array_agg(DISTINCT eventname) AS apis
+FROM skyfortress.org_trail
+WHERE "timestamp" &gt;= date_format(current_date - interval '1' day, '%Y/%m/%d')
+  AND errorcode IN ('AccessDenied','Client.UnauthorizedOperation','AccessDeniedException')
+GROUP BY 1 ORDER BY denied DESC LIMIT 20;</code></pre>
+              <figure class="shot" data-url="console.aws.amazon.com/athena/home?region=us-east-1#/query-editor">
+                <img src="assets/img/day2/shot-athena.svg" alt="Illustrative mock-up of the Athena query editor running the H1 hunt: one nimbus-ops-hunt-role session with three denials across IAM APIs at the top of the results, session name redacted">
+                <figcaption><b>SCREEN 2.4</b> H1 in the Athena query editor: one session stands out with denials across three different IAM APIs. Illustrative mock-up; the live console layout may differ.</figcaption>
+              </figure>
+            </li>
+            <li><strong>H2: who read which secret?</strong>
+<pre data-title="Athena"><code class="language-sql">SELECT useridentity.arn AS principal,
+       json_extract_scalar(requestparameters, '$.secretId') AS secret,
+       count(*) AS reads, min(eventtime) AS first_seen
+FROM skyfortress.org_trail
+WHERE "timestamp" &gt;= date_format(current_date - interval '1' day, '%Y/%m/%d')
+  AND eventsource = 'secretsmanager.amazonaws.com' AND eventname = 'GetSecretValue'
+GROUP BY 1, 2 ORDER BY reads ASC;</code></pre>
+              <div class="predict"><p>One principal reads the route-planner token four times; another reads the payments key exactly once. Which is more suspicious, and what would you need to know to decide?</p>
+                <details><summary>Reveal</summary><p>Volume alone misleads. Four reads from a session named like a pipeline, on a schedule, is a robot doing its job. <b>One</b> first-ever read of a high-value secret from an unusual session is the classic “smash and grab.” You need the baseline (has this principal ever read it?) and the context (session name, user agent, what it did next). H3 and H4 give you the context.</p></details></div>
+            </li>
+            <li><strong>H3: stack the user agents</strong>
+<pre data-title="Athena"><code class="language-sql">SELECT useragent, count(*) AS n, count(DISTINCT useridentity.arn) AS principals
+FROM skyfortress.org_trail
+WHERE "timestamp" &gt;= date_format(current_date - interval '1' day, '%Y/%m/%d')
+  AND useridentity.type = 'AssumedRole'
+GROUP BY 1 ORDER BY n ASC LIMIT 15;</code></pre>
+              <div class="callout gotcha"><strong class="ct">User agents are attacker-controlled</strong><p>A clumsy adversary leaves a fingerprint. A good one copies yours. Use the user agent to <i>prioritize</i>, never to <i>exonerate</i>.</p></div>
+            </li>
+            <li><strong>H4: Region hopping</strong>
+<pre data-title="Athena"><code class="language-sql">SELECT useridentity.arn AS principal, count(DISTINCT awsregion) AS regions,
+       array_agg(DISTINCT awsregion) AS which
+FROM skyfortress.org_trail
+WHERE "timestamp" &gt;= date_format(current_date - interval '1' day, '%Y/%m/%d')
+GROUP BY 1 HAVING count(DISTINCT awsregion) &gt;= 3 ORDER BY regions DESC;</code></pre>
+              <div class="term" data-title="Athena · results · H4"><pre>principal                                                                  regions  which
+arn:aws:sts::333333333333:assumed-role/nimbus-ops-hunt-role/<span class="hl">▓▓▓▓▓▓▓▓▓▓▓▓▓▓</span>   <span class="warn">5</span>        [us-east-1, us-west-2, eu-west-1, ap-southeast-1, sa-east-1]
+arn:aws:sts::333333333333:assumed-role/stratus-red-team-…/…                3        [us-east-1, us-west-2, eu-west-1]
+<span class="o">-- scanned 3891204 bytes</span></pre></div>
+              <p class="term-caption">Session name masked: it's flag 2.3a. You may also see Stratus or your own admin sessions here; that's what the other hunts help you rule out.</p>
+              <p>Three hunts should now point at the <b>same session</b>. Convergence across independent hypotheses is how you build confidence.</p>
+            </li>
+            <li><strong>H5: reconstruct the timeline (flag)</strong>
+              <p>Put the session name you found into H5 from the hunt pack (replace <code>SESSION_NAME_HERE</code>) and read the timeline top to bottom: identity check → list secrets → read <b>one</b> secret → probe IAM → hop Regions. The <b>session name</b> is flag 2.3a.</p>
+            </li>
+            <li><strong>Decide what was stolen, then rotate it (flag)</strong>
+              <p>From H2/H5, which secret did the intruder read? As the defender you're allowed to look at its value, because you'll need to tell the payments team what to rotate:</p>
+<pre data-title="CloudShell · prod"><code class="language-bash">aws secretsmanager get-secret-value --profile sky-prod --secret-id '&lt;the secret the intruder read&gt;' \
+  --query SecretString --output text</code></pre>
+              <p>The value is flag 2.3b. Careful: the other secrets contain convincing <b>decoys</b>. If the flag box rejects you, your scoping was wrong.</p>
+            </li>
+            <li><strong>Track A: same hunt in OCSF (if Security Lake is on)</strong>
+<pre data-title="Athena · Security Lake"><code class="language-sql">SELECT actor.user.uid AS principal_id, count(*) AS denied,
+       array_agg(DISTINCT api.operation) AS apis
+FROM "amazon_security_lake_glue_db_us_east_1"."amazon_security_lake_table_us_east_1_cloud_trail_mgmt_2_0"
+WHERE time_dt &gt;= current_timestamp - INTERVAL '1' DAY
+  AND api.response.error IN ('AccessDenied','Client.UnauthorizedOperation','AccessDeniedException')
+GROUP BY 1 ORDER BY denied DESC LIMIT 20;</code></pre>
+              <p>Run <code>DESCRIBE</code> on the table first. OCSF field names are stable, but your Security Lake source version decides the table name. Source version 2 tables are Apache Iceberg tables: filter on <code>time_dt</code> and Athena prunes the date partitions for you (the version 1 tables used <code>eventday</code>/<code>region</code>/<code>accountid</code> partition columns instead). Which schema was faster to write? Which would you rather hand to a new analyst, or to a SIEM?</p>
+            </li>
+            <li><strong>Write the hunt report</strong>
+              <div class="report-card">HYPOTHESIS:  A role session is enumerating and reading secrets it has no business reading (T1555.006, T1580)
+DATA:        org trail · mgmt events · prod · last 24h · Athena (scanned: ___ MB)
+RESULT:      CONFIRMED — session ________ · secret ________ · regions ________ · UA ________
+CONFIDENCE:  H1 + H2 + H3 + H4 converge on the same session
+DETECTION:   new tripwire → GetSecretValue on prod/payments/* by any principal not in {payments-svc}  (Lab 2.4!)
+ACTIONS:     rotate secret · revoke role sessions (Day 5) · tighten role trust · add data perimeter condition</div>
+            </li>
+          </ol>
+          <div class="checkpoint"><p>Your four hunts converge on one session. You can show its full timeline with timestamps and Regions, name the secret it read, and point to the line of evidence for each claim.</p></div>
+          <h4>Troubleshooting</h4>
+          <div class="table-wrap"><table><thead><tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr></thead><tbody>
+            <tr><td>H0 returns 0 rows</td><td>Wrong bucket, org ID or account list in the DDL, or querying the wrong day</td><td><code>SHOW CREATE TABLE skyfortress.org_trail</code> and compare <code>storage.location.template</code> with the real S3 path from <code>find-beacon.sh</code>.</td></tr>
+            <tr><td><code>HIVE_BAD_DATA</code> / JSON parse errors</td><td>Digest files or non-JSON objects matched by the location</td><td>The table's <code>LOCATION</code> must end in <code>/CloudTrail/</code>, not <code>/</code> (digests live in <code>/CloudTrail-Digest/</code>).</td></tr>
+            <tr><td>Query scans gigabytes</td><td>No <code>"timestamp"</code> filter, so projection can't prune</td><td>Always constrain <code>"timestamp"</code> (and ideally <code>account</code>). Cancel, add the filter, re-run.</td></tr>
+            <tr><td><code>run-athena.sh</code> → <code>ATHENA_OUT</code> unset</td><td>New shell</td><td><code>source ~/.skyfortress.env</code>.</td></tr>
+            <tr><td>The intruder session isn't in any result</td><td>Seeded less than 15 minutes ago</td><td>Check delivery with <code>find-beacon.sh</code>-style listing of today's prefix, or wait and re-run H1.</td></tr>
+          </tbody></table></div>
+          <form class="flag" data-id="d2-flag4" data-hash="e1b13e7906490572806a2efb5955c43159e229b29bea5118cd676a0070bbb3d9" data-xp="200" data-label="Flag 2.3a · name the intruder session (SKY{session_name})"></form>
+          <form class="flag" data-id="d2-flag5" data-hash="7bc558d8601f81207dff3d5c3d6c401f83dfa5b71f4dfddeb0d0191be39bee96" data-xp="150" data-label="Flag 2.3b · what did it steal?"></form>
+          <details class="hint"><summary>Hint: flag 2.3a format</summary><p>Wrap the role session name exactly as it appears after the role name in the assumed-role ARN: <code>arn:aws:sts::…:assumed-role/nimbus-ops-hunt-role/<b>this_part</b></code> → <code>SKY{this_part}</code>.</p></details>
+          <div class="stretch"><p><b>First-seen detection.</b> Write a query that returns every <code>(principal, eventname)</code> pair seen in the last 24 hours that was <b>not</b> seen in the previous 7 days. Schedule it (EventBridge Scheduler → Lambda → Athena) and send new pairs to the SNS topic you'll build in Lab 2.4. Congratulations, you've built UEBA-lite.</p></div>
+          <div class="cleanup">
+<pre data-title="CloudShell · prod"><code class="language-bash">AWS_PROFILE=sky-prod ~/skyfortress/labs/day2/lab3/cleanup-hunt.sh
+# keep the Athena table and results bucket — the boss fight and Day 5 reuse them</code></pre>
+          </div>
+        </div>
+      </article>
+
+      <!-- ===================== LAB 2.4 ===================== -->
+      <article class="lab" id="lab-2-4" data-toc="Lab 2.4 Tripwires as Code">
+        <img class="lab-cover" src="assets/img/day2/lab4-cover.svg" alt="Cover art: a corridor criss-crossed by red laser tripwires inside giant code braces, with passing tests at the far end and a tentacle creeping in">
+        <div class="lab-head">
+          <div class="lab-num">Lab 2.4</div>
+          <h3>Tripwires as Code 🪤</h3>
+          <div class="chips"><span class="chip med">Intermediate</span><span class="chip">⏱ 55 min</span><span class="chip">💸 ~$0 (free tier)</span><span class="chip">EventBridge · Lambda · SNS · Terraform · Security Hub</span></div>
+        </div>
+        <div class="lab-body">
+          <p><b>Goal:</b> turn today's lessons into five production-grade tripwires: root sign-in, CloudTrail tampering, public buckets, access keys minted for someone else, and high-severity GuardDuty findings. Write the detection logic, prove it with unit tests against real event shapes and the real EventBridge matcher, deploy it with Terraform, and trip it for real.</p>
+          <div class="paths">
+            <div class="path guided"><p>Fill in the two TODOs with the hints (or peek at the reference solution), get to green, then deploy and trip both wires.</p><ul><li>☐ Read patterns and detector, watch 2 tests fail (steps 1–2)</li><li>☐ Implement both TODOs, 8/8 green: flag (3–5)</li><li>☐ Match matrix from the real EventBridge engine (6)</li><li>☐ Deployed with Terraform, two real alert emails (7–10)</li><li>☐ Automation rules and the CI false-positive loop (11–12)</li></ul></div>
+            <div class="path challenge"><p><b>Goal:</b> make <code>test_detector.py</code> pass without opening the solution, then add tripwire #6 (stretch) with its own test events before you deploy.</p>
+              <ul><li><b>Constraints:</b> don't edit <code>EXPECTED</code> or the test events; failed API calls must never page.</li>
+              <li><b>Done when:</b> 8/8 green (flag), the match matrix has no surprises, and two real alert emails arrive.</li></ul></div>
+          </div>
+          <p><b>Files:</b> <a href="labs/day2/lab4/index.html"><code>labs/day2/lab4/</code></a>: <code>patterns/</code> (5 EventBridge patterns), <code>detector.py</code> (Lambda with two TODOs), <code>tests/events/</code> (8 sample events), <code>test_detector.py</code>, <code>test-patterns.sh</code>, <code>main.tf</code>, <code>create-automation-rules.sh</code>.</p>
+          <h4>Steps</h4>
+          <ol class="steps" data-lab="d2-lab4">
+            <li><strong>Read before you write</strong>
+<pre data-title="CloudShell"><code class="language-bash">cd ~/skyfortress/labs/day2/lab4
+cat patterns/public-bucket.json; sed -n '1,60p' detector.py</code></pre>
+              <p>Notice the split. <b>Patterns</b> are coarse and free to evaluate (“any <code>PutBucketPolicy</code>”). The <b>detector</b> is precise (“…that grants <code>*</code> with no condition”). Failed calls (<code>errorCode</code> present) never page anyone.</p>
+            </li>
+            <li><strong>Run the tests and watch them fail</strong>
+<pre data-title="CloudShell"><code class="language-bash">python3 test_detector.py</code></pre>
+              <div class="predict"><p>The starter detector already handles root logins, trail tampering and GuardDuty severity. Before you run the tests: which two of the eight events will it get wrong, and in which direction (missed alert or false alarm)?</p>
+                <details><summary>Reveal</summary><p><b>Two missed alerts:</b> the public bucket policy (03) and the access key minted by a role for another user (05). The stubbed functions return <code>False</code>, so the detector stays silent. A silent detector passes the “should not fire” tests by accident, which is why every rule needs both a positive and a negative test.</p></details></div>
+              <div class="term" data-title="CloudShell · ~/skyfortress/labs/day2/lab4"><pre><span class="p">$</span> <span class="c">python3 test_detector.py</span>
+<span class="ok">PASS</span>  01-root-login.json               got=ROOT_LOGIN           want=ROOT_LOGIN
+<span class="ok">PASS</span>  02-stop-logging.json             got=TRAIL_TAMPER         want=TRAIL_TAMPER
+<span class="err">FAIL</span>  03-public-policy.json            got=None                 want=PUBLIC_BUCKET
+<span class="ok">PASS</span>  04-org-scoped-policy.json        got=None                 want=None
+<span class="err">FAIL</span>  05-createkey-other-user.json     got=None                 want=KEY_FOR_OTHER_USER
+<span class="ok">PASS</span>  06-createkey-self.json           got=None                 want=None
+<span class="ok">PASS</span>  07-guardduty-high.json           got=GD_HIGH              want=GD_HIGH
+<span class="ok">PASS</span>  08-guardduty-low.json            got=None                 want=None
+
+<span class="err">2 test(s) failing. The Kraken thanks you for the blind spot. 🐙</span></pre></div>
+              <p class="term-caption">The starting point: red is good news, because it proves the tests can fail.</p>
+              <p>Six pass and two fail: <code>03-public-policy</code> and <code>05-createkey-other-user</code>. Open both event files and the two <code>04</code>/<code>06</code> counter-examples. Good detections are defined as much by what they <b>don't</b> fire on.</p>
+            </li>
+            <li><strong>Implement the public-bucket logic</strong>
+              <p>Fill in <code>_is_public_statement</code> and <code>_public_bucket</code>. A statement is public if it's an <code>Allow</code> with principal <code>"*"</code> or <code>{"AWS": "*"}</code> (string or list) and <b>no</b> <code>Condition</code>. <code>DeleteBucketPublicAccessBlock</code> always counts.</p>
+              <details class="hint"><summary>Hint: where's the policy?</summary><p>In CloudTrail, <code>requestParameters.bucketPolicy</code> is a parsed JSON <b>object</b>, not a string. Be defensive anyway: if it's a string, <code>json.loads</code> it. <code>Statement</code> can be a single object instead of a list.</p></details>
+            </li>
+            <li><strong>Implement the access-key-for-someone-else logic</strong>
+              <p>Fill in <code>_key_for_other_user</code>: for <code>CreateAccessKey</code>/<code>CreateLoginProfile</code>/<code>UpdateLoginProfile</code>, alert when the caller isn't an IAM user acting on itself. A <b>role session</b> minting long-lived user keys is exactly what the boss-fight intruder does (T1098.001).</p>
+              <details class="hint solution"><summary>Reference solution (try first!)</summary>
+<pre data-title="detector.py (solution)"><code class="language-python">def _is_public_statement(stmt):
+    if stmt.get("Effect") != "Allow" or stmt.get("Condition"):
+        return False
+    p = stmt.get("Principal")
+    if p == "*":
+        return True
+    if isinstance(p, dict):
+        aws = p.get("AWS", [])
+        aws = [aws] if isinstance(aws, str) else aws
+        return "*" in aws
+    return False
+
+
+def _public_bucket(detail):
+    name = detail.get("eventName")
+    if name == "DeleteBucketPublicAccessBlock":
+        return True
+    if name != "PutBucketPolicy":
+        return False
+    policy = (detail.get("requestParameters") or {}).get("bucketPolicy") or {}
+    if isinstance(policy, str):
+        policy = json.loads(policy)
+    stmts = policy.get("Statement", [])
+    stmts = [stmts] if isinstance(stmts, dict) else stmts
+    return any(_is_public_statement(s) for s in stmts)
+
+
+def _key_for_other_user(detail):
+    if detail.get("eventName") not in {"CreateAccessKey", "CreateLoginProfile", "UpdateLoginProfile"}:
+        return False
+    caller = detail.get("userIdentity") or {}
+    target = (detail.get("requestParameters") or {}).get("userName")
+    if caller.get("type") != "IAMUser":
+        return True
+    return target is not None and target != caller.get("userName")</code></pre>
+              </details>
+            </li>
+            <li><strong>Green bar = flag</strong>
+<pre data-title="CloudShell"><code class="language-bash">python3 test_detector.py</code></pre>
+              <div class="term" data-title="CloudShell · ~/skyfortress/labs/day2/lab4"><pre><span class="p">$</span> <span class="c">python3 test_detector.py</span>
+<span class="ok">PASS</span>  01-root-login.json               got=ROOT_LOGIN           want=ROOT_LOGIN
+<span class="o">…</span>
+<span class="ok">PASS</span>  08-guardduty-low.json            got=None                 want=None
+
+<span class="ok">All tripwires armed. 🦉  Flag: </span><span class="hl">SKY{▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓}</span></pre></div>
+              <p>When all eight pass, the harness derives a key from your detector's verdicts and decrypts flag 2.4. Hard-coding the answers is possible, but the Kraken will know. 🐙</p>
+            </li>
+            <li><strong>Test the patterns with the real EventBridge engine</strong>
+<pre data-title="CloudShell"><code class="language-bash">./test-patterns.sh</code></pre>
+              <div class="term" data-title="CloudShell · ~/skyfortress/labs/day2/lab4"><pre><span class="p">$</span> <span class="c">./test-patterns.sh</span>
+event \ pattern                   access-key-o  guardduty-hi  public-bucke  root-login    trail-tamper
+01-root-login.json                  ·             ·             ·             <span class="ok">●</span>             ·
+02-stop-logging.json                ·             ·             ·             ·             <span class="ok">●</span>
+03-public-policy.json               ·             ·             <span class="ok">●</span>             ·             ·
+04-org-scoped-policy.json           ·             ·             <span class="warn">●</span>             ·             ·
+05-createkey-other-user.json        <span class="ok">●</span>             ·             ·             ·             ·
+06-createkey-self.json              <span class="warn">●</span>             ·             ·             ·             ·
+07-guardduty-high.json              ·             <span class="ok">●</span>             ·             ·             ·
+08-guardduty-low.json               ·             ·             ·             ·             ·</pre></div>
+              <p class="term-caption">Amber dots are events the cheap pattern lets through and the detector then rejects: the layered design working as intended.</p>
+              <p>This calls <code>aws events test-event-pattern</code> for every pattern × event pair and prints a match matrix. <code>04-org-scoped-policy</code> matches the <i>pattern</i> but not the <i>detector</i>. That's the layered design working. Add this script to CI next to the unit tests.</p>
+            </li>
+            <li><strong>Deploy to prod with Terraform</strong>
+<pre data-title="CloudShell · prod"><code class="language-bash">export AWS_PROFILE=sky-prod
+terraform init -input=false
+terraform apply -var alert_email=you@example.com -auto-approve
+unset AWS_PROFILE</code></pre>
+              <div class="term" data-title="CloudShell · us-east-1 · sky-prod"><pre><span class="o">…</span>
+aws_cloudwatch_event_rule.tripwire["trail-tamper"]: Creation complete after 1s
+aws_lambda_permission.events["root-login"]: Creation complete after 0s
+<span class="ok">Apply complete! Resources: 21 added, 0 changed, 0 destroyed.</span>
+
+Outputs:
+rules = [ "skyfortress-tripwire-access-key-other-user", … ]
+topic = "arn:aws:sns:us-east-1:333333333333:skyfortress-tripwires"</pre></div>
+              <p class="term-caption">21 resources: topic, subscription, role, two policies, the Lambda, and a rule, target and permission for each of the five patterns. Rule names may differ slightly.</p>
+              <p>Confirm the SNS subscription in your inbox. Terraform creates five rules (one per pattern file), the Lambda, its role (scoped to <code>sns:Publish</code> on one topic) and an encrypted topic.</p>
+            </li>
+            <li><strong>Trip wire #1: an access key for someone else</strong>
+<pre data-title="CloudShell · prod"><code class="language-bash">aws iam create-user --user-name tripwire-test --profile sky-prod
+aws iam create-access-key --user-name tripwire-test --profile sky-prod --query AccessKey.AccessKeyId</code></pre>
+              <p>You're calling as an <b>assumed role</b> (<code>OrganizationAccountAccessRole</code>), so <code>KEY_FOR_OTHER_USER</code> fires. The email should arrive within a minute or two.</p>
+              <figure class="shot" data-url="mail.example.com/inbox">
+                <img src="assets/img/day2/shot-sns-alert.svg" alt="Illustrative mock-up of the tripwire alert email: subject [HIGH] Access key minted for another principal, with a JSON body containing rule, severity, ATT&amp;CK ID, who, what, source IP, user agent and runbook link">
+                <figcaption><b>SCREEN 2.5</b> The tripwire email. SNS email delivers the JSON as plain text; enrichment is what lets the on-call engineer decide in 30 seconds. Illustrative mock-up.</figcaption>
+              </figure>
+            </li>
+            <li><strong>Trip wire #2: public access block removed, and a twist</strong>
+<pre data-title="CloudShell · prod"><code class="language-bash">B=tripwire-test-$SKY_PROD
+aws s3api create-bucket --bucket "$B" --profile sky-prod
+aws s3api delete-public-access-block --bucket "$B" --profile sky-prod          # → PUBLIC_BUCKET alert
+aws s3api put-bucket-policy --bucket "$B" --profile sky-prod --policy \
+  "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Principal\":\"*\",\"Action\":\"s3:GetObject\",\"Resource\":\"arn:aws:s3:::$B/*\"}]}"</code></pre>
+              <div class="predict"><p>The last command may <b>fail</b> because of account-level Block Public Access from Lab 0. If it fails, does your tripwire fire? <i>Should</i> it?</p></div>
+              <details class="hint solution"><summary>Discussion</summary><p>A failed call has an <code>errorCode</code>, so the detector stays quiet by design: the control worked. But a principal <i>trying</i> to make a bucket public in prod is interesting. The mature answer is a separate, lower-severity “attempted” signal sent to a dashboard or a hunting queue, not a pager.</p></details>
+            </li>
+            <li><strong>Read the detector's mind</strong>
+<pre data-title="CloudShell · prod"><code class="language-bash">aws logs tail /aws/lambda/skyfortress-tripwire-detector --since 20m --profile sky-prod</code></pre>
+              <p>Each alert carries its rule, severity, ATT&amp;CK ID, who, what, source IP, user agent and a runbook link. That's what “enriched” means.</p>
+            </li>
+            <li><strong>Security Hub automation rules: escalate and suppress, with receipts</strong>
+<pre data-title="CloudShell · delegated admin"><code class="language-bash">AWS_PROFILE=sky-dev ./create-automation-rules.sh "$SKY_PROD" "$SKY_DEV"</code></pre>
+              <p>Rule 1 raises any medium or high finding on a prod resource tagged <code>data-classification=restricted</code> to <b>CRITICAL</b>. Rule 2 suppresses one accepted-risk control in the dev sandbox, <b>with a note, a ticket and an expiry date</b>. A suppression without a reason is an unexplained hole in your coverage.</p>
+            </li>
+            <li><strong>Close the feedback loop</strong>
+              <p>Your Terraform pipeline's role will legitimately create access keys for service users. Turn that into a test first: copy <code>05-createkey-other-user.json</code> to <code>09-createkey-by-ci.json</code>, change the role to <code>ci-deployer</code> and expect <code>None</code>. Watch the test fail, then fix it, either with an <code>anything-but</code> prefix in the pattern (see Module 2.5) or an allow list in the detector. Which layer is the right place, and why?</p>
+            </li>
+          </ol>
+          <div class="checkpoint"><p><code>test_detector.py</code> is all green and prints a flag. <code>test-patterns.sh</code> prints a sensible matrix. At least two real emails arrived from real API calls. <code>list-automation-rules</code> shows both rules.</p></div>
+          <h4>Troubleshooting</h4>
+          <div class="table-wrap"><table><thead><tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr></thead><tbody>
+            <tr><td>8/8 PASS but no flag, or a garbled one</td><td>You edited <code>EXPECTED</code> or a test event</td><td><code>git checkout -- tests/ test_detector.py</code> and fix the detector instead.</td></tr>
+            <tr><td><code>test-patterns.sh</code> → <code>InvalidEventPatternException</code></td><td>JSON error in a pattern you edited</td><td><code>jq . patterns/*.json</code> finds it fast.</td></tr>
+            <tr><td><code>terraform apply</code> → <code>AccessDenied</code> on IAM</td><td>Forgot <code>AWS_PROFILE=sky-prod</code>, or the Day 1 SCP blocks role creation</td><td>Export the profile; check that the Day 1 SCP exempts your admin role.</td></tr>
+            <tr><td>No email after a real trip</td><td>Subscription not confirmed, or the rule lives in a different Region</td><td>Confirm the email; IAM events only arrive in <b>us-east-1</b>.</td></tr>
+            <tr><td>Lambda runs (logs) but no alert</td><td>The detector returned <code>None</code> for the live event shape</td><td>Copy the event from the Lambda log into <code>tests/events/</code>, write a test, fix, redeploy.</td></tr>
+          </tbody></table></div>
+          <form class="flag" data-id="d2-flag6" data-hash="53a32eb9b5e6a35447484448d269b6250b0b3e87a15adf5e886b3ffd2d4289bb" data-xp="200" data-label="Flag 2.4 · green bar"></form>
+          <div class="stretch"><p><b>Tripwire #6: the Lab 2.3 lesson.</b> Add a pattern and detector rule for <code>GetSecretValue</code> on <code>prod/payments/*</code> by any principal outside an allow list. Then re-run <code>seed-hunt.py</code> and get paged in real time for what took you an hour to hunt. That's how hunting pays for itself.</p></div>
+          <div class="cleanup">
+<pre data-title="CloudShell · prod"><code class="language-bash">K=$(aws iam list-access-keys --user-name tripwire-test --profile sky-prod --query 'AccessKeyMetadata[0].AccessKeyId' --output text)
+aws iam delete-access-key --user-name tripwire-test --access-key-id "$K" --profile sky-prod
+aws iam delete-user --user-name tripwire-test --profile sky-prod
+aws s3api delete-bucket --bucket "tripwire-test-$SKY_PROD" --profile sky-prod
+# Keep the tripwires running for the boss fight and GameDay! Afterwards:
+#   AWS_PROFILE=sky-prod terraform destroy -var alert_email=you@example.com</code></pre>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <!-- ============ BOSS ============ -->
+    <section id="boss">
+      <div class="eyebrow">Boss fight</div>
+      <h2>Final encounter</h2>
+      <div class="boss" data-flag="d2-boss">
+        <img class="boss-cover zoomable" src="assets/img/day2/boss-cover.svg" alt="Boss cover art: at 3 a.m. a secret door in the fortress wall glows ajar, tentacle prints lead inside, and a clock reads 03:00 UTC">
+        <div class="boss-grid">
+          <img src="assets/img/kraken.svg" alt="The Kraken">
+          <div>
+            <div class="eyebrow">Boss fight · 30 minutes · logs only</div>
+            <h3>The 3 A.M. Backdoor</h3>
+            <div class="hp"><i></i></div>
+            <p>During the afternoon break, someone used the <code>nimbus-maintenance</code> role in <b>skyfortress-prod</b>. One of its sessions did routine platform work. The other planted a way back in and tested it. Both created users with innocent-looking names. Both tagged them <code>owner=platform-team</code>.</p>
+            <p><b>Hint zero:</b> if your Lab 2.4 tripwires are still deployed in prod, check your inbox. Did something page you during the break? 📬</p>
+            <p><b>Rules:</b> logs only (<code>cloudtrail lookup-events</code>, your Athena table, GuardDuty). No <code>iam list-users</code> or <code>get-user-policy</code> until you've submitted the flag. That's how it works in a real incident, where the attacker may already have cleaned up.</p>
+            <p><b>Answer in your notebook:</b> ① which role session did it ② what persistence it created (user, policy, credential) ③ when (UTC) ④ how the implant authenticated and what it called ⑤ which user is the <i>decoy</i>, and why.</p>
+            <p><b>Flag format:</b> <code>SKY{</code> + backdoor user name with hyphens turned into underscores + <code>_</code> + its inline policy name in lowercase + <code>}</code></p>
+            <div class="paths">
+              <div class="path guided"><p>Open the hints one at a time, in order. Each one costs you nothing but pride.</p></div>
+              <div class="path challenge"><p>No hints, logs only, 30-minute timer. Answer all five questions <i>before</i> you submit the flag.</p></div>
+            </div>
+            <div class="predict"><p>What's the <b>minimum</b> sequence of IAM API calls an attacker needs for a durable backdoor user that can authenticate without a console password?</p>
+              <details><summary>Reveal</summary><p><code>CreateUser</code> → a permission grant (<code>PutUserPolicy</code> or <code>AttachUserPolicy</code>) → <code>CreateAccessKey</code>. Three verbs. Hunt for all three from the same session within minutes of each other; that's your sequence.</p></details></div>
+            <figure class="shot" data-url="console.aws.amazon.com/cloudtrail/home?region=us-east-1#/events">
+              <img src="assets/img/day2/shot-event-history.svg" alt="Illustrative mock-up of CloudTrail event history filtered to iam.amazonaws.com, showing two sessions of the nimbus-maintenance role creating users and policies, with names masked">
+              <figcaption><b>SCREEN 2.6</b> Event history is the zero-setup view of the same data Hint 1 pulls from the CLI. Names masked. Illustrative mock-up; the live console layout may differ.</figcaption>
+            </figure>
+            <details class="hint"><summary>Instructor: arming the boss</summary>
+<pre data-title="CloudShell · prod (instructor or eyes-closed student)"><code class="language-bash">AWS_PROFILE=sky-prod python3 ~/skyfortress/labs/day2/boss/boss-plant.py
+# wait ~10 min for lookup-events to catch up; cleanup afterwards:
+AWS_PROFILE=sky-prod ~/skyfortress/labs/day2/boss/boss-cleanup.sh</code></pre>
+            </details>
+            <details class="hint"><summary>Hint 1: start with the verbs</summary>
+<pre data-title="CloudShell · prod"><code class="language-bash">for E in CreateUser PutUserPolicy AttachUserPolicy CreateAccessKey; do
+  aws cloudtrail lookup-events --profile sky-prod --region us-east-1 \
+    --lookup-attributes AttributeKey=EventName,AttributeValue=$E --max-results 20 \
+  | jq -r --arg e "$E" '.Events[].CloudTrailEvent | fromjson
+      | [.eventTime, $e, .userIdentity.arn, (.requestParameters|tostring)] | @tsv'
+done | sort</code></pre>
+<div class="term" data-title="CloudShell · us-east-1 · sky-prod"><pre><span class="o">2026-11-24T15:21:07Z  CreateUser       arn:aws:sts::333333333333:assumed-role/nimbus-maintenance/▓▓▓▓▓▓  {"userName":"▓▓▓▓▓▓▓▓","permissionsBoundary":…}</span>
+<span class="o">2026-11-24T15:21:09Z  AttachUserPolicy arn:aws:sts::333333333333:assumed-role/nimbus-maintenance/▓▓▓▓▓▓  {"userName":"▓▓▓▓▓▓▓▓","policyArn":"…"}</span>
+<span class="o">2026-11-24T15:22:40Z  CreateUser       arn:aws:sts::333333333333:assumed-role/nimbus-maintenance/▓▓▓▓▓▓  {"userName":"▓▓▓▓▓▓▓▓▓","permissionsBoundary":…}</span>
+<span class="o">2026-11-24T15:22:41Z  PutUserPolicy    arn:aws:sts::333333333333:assumed-role/nimbus-maintenance/▓▓▓▓▓▓  {"userName":"▓▓▓▓▓▓▓▓▓","policyName":"▓▓▓▓▓▓",…}</span>
+<span class="o">2026-11-24T15:22:43Z  CreateAccessKey  arn:aws:sts::333333333333:assumed-role/nimbus-maintenance/▓▓▓▓▓▓  {"userName":"▓▓▓▓▓▓▓▓▓"}</span></pre></div>
+<p class="term-caption">The shape of Hint 1's output, names masked. Two sessions, two users: one of them is the decoy.</p>
+            </details>
+            <details class="hint"><summary>Hint 2: decoy or backdoor?</summary><p>Compare the policies. One user gets an AWS-managed <code>ReadOnlyAccess</code> attachment. The other gets an <b>inline</b> policy whose name says “read only” and whose document says <code>"Action": "*"</code>. Names lie, documents don't. Then search for which access key was used <i>from a user agent you've never seen</i>.</p></details>
+            <details class="hint"><summary>Troubleshooting</summary>
+              <div class="table-wrap"><table><thead><tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr></thead><tbody>
+                <tr><td><code>lookup-events</code> returns nothing</td><td>Planter ran under 10 minutes ago, or wrong Region</td><td>Event history can lag by several minutes. IAM events are in <b>us-east-1</b>.</td></tr>
+                <tr><td>Only some events appear</td><td><code>--max-results 20</code> paginates</td><td>Raise it, or follow <code>NextToken</code>.</td></tr>
+                <tr><td>Flag rejected</td><td>Format slip</td><td>Hyphens → underscores in the user name; policy name in lowercase; one <code>_</code> between them.</td></tr>
+              </tbody></table></div>
+            </details>
+            <form class="flag" data-id="d2-boss" data-hash="5fde0aafbea8fc94384d6c59c075598a344fcea3d71765f10228e9c49da49d23" data-xp="400" data-badge="day2" data-label="Boss flag"></form>
+            <div class="callout info" style="margin-bottom:0"><strong class="ct">Safety net, not realism</strong><p>Every user the planter creates is capped by a permissions boundary (<code>skyfortress-boss-boundary</code>) that allows only <code>sts:GetCallerIdentity</code> and <code>s3:ListAllMyBuckets</code>. Spot it in the <code>CreateUser</code> event and you'll have learned why boundaries matter (Day 1). Real backdoors don't come with one.</p></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ============ CHEAT SHEET ============ -->
+    <section id="cheatsheet">
+      <div class="eyebrow">Field kit</div>
+      <h2>Day 2 cheat sheet</h2>
+      <p>Twelve one-liners worth keeping in your shell history. All run in CloudShell, us-east-1.</p>
+      <div class="table-wrap"><table>
+        <thead><tr><th>I need to…</th><th>Command</th></tr></thead>
+        <tbody>
+          <tr><td>See who administers what</td><td><code>aws organizations list-delegated-administrators</code></td></tr>
+          <tr><td>Check the trail is alive</td><td><code>aws cloudtrail get-trail-status --name skyfortress-org-trail</code></td></tr>
+          <tr><td>See which events I pay for</td><td><code>aws cloudtrail get-event-selectors --trail-name skyfortress-org-trail</code></td></tr>
+          <tr><td>Quick-triage a verb (90 days, mgmt only)</td><td><code>aws cloudtrail lookup-events --lookup-attributes AttributeKey=EventName,AttributeValue=CreateUser</code></td></tr>
+          <tr><td>Everything one access key did</td><td><code>… --lookup-attributes AttributeKey=AccessKeyId,AttributeValue=AKIA…</code></td></tr>
+          <tr><td>Prove logs weren't tampered with</td><td><code>aws cloudtrail validate-logs --trail-arn $TRAIL_ARN --start-time …</code></td></tr>
+          <tr><td>Org-wide GuardDuty posture</td><td><code>aws guardduty describe-organization-configuration --detector-id $DID</code></td></tr>
+          <tr><td>Top findings, highest first</td><td><code>labs/day2/lab2/triage-findings.sh [TypeFilter]</code></td></tr>
+          <tr><td>Generate a test finding</td><td><code>aws guardduty create-sample-findings --detector-id $DID --finding-types '&lt;Type&gt;'</code></td></tr>
+          <tr><td>Find suppression rules (attacker or yours)</td><td><code>aws guardduty list-filters --detector-id $DID</code></td></tr>
+          <tr><td>Unit-test an EventBridge pattern</td><td><code>aws events test-event-pattern --event-pattern file://p.json --event file://e.json</code></td></tr>
+          <tr><td>Run one Athena hunt from the shell</td><td><code>labs/day2/lab3/run-athena.sh "SELECT …"</code></td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <!-- ============ QUIZ ============ -->
+    <section id="quiz">
+      <div class="eyebrow">Knowledge check</div>
+      <h2>Quiz <span class="quiz-score" style="font-size:1rem"></span></h2>
+      <div class="quiz" data-id="d2-quiz">
+        <div class="q" data-answer="c">
+          <p>An admin in <code>skyfortress-prod</code> runs <code>aws cloudtrail stop-logging</code> against the organization trail. What happens?</p>
+          <div class="opts"><button data-k="a">Logging stops for prod only; other accounts keep logging</button><button data-k="b">Logging stops org-wide until the management account restarts it</button><button data-k="c">The call fails: organization trails can only be modified from the management account (or a CloudTrail delegated admin)</button><button data-k="d">It succeeds, but log file validation records the gap</button></div>
+          <div class="explain">Member accounts can see an org trail but can't stop, update or delete it. That's why the org trail is the backbone: a compromised member admin can't blind you. They <i>can</i> create and stop their own local trails, which is exactly what Stratus's <code>cloudtrail-stop</code> does.</div>
+        </div>
+        <div class="q" data-answer="b">
+          <p>Stolen EC2 role credentials are used from AWS CloudShell in a different account. Which GuardDuty finding is most likely?</p>
+          <div class="opts"><button data-k="a"><code>InstanceCredentialExfiltration.OutsideAWS</code></button><button data-k="b"><code>InstanceCredentialExfiltration.InsideAWS</code></button><button data-k="c"><code>Recon:IAMUser/MaliciousIPCaller</code></button><button data-k="d">No finding, because CloudShell is an AWS service</button></div>
+          <div class="explain">CloudShell runs on AWS IP space but in a different account from the instance, so it's the <b>InsideAWS</b> variant. Attackers deliberately operate from cloud hosts so their traffic blends in. Treat both variants as high.</div>
+        </div>
+        <div class="q" data-answer="d">
+          <p>Your team plans to “save money” by disabling VPC Flow Logs in all accounts. What's the impact on GuardDuty's network-based findings?</p>
+          <div class="opts"><button data-k="a">GuardDuty loses all network findings</button><button data-k="b">GuardDuty switches to sampling and loses accuracy</button><button data-k="c">GuardDuty only keeps DNS findings</button><button data-k="d">None. GuardDuty consumes VPC flow data through its own independent stream</button></div>
+          <div class="explain">GuardDuty's foundational sources (CloudTrail management events, VPC Flow Logs, DNS logs) come from independent duplicated streams. Your flow logs are for <i>your</i> hunts and forensics, and losing them blinds your analysts, not GuardDuty.</div>
+        </div>
+        <div class="q" data-answer="a">
+          <p>You need to know exactly which objects an attacker read from a bucket last Tuesday. Management events are on everywhere. What determines whether you can answer?</p>
+          <div class="opts"><button data-k="a">Whether an S3 <b>data event</b> selector covered that bucket before Tuesday</button><button data-k="b">Whether GuardDuty S3 Protection was enabled</button><button data-k="c">Whether the bucket had versioning</button><button data-k="d">Whether CloudTrail Insights was on</button></div>
+          <div class="explain">Object-level reads are <b>data events</b>, which are opt-in and never backfilled. GuardDuty S3 Protection would <i>detect</i> the anomaly through its own stream, but it doesn't give you a per-object audit trail to hand to legal. Versioning helps recovery, not attribution.</div>
+        </div>
+        <div class="q" data-answer="c">
+          <p>An attacker with GuardDuty permissions in a member account wants to hide future findings about themselves without disabling GuardDuty. Which API is the stealthiest option, and therefore one to deny by SCP?</p>
+          <div class="opts"><button data-k="a"><code>guardduty:DeleteDetector</code></button><button data-k="b"><code>guardduty:UpdateDetector</code> with <code>--no-enable</code></button><button data-k="c"><code>guardduty:CreateFilter</code> with action <code>ARCHIVE</code> (a suppression rule)</button><button data-k="d"><code>guardduty:ArchiveFindings</code></button></div>
+          <div class="explain">A suppression rule auto-archives matching findings, and suppressed findings aren't sent to Security Hub, Detective or EventBridge. GuardDuty stays “healthy” while the alerts disappear. Deny <code>CreateFilter</code>/<code>UpdateFilter</code> outside the security team.</div>
+        </div>
+        <div class="q" data-answer="b">
+          <p>Your <code>CreateAccessKey</code> tripwire is deployed in <code>eu-west-1</code>, your primary Region. An attacker creates a key at 03:00. Why might it not fire?</p>
+          <div class="opts"><button data-k="a">EventBridge doesn't support IAM events</button><button data-k="b">IAM is a global service, and its CloudTrail events are delivered to EventBridge in us-east-1</button><button data-k="c">CreateAccessKey is a data event</button><button data-k="d">The org trail must be in eu-west-1</button></div>
+          <div class="explain">IAM, global STS and console sign-in events arrive in <b>us-east-1</b>. Global-service tripwires must live there (or forward from there), whatever your primary Region is.</div>
+        </div>
+        <div class="q" data-answer="d">
+          <p>What best describes a GuardDuty <b>attack sequence</b> finding?</p>
+          <div class="opts"><button data-k="a">A paid add-on that replays CloudTrail to find attacks</button><button data-k="b">A Security Hub automation that merges findings with the same title</button><button data-k="c">A Detective visualization of related findings</button><button data-k="d">A Critical finding from Extended Threat Detection that correlates multiple signals across tactics into one incident story, included with GuardDuty at no extra cost</button></div>
+          <div class="explain">Extended Threat Detection is automatic when GuardDuty is on. Since May 2026, sequences also carry indicators like <code>SENSITIVE_DATA</code> and <code>REACHABILITY</code> that explain their impact.</div>
+        </div>
+        <div class="q" data-answer="a">
+          <p>You're writing one hunting query to run across raw CloudTrail from five SaaS tools <i>and</i> AWS. Why pick Security Lake's OCSF tables over raw logs?</p>
+          <div class="opts"><button data-k="a">OCSF normalizes different sources into shared classes and fields (e.g. <code>api.operation</code>, <code>src_endpoint.ip</code>), so one query shape works across sources</button><button data-k="b">OCSF data has zero ingestion latency</button><button data-k="c">OCSF includes data events even if you never enabled them</button><button data-k="d">Raw CloudTrail can't be queried with Athena</button></div>
+          <div class="explain">Normalization is the point. It adds some latency and doesn't create events you never collected. Raw CloudTrail is perfectly queryable (you did it in Lab 2.3); you just pay for it in schema work for every source.</div>
+        </div>
+        <div class="q" data-answer="c">
+          <p>Which control lets you <b>prove</b> to an auditor that CloudTrail log files weren't modified after delivery?</p>
+          <div class="opts"><button data-k="a">SSE-KMS encryption of the log bucket</button><button data-k="b">S3 versioning</button><button data-k="c">CloudTrail log file validation (signed hourly digest files) checked with <code>validate-logs</code></button><button data-k="d">MFA delete on the bucket</button></div>
+          <div class="explain">Encryption, versioning and MFA delete make tampering harder. Digest files, which chain SHA-256 hashes and are signed, let you <b>prove</b> integrity. Pair them with Object Lock so the evidence can't be deleted either.</div>
+        </div>
+        <div class="q" data-answer="b">
+          <p>Your new detection fires 400 times a day; 12 alerts were actionable. What's the best next step?</p>
+          <div class="opts"><button data-k="a">Raise the severity so people take it seriously</button><button data-k="b">Turn the 388 false positives into test cases, tune the rule (pattern filter or detector logic) until precision is acceptable, and route the remainder to a dashboard</button><button data-k="c">Delete the rule; it's noise</button><button data-k="d">Add a second SNS topic so the load is shared</button></div>
+          <div class="explain">3% precision trains people to ignore the pager. Treat false positives as bugs: capture them as tests, fix the logic, and push low-confidence signals to hunting queues instead of humans.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ DEBRIEF ============ -->
+    <section id="debrief">
+      <div class="eyebrow">Debrief</div>
+      <h2>What you built today</h2>
+      <div class="grid g4">
+        <div class="card lift"><h3>🔥 Backbone</h3><p class="muted">Delegated admin, org-wide GuardDuty and Security Hub, a tamper-resistant org trail with surgical selectors, and verified data events.</p></div>
+        <div class="card lift"><h3>🐙 Battle scars</h3><p class="muted">Real techniques detonated, real findings triaged, an attack sequence dissected, and an honest list of your blind spots.</p></div>
+        <div class="card lift"><h3>🔦 A hunt</h3><p class="muted">Four hypotheses converging on one intruder, a reconstructed timeline and a written hunt report.</p></div>
+        <div class="card lift"><h3>🪤 Tripwires</h3><p class="muted">Five tested, deployed, enriched detections, plus automation rules that escalate and suppress with receipts.</p></div>
+      </div>
+      <div class="story reveal" style="margin-top:30px">
+        <img class="avatar" src="assets/img/owlsley.svg" alt="Owlsley">
+        <div>
+          <div class="who">OWLSLEY · end-of-day transmission</div>
+          <p>Every account lit. One intruder named from logs alone. Tripwires that page us before the Kraken finishes its coffee. And thanks to the cargo-manifest bucket, we now know exactly which forensic question we couldn't answer. That's not failure. That's tomorrow's backlog.</p>
+          <p>Tomorrow we go after the network itself: egress lockdown, WAF against a bot swarm, a Kubernetes fortress, and supply-chain signatures. The Kraken has been probing our edge all day. Get some sleep. 🦉</p>
+        </div>
+      </div>
+      <div class="callout new"><strong class="ct">Watch this space: re:Invent 2026 (Nov 30 – Dec 4)</strong><p>This year re:Inforce was folded into re:Invent, with a dedicated <b>security day on Thursday, December 3</b>. Expect detection and response news, especially around agentic AI security and Security Hub. Check the AWS Security Blog and the What's New feed the morning after and bring one announcement to the GameDay stand-up.</p></div>
+    </section>
+
+    <div class="pager"><a class="prev" href="day1.html"><small>← Previous</small>Day 1 · Keys to the Kingdom</a><a class="next" href="day3.html"><small>Next →</small>Day 3 · Walls &amp; Moats</a></div>
+  </main>
+</div>
+
+<footer id="site-footer"></footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+<script src="assets/js/site.js"></script>
+</body>
+</html>

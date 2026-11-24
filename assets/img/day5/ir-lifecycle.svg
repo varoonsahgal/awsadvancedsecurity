@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 720" role="img" aria-labelledby="t d">
+<title id="t">Incident response on AWS mapped to NIST CSF 2.0</title><desc id="d">NIST SP 800-61 Rev. 3 frames incident response with the six CSF 2.0 functions; each is mapped to AWS services.</desc>
+<defs>
+ <radialGradient id="bg" cx=".2" cy="0" r="1.2"><stop offset="0" stop-color="#2a0f2e"/><stop offset=".55" stop-color="#0b0d24"/><stop offset="1" stop-color="#070914"/></radialGradient>
+ <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M40 0H0V40" fill="none" stroke="#ffffff" stroke-opacity=".035"/></pattern>
+ <filter id="glow" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+ <marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#b7c0e6"/></marker>
+ <marker id="arR" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#fb7185"/></marker>
+ <marker id="arG" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#34d399"/></marker>
+ <marker id="arO" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#ff9900"/></marker>
+</defs>
+<rect width="1200" height="720" rx="22" fill="url(#bg)"/><rect width="1200" height="720" rx="22" fill="url(#grid)"/>
+<rect x="1" y="1" width="1198" height="718" rx="21" fill="none" stroke="#fb7185" stroke-opacity=".25"/>
+<text x="40" y="52" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="600" fill="#fb7185" text-anchor="start" letter-spacing="4">INCIDENT RESPONSE ON AWS</text>
+<text x="40" y="84" font-family="Space Grotesk, Inter, sans-serif" font-size="22" font-weight="600" fill="#e8ecff" text-anchor="start" >NIST SP 800-61r3 × CSF 2.0 — mapped to the services you'll touch today</text>
+<circle cx="600" cy="400" r="235" fill="none" stroke="#fb7185" stroke-opacity=".45" stroke-width="2.5" stroke-dasharray="10 9"/>
+<path d="M726.7 210.3 L745.4 215.2 L735.0 198.9" fill="none" stroke="#fb7185" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M819.6 461.9 L820.7 481.2 L832.9 466.2" fill="none" stroke="#fb7185" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M609.0 628.0 L591.0 635.0 L609.0 642.0" fill="none" stroke="#fb7185" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M385.9 479.0 L373.7 464.1 L372.6 483.3" fill="none" stroke="#fb7185" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M458.7 220.8 L469.2 204.6 L450.5 209.5" fill="none" stroke="#fb7185" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="460.0" y="107.0" width="280" height="116" rx="14" fill="#22d3ee" fill-opacity="0.16" stroke="#22d3ee" stroke-opacity=".75" stroke-width="1.6"/>
+<text x="476.0" y="135.0" font-family="Space Grotesk, Inter, sans-serif" font-size="19" font-weight="600" fill="#fff" text-anchor="start" >IDENTIFY</text>
+<text x="476.0" y="159.0" font-family="Space Grotesk, Inter, sans-serif" font-size="14.5" font-weight="400" fill="#b7c0e6" text-anchor="start" >Security Hub exposures + AI inventory</text>
+<text x="476.0" y="180.0" font-family="Space Grotesk, Inter, sans-serif" font-size="14.5" font-weight="400" fill="#b7c0e6" text-anchor="start" >Config · Access Analyzer</text>
+<text x="476.0" y="201.0" font-family="Space Grotesk, Inter, sans-serif" font-size="14.5" font-weight="400" fill="#b7c0e6" text-anchor="start" >Inspector · asset tagging</text>
+<rect x="683.4982813293611" y="269.38100632188736" width="280" height="116" rx="14" fill="#a78bfa" fill-opacity="0.16" stroke="#a78bfa" stroke-opacity=".75" stroke-width="1.6"/>
+<text x="699.4982813293611" y="297.38100632188736" font-family="Space Grotesk, Inter, sans-serif" font-size="19" font-weight="600" fill="#fff" text-anchor="start" >PROTECT</text>
+<text x="699.4982813293611" y="321.38100632188736" font-family="Space Grotesk, Inter, sans-serif" font-size="14.5" font-weight="400" fill="#b7c0e6" text-anchor="start" >Identity Center · SCPs / RCPs</text>
+<text x="699.4982813293611" y="342.38100632188736" font-family="Space Grotesk, Inter, sans-serif" font-size="14.5" font-weight="400" fill="#b7c0e6" text-anchor="start" >KMS · WAF · declarative policies</text>
+<text x="699.4982813293611" y="363.38100632188736" font-family="Space Grotesk, Inter, sans-serif" font-size="14.5" font-weight="400" fill="#b7c0e6" text-anchor="start" >Backup logically air-gapped vault</text>
+<rect x="598.1295342887312" y="532.1189936781127" width="280" height="116" rx="14" fill="#ff9900" fill-opacity="0.16" stroke="#ff9900" stroke-opacity=".75" stroke-width="1.6"/>
+<text x="614.1295342887312" y="560.1189936781127" font-family="Space Grotesk, Inter, sans-serif" font-size="19" font-weight="600" fill="#fff" text-anchor="start" >DETECT</text>
+<text x="614.1295342887312" y="584.1189936781127" font-family="Space Grotesk, Inter, sans-serif" font-size="14.5" font-weight="400" fill="#b7c0e6" text-anchor="start" >GuardDuty Extended Threat Det.</text>
+<text x="614.1295342887312" y="605.1189936781127" font-family="Space Grotesk, Inter, sans-serif" font-size="14.5" font-weight="400" fill="#b7c0e6" text-anchor="start" >Security Hub correlation</text>
+<text x="614.1295342887312" y="626.1189936781127" font-family="Space Grotesk, Inter, sans-serif" font-size="14.5" font-weight="400" fill="#b7c0e6" text-anchor="start" >CloudTrail Lake · Security Lake</text>
+<rect x="321.8704657112688" y="532.1189936781127" width="280" height="116" rx="14" fill="#fb7185" fill-opacity="0.16" stroke="#fb7185" stroke-opacity=".75" stroke-width="1.6"/>
+<text x="337.8704657112688" y="560.1189936781127" font-family="Space Grotesk, Inter, sans-serif" font-size="19" font-weight="600" fill="#fff" text-anchor="start" >RESPOND</text>
+<text x="337.8704657112688" y="584.1189936781127" font-family="Space Grotesk, Inter, sans-serif" font-size="14.5" font-weight="400" fill="#b7c0e6" text-anchor="start" >Security Incident Response svc</text>
+<text x="337.8704657112688" y="605.1189936781127" font-family="Space Grotesk, Inter, sans-serif" font-size="14.5" font-weight="400" fill="#b7c0e6" text-anchor="start" >Detective · SSM · Step Functions</text>
+<text x="337.8704657112688" y="626.1189936781127" font-family="Space Grotesk, Inter, sans-serif" font-size="14.5" font-weight="400" fill="#b7c0e6" text-anchor="start" >revoke sessions · quarantine SG</text>
+<rect x="236.50171867063887" y="269.3810063218874" width="280" height="116" rx="14" fill="#34d399" fill-opacity="0.16" stroke="#34d399" stroke-opacity=".75" stroke-width="1.6"/>
+<text x="252.50171867063887" y="297.3810063218874" font-family="Space Grotesk, Inter, sans-serif" font-size="19" font-weight="600" fill="#fff" text-anchor="start" >RECOVER</text>
+<text x="252.50171867063887" y="321.3810063218874" font-family="Space Grotesk, Inter, sans-serif" font-size="14.5" font-weight="400" fill="#b7c0e6" text-anchor="start" >Restore from Backup vault</text>
+<text x="252.50171867063887" y="342.3810063218874" font-family="Space Grotesk, Inter, sans-serif" font-size="14.5" font-weight="400" fill="#b7c0e6" text-anchor="start" >Rebuild via IaC pipeline</text>
+<text x="252.50171867063887" y="363.3810063218874" font-family="Space Grotesk, Inter, sans-serif" font-size="14.5" font-weight="400" fill="#b7c0e6" text-anchor="start" >re-enable guardrails + verify</text>
+<circle cx="600" cy="400" r="92" fill="#fbbf24" fill-opacity=".12" stroke="#fbbf24" stroke-width="2"/>
+<text x="600" y="378" font-family="Space Grotesk, Inter, sans-serif" font-size="22" font-weight="700" fill="#fff" text-anchor="middle" >GOVERN</text>
+<text x="600" y="404" font-family="Space Grotesk, Inter, sans-serif" font-size="14.5" font-weight="400" fill="#b7c0e6" text-anchor="middle" >IR policy · roles</text>
+<text x="600" y="424" font-family="Space Grotesk, Inter, sans-serif" font-size="14.5" font-weight="400" fill="#b7c0e6" text-anchor="middle" >break-glass · playbooks</text>
+<text x="600" y="444" font-family="Space Grotesk, Inter, sans-serif" font-size="14.5" font-weight="400" fill="#b7c0e6" text-anchor="middle" >Organizations</text>
+<rect x="30" y="150" width="210" height="170" rx="14" fill="#22d3ee" fill-opacity="0.07" stroke="#22d3ee" stroke-opacity=".75" stroke-width="1.6"/>
+<text x="46" y="178" font-family="Space Grotesk, Inter, sans-serif" font-size="16" font-weight="600" fill="#fff" text-anchor="start" >PREPARATION</text>
+<text x="46" y="202" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="400" fill="#b7c0e6" text-anchor="start" >Govern · Identify · Protect</text>
+<text x="46" y="223" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="400" fill="#b7c0e6" text-anchor="start" >lives in the CSF now —</text>
+<text x="46" y="244" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="400" fill="#b7c0e6" text-anchor="start" >not a step you do once</text>
+<rect x="960" y="150" width="210" height="170" rx="14" fill="#fb7185" fill-opacity="0.07" stroke="#fb7185" stroke-opacity=".75" stroke-width="1.6"/>
+<text x="976" y="178" font-family="Space Grotesk, Inter, sans-serif" font-size="16" font-weight="600" fill="#fff" text-anchor="start" >RESPONSE</text>
+<text x="976" y="202" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="400" fill="#b7c0e6" text-anchor="start" >Detect · Respond · Recover</text>
+<text x="976" y="223" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="400" fill="#b7c0e6" text-anchor="start" >the 'classic' IR loop,</text>
+<text x="976" y="244" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="400" fill="#b7c0e6" text-anchor="start" >run as often as needed</text>
+<rect x="960" y="520" width="210" height="150" rx="14" fill="#fbbf24" fill-opacity="0.07" stroke="#fbbf24" stroke-opacity=".75" stroke-width="1.6"/>
+<text x="976" y="548" font-family="Space Grotesk, Inter, sans-serif" font-size="16" font-weight="600" fill="#fff" text-anchor="start" >IMPROVE</text>
+<text x="976" y="572" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="400" fill="#b7c0e6" text-anchor="start" >Lessons learned feed</text>
+<text x="976" y="593" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="400" fill="#b7c0e6" text-anchor="start" >back into Identify</text>
+<text x="976" y="614" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="400" fill="#b7c0e6" text-anchor="start" >+ every other function</text>
+<rect x="30" y="520" width="210" height="150" rx="14" fill="#ff9900" fill-opacity="0.07" stroke="#ff9900" stroke-opacity=".75" stroke-width="1.6"/>
+<text x="46" y="548" font-family="Space Grotesk, Inter, sans-serif" font-size="16" font-weight="600" fill="#fff" text-anchor="start" >2026 LENS</text>
+<text x="46" y="572" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="400" fill="#b7c0e6" text-anchor="start" >AI triage + agents</text>
+<text x="46" y="593" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="400" fill="#b7c0e6" text-anchor="start" >accelerate Detect/Respond;</text>
+<text x="46" y="614" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="400" fill="#b7c0e6" text-anchor="start" >humans own decisions</text>
+</svg>

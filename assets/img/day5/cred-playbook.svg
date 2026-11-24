@@ -1,0 +1,134 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 780" role="img" aria-labelledby="t d">
+<title id="t">Credential compromise playbook</title><desc id="d">Flowchart from leaked key signal through scoping, coordinated containment, verification, eradication and improvement.</desc>
+<defs>
+ <radialGradient id="bg" cx=".2" cy="0" r="1.2"><stop offset="0" stop-color="#2a0f2e"/><stop offset=".55" stop-color="#0b0d24"/><stop offset="1" stop-color="#070914"/></radialGradient>
+ <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M40 0H0V40" fill="none" stroke="#ffffff" stroke-opacity=".035"/></pattern>
+ <filter id="glow" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+ <marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#b7c0e6"/></marker>
+ <marker id="arR" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#fb7185"/></marker>
+ <marker id="arG" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#34d399"/></marker>
+ <marker id="arO" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#ff9900"/></marker>
+</defs>
+<rect width="1200" height="780" rx="22" fill="url(#bg)"/><rect width="1200" height="780" rx="22" fill="url(#grid)"/>
+<rect x="1" y="1" width="1198" height="778" rx="21" fill="none" stroke="#fb7185" stroke-opacity=".25"/>
+<text x="40" y="52" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="600" fill="#fb7185" text-anchor="start" letter-spacing="4">PLAYBOOK · COMPROMISED CREDENTIALS</text>
+<text x="40" y="84" font-family="Space Grotesk, Inter, sans-serif" font-size="22" font-weight="600" fill="#e8ecff" text-anchor="start" >Contain everything at once — keys, sessions, and every role they touched</text>
+<rect x="40" y="112" width="200" height="640" rx="16" fill="#60a5fa" fill-opacity=".05" stroke="#60a5fa" stroke-opacity=".25" stroke-dasharray="5 6"/>
+<text x="140" y="140" font-family="JetBrains Mono, ui-monospace, monospace" font-size="15" font-weight="700" fill="#60a5fa" text-anchor="middle" letter-spacing="2">1 · SIGNAL</text>
+<rect x="270" y="112" width="200" height="640" rx="16" fill="#22d3ee" fill-opacity=".05" stroke="#22d3ee" stroke-opacity=".25" stroke-dasharray="5 6"/>
+<text x="370" y="140" font-family="JetBrains Mono, ui-monospace, monospace" font-size="15" font-weight="700" fill="#22d3ee" text-anchor="middle" letter-spacing="2">2 · SCOPE</text>
+<rect x="500" y="112" width="200" height="640" rx="16" fill="#fb7185" fill-opacity=".05" stroke="#fb7185" stroke-opacity=".25" stroke-dasharray="5 6"/>
+<text x="600" y="140" font-family="JetBrains Mono, ui-monospace, monospace" font-size="15" font-weight="700" fill="#fb7185" text-anchor="middle" letter-spacing="2">3 · CONTAIN</text>
+<rect x="730" y="112" width="200" height="640" rx="16" fill="#a78bfa" fill-opacity=".05" stroke="#a78bfa" stroke-opacity=".25" stroke-dasharray="5 6"/>
+<text x="830" y="140" font-family="JetBrains Mono, ui-monospace, monospace" font-size="15" font-weight="700" fill="#a78bfa" text-anchor="middle" letter-spacing="2">4 · ERADICATE</text>
+<rect x="960" y="112" width="200" height="640" rx="16" fill="#34d399" fill-opacity=".05" stroke="#34d399" stroke-opacity=".25" stroke-dasharray="5 6"/>
+<text x="1060" y="140" font-family="JetBrains Mono, ui-monospace, monospace" font-size="15" font-weight="700" fill="#34d399" text-anchor="middle" letter-spacing="2">5 · IMPROVE</text>
+<rect x="52" y="160" width="176" height="120" rx="14" fill="#60a5fa" fill-opacity="0.12" stroke="#60a5fa" stroke-opacity=".75" stroke-width="1.6"/>
+<text x="68" y="188" font-family="Space Grotesk, Inter, sans-serif" font-size="16" font-weight="600" fill="#fff" text-anchor="start" >Leaked key</text>
+<text x="68" y="212" font-family="Space Grotesk, Inter, sans-serif" font-size="13.5" font-weight="400" fill="#b7c0e6" text-anchor="start" >public repo scan,</text>
+<text x="68" y="233" font-family="Space Grotesk, Inter, sans-serif" font-size="13.5" font-weight="400" fill="#b7c0e6" text-anchor="start" >AWS Health risk event,</text>
+<text x="68" y="254" font-family="Space Grotesk, Inter, sans-serif" font-size="13.5" font-weight="400" fill="#b7c0e6" text-anchor="start" >GuardDuty IAMUser/*</text>
+<rect x="52" y="310" width="176" height="96" rx="14" fill="#60a5fa" fill-opacity="0.12" stroke="#60a5fa" stroke-opacity=".75" stroke-width="1.6"/>
+<text x="68" y="338" font-family="Space Grotesk, Inter, sans-serif" font-size="16" font-weight="600" fill="#fff" text-anchor="start" >Declare SEV</text>
+<text x="68" y="362" font-family="Space Grotesk, Inter, sans-serif" font-size="13.5" font-weight="400" fill="#b7c0e6" text-anchor="start" >open case · assign IC</text>
+<text x="68" y="383" font-family="Space Grotesk, Inter, sans-serif" font-size="13.5" font-weight="400" fill="#b7c0e6" text-anchor="start" >engage AWS CIRT?</text>
+<rect x="52" y="436" width="176" height="130" rx="14" fill="#fbbf24" fill-opacity="0.12" stroke="#fbbf24" stroke-opacity=".75" stroke-width="1.6"/>
+<text x="68" y="464" font-family="Space Grotesk, Inter, sans-serif" font-size="16" font-weight="600" fill="#fff" text-anchor="start" >AKIA or ASIA?</text>
+<text x="68" y="488" font-family="Space Grotesk, Inter, sans-serif" font-size="13.5" font-weight="400" fill="#b7c0e6" text-anchor="start" >AKIA = long-term</text>
+<text x="68" y="509" font-family="Space Grotesk, Inter, sans-serif" font-size="13.5" font-weight="400" fill="#b7c0e6" text-anchor="start" >ASIA = temporary —</text>
+<text x="68" y="530" font-family="Space Grotesk, Inter, sans-serif" font-size="13.5" font-weight="400" fill="#b7c0e6" text-anchor="start" >survives key</text>
+<text x="68" y="551" font-family="Space Grotesk, Inter, sans-serif" font-size="13.5" font-weight="400" fill="#b7c0e6" text-anchor="start" >deactivation!</text>
+<path d="M140 280 L140 308" fill="none" stroke="#b7c0e6" stroke-width="2"  marker-end="url(#ar)"/>
+<path d="M140 406 L140 434" fill="none" stroke="#b7c0e6" stroke-width="2"  marker-end="url(#ar)"/>
+<rect x="282" y="160" width="176" height="118" rx="14" fill="#22d3ee" fill-opacity="0.12" stroke="#22d3ee" stroke-opacity=".75" stroke-width="1.6"/>
+<text x="298" y="188" font-family="Space Grotesk, Inter, sans-serif" font-size="16" font-weight="600" fill="#fff" text-anchor="start" >Event history</text>
+<text x="298" y="212" font-family="Space Grotesk, Inter, sans-serif" font-size="13.5" font-weight="400" fill="#b7c0e6" text-anchor="start" >lookup-events</text>
+<text x="298" y="233" font-family="Space Grotesk, Inter, sans-serif" font-size="13.5" font-weight="400" fill="#b7c0e6" text-anchor="start" >AccessKeyId=AKIA…</text>
+<text x="298" y="254" font-family="Space Grotesk, Inter, sans-serif" font-size="13.5" font-weight="400" fill="#b7c0e6" text-anchor="start" >(90 days, per Region)</text>
+<rect x="282" y="300" width="176" height="118" rx="14" fill="#22d3ee" fill-opacity="0.12" stroke="#22d3ee" stroke-opacity=".75" stroke-width="1.6"/>
+<text x="298" y="328" font-family="Space Grotesk, Inter, sans-serif" font-size="16" font-weight="600" fill="#fff" text-anchor="start" >Follow the pivot</text>
+<text x="298" y="352" font-family="Space Grotesk, Inter, sans-serif" font-size="13.5" font-weight="400" fill="#b7c0e6" text-anchor="start" >AssumeRole response</text>
+<text x="298" y="373" font-family="Space Grotesk, Inter, sans-serif" font-size="13.5" font-weight="400" fill="#b7c0e6" text-anchor="start" >→ new ASIA key id</text>
+<text x="298" y="394" font-family="Space Grotesk, Inter, sans-serif" font-size="13.5" font-weight="400" fill="#b7c0e6" text-anchor="start" >→ search again</text>
+<rect x="282" y="440" width="176" height="118" rx="14" fill="#22d3ee" fill-opacity="0.12" stroke="#22d3ee" stroke-opacity=".75" stroke-width="1.6"/>
+<text x="298" y="468" font-family="Space Grotesk, Inter, sans-serif" font-size="16" font-weight="600" fill="#fff" text-anchor="start" >Org-wide</text>
+<text x="298" y="492" font-family="Space Grotesk, Inter, sans-serif" font-size="13.5" font-weight="400" fill="#b7c0e6" text-anchor="start" >CloudTrail Lake /</text>
+<text x="298" y="513" font-family="Space Grotesk, Inter, sans-serif" font-size="13.5" font-weight="400" fill="#b7c0e6" text-anchor="start" >Security Lake SQL,</text>
+<text x="298" y="534" font-family="Space Grotesk, Inter, sans-serif" font-size="13.5" font-weight="400" fill="#b7c0e6" text-anchor="start" >Detective graph</text>
+<rect x="282" y="580" width="176" height="140" rx="14" fill="#f472b6" fill-opacity="0.12" stroke="#f472b6" stroke-opacity=".75" stroke-width="1.6"/>
+<text x="298" y="608" font-family="Space Grotesk, Inter, sans-serif" font-size="16" font-weight="600" fill="#fff" text-anchor="start" >Find persistence</text>
+<text x="298" y="632" font-family="JetBrains Mono, ui-monospace, monospace" font-size="13" font-weight="400" fill="#b7c0e6" text-anchor="start" >CreateUser/AccessKey</text>
+<text x="298" y="653" font-family="JetBrains Mono, ui-monospace, monospace" font-size="13" font-weight="400" fill="#b7c0e6" text-anchor="start" >UpdateAssumeRole…</text>
+<text x="298" y="674" font-family="JetBrains Mono, ui-monospace, monospace" font-size="13" font-weight="400" fill="#b7c0e6" text-anchor="start" >StopLogging</text>
+<text x="298" y="695" font-family="JetBrains Mono, ui-monospace, monospace" font-size="13" font-weight="400" fill="#b7c0e6" text-anchor="start" >gd:CreateFilter</text>
+<path d="M228 500 Q254 220 280 220" fill="none" stroke="#22d3ee" stroke-width="2"  marker-end="url(#ar)"/>
+<path d="M370 278 L370 298" fill="none" stroke="#b7c0e6" stroke-width="2"  marker-end="url(#ar)"/>
+<path d="M370 418 L370 438" fill="none" stroke="#b7c0e6" stroke-width="2"  marker-end="url(#ar)"/>
+<path d="M370 558 L370 578" fill="none" stroke="#b7c0e6" stroke-width="2"  marker-end="url(#ar)"/>
+<path d="M458 360 C490 360 490 230 458 230" fill="none" stroke="#22d3ee" stroke-width="2" stroke-dasharray="4 5" marker-end="url(#ar)"/><text x="492" y="300" font-family="JetBrains Mono, ui-monospace, monospace" font-size="13" font-weight="400" fill="#22d3ee" text-anchor="start" >loop</text>
+<rect x="512" y="160" width="176" height="100" rx="14" fill="#fb7185" fill-opacity="0.12" stroke="#fb7185" stroke-opacity=".75" stroke-width="1.6"/>
+<text x="528" y="188" font-family="Space Grotesk, Inter, sans-serif" font-size="16" font-weight="600" fill="#fff" text-anchor="start" >Deactivate key</text>
+<text x="528" y="212" font-family="JetBrains Mono, ui-monospace, monospace" font-size="13" font-weight="400" fill="#b7c0e6" text-anchor="start" >update-access-key</text>
+<text x="528" y="233" font-family="JetBrains Mono, ui-monospace, monospace" font-size="13" font-weight="400" fill="#b7c0e6" text-anchor="start" >--status Inactive</text>
+<rect x="512" y="282" width="176" height="130" rx="14" fill="#fb7185" fill-opacity="0.12" stroke="#fb7185" stroke-opacity=".75" stroke-width="1.6"/>
+<text x="528" y="310" font-family="Space Grotesk, Inter, sans-serif" font-size="16" font-weight="600" fill="#fff" text-anchor="start" >Revoke sessions</text>
+<text x="528" y="334" font-family="JetBrains Mono, ui-monospace, monospace" font-size="13" font-weight="400" fill="#b7c0e6" text-anchor="start" >AWSRevokeOlder…</text>
+<text x="528" y="355" font-family="JetBrains Mono, ui-monospace, monospace" font-size="13" font-weight="400" fill="#b7c0e6" text-anchor="start" >Deny * if</text>
+<text x="528" y="376" font-family="JetBrains Mono, ui-monospace, monospace" font-size="13" font-weight="400" fill="#b7c0e6" text-anchor="start" >aws:TokenIssueTime</text>
+<text x="528" y="397" font-family="JetBrains Mono, ui-monospace, monospace" font-size="13" font-weight="400" fill="#b7c0e6" text-anchor="start" >  &lt; now</text>
+<rect x="512" y="434" width="176" height="100" rx="14" fill="#fb7185" fill-opacity="0.12" stroke="#fb7185" stroke-opacity=".75" stroke-width="1.6"/>
+<text x="528" y="462" font-family="Space Grotesk, Inter, sans-serif" font-size="16" font-weight="600" fill="#fff" text-anchor="start" >Quarantine SCP</text>
+<text x="528" y="486" font-family="Space Grotesk, Inter, sans-serif" font-size="13.5" font-weight="400" fill="#b7c0e6" text-anchor="start" >deny the principal</text>
+<text x="528" y="507" font-family="Space Grotesk, Inter, sans-serif" font-size="13.5" font-weight="400" fill="#b7c0e6" text-anchor="start" >across the OU</text>
+<rect x="512" y="556" width="176" height="120" rx="14" fill="#34d399" fill-opacity="0.12" stroke="#34d399" stroke-opacity=".75" stroke-width="1.6"/>
+<text x="528" y="584" font-family="Space Grotesk, Inter, sans-serif" font-size="16" font-weight="600" fill="#fff" text-anchor="start" >Verify</text>
+<text x="528" y="608" font-family="Space Grotesk, Inter, sans-serif" font-size="13" font-weight="400" fill="#b7c0e6" text-anchor="start" >replay stolen creds</text>
+<text x="528" y="629" font-family="Space Grotesk, Inter, sans-serif" font-size="13" font-weight="400" fill="#b7c0e6" text-anchor="start" >→ AccessDenied</text>
+<text x="528" y="650" font-family="Space Grotesk, Inter, sans-serif" font-size="13" font-weight="400" fill="#b7c0e6" text-anchor="start" >(GetCallerIdentity</text>
+<text x="528" y="671" font-family="Space Grotesk, Inter, sans-serif" font-size="13" font-weight="400" fill="#b7c0e6" text-anchor="start" >always works)</text>
+<path d="M458 650 Q486 210 510 210" fill="none" stroke="#fb7185" stroke-width="2"  marker-end="url(#arR)"/>
+<text x="600" y="712" font-family="JetBrains Mono, ui-monospace, monospace" font-size="15" font-weight="700" fill="#fbbf24" text-anchor="middle" >⚡ all at once</text>
+<path d="M600 260 L600 280" fill="none" stroke="#b7c0e6" stroke-width="2"  marker-end="url(#ar)"/>
+<path d="M600 412 L600 432" fill="none" stroke="#b7c0e6" stroke-width="2"  marker-end="url(#ar)"/>
+<path d="M600 534 L600 554" fill="none" stroke="#b7c0e6" stroke-width="2"  marker-end="url(#ar)"/>
+<rect x="742" y="160" width="176" height="110" rx="14" fill="#a78bfa" fill-opacity="0.12" stroke="#a78bfa" stroke-opacity=".75" stroke-width="1.6"/>
+<text x="758" y="188" font-family="Space Grotesk, Inter, sans-serif" font-size="16" font-weight="600" fill="#fff" text-anchor="start" >Remove backdoors</text>
+<text x="758" y="212" font-family="Space Grotesk, Inter, sans-serif" font-size="13.5" font-weight="400" fill="#b7c0e6" text-anchor="start" >users, keys, roles,</text>
+<text x="758" y="233" font-family="Space Grotesk, Inter, sans-serif" font-size="13.5" font-weight="400" fill="#b7c0e6" text-anchor="start" >trust policy edits</text>
+<rect x="742" y="300" width="176" height="110" rx="14" fill="#a78bfa" fill-opacity="0.12" stroke="#a78bfa" stroke-opacity=".75" stroke-width="1.6"/>
+<text x="758" y="328" font-family="Space Grotesk, Inter, sans-serif" font-size="16" font-weight="600" fill="#fff" text-anchor="start" >Rotate secrets</text>
+<text x="758" y="352" font-family="Space Grotesk, Inter, sans-serif" font-size="13.5" font-weight="400" fill="#b7c0e6" text-anchor="start" >anything readable</text>
+<text x="758" y="373" font-family="Space Grotesk, Inter, sans-serif" font-size="13.5" font-weight="400" fill="#b7c0e6" text-anchor="start" >by the principal</text>
+<path d="M830 270 L830 298" fill="none" stroke="#b7c0e6" stroke-width="2"  marker-end="url(#ar)"/>
+<rect x="742" y="440" width="176" height="110" rx="14" fill="#a78bfa" fill-opacity="0.12" stroke="#a78bfa" stroke-opacity=".75" stroke-width="1.6"/>
+<text x="758" y="468" font-family="Space Grotesk, Inter, sans-serif" font-size="16" font-weight="600" fill="#fff" text-anchor="start" >Undo evasion</text>
+<text x="758" y="492" font-family="Space Grotesk, Inter, sans-serif" font-size="13.5" font-weight="400" fill="#b7c0e6" text-anchor="start" >restart trails, re-</text>
+<text x="758" y="513" font-family="Space Grotesk, Inter, sans-serif" font-size="13.5" font-weight="400" fill="#b7c0e6" text-anchor="start" >enable detectors</text>
+<path d="M830 410 L830 438" fill="none" stroke="#b7c0e6" stroke-width="2"  marker-end="url(#ar)"/>
+<rect x="742" y="580" width="176" height="110" rx="14" fill="#a78bfa" fill-opacity="0.12" stroke="#a78bfa" stroke-opacity=".75" stroke-width="1.6"/>
+<text x="758" y="608" font-family="Space Grotesk, Inter, sans-serif" font-size="16" font-weight="600" fill="#fff" text-anchor="start" >Kill long-term keys</text>
+<text x="758" y="632" font-family="Space Grotesk, Inter, sans-serif" font-size="13.5" font-weight="400" fill="#b7c0e6" text-anchor="start" >roles + OIDC for</text>
+<text x="758" y="653" font-family="Space Grotesk, Inter, sans-serif" font-size="13.5" font-weight="400" fill="#b7c0e6" text-anchor="start" >CI/CD instead</text>
+<path d="M830 550 L830 578" fill="none" stroke="#b7c0e6" stroke-width="2"  marker-end="url(#ar)"/>
+<path d="M688 616 Q716 215 740 215" fill="none" stroke="#a78bfa" stroke-width="2"  marker-end="url(#ar)"/>
+<rect x="972" y="160" width="176" height="110" rx="14" fill="#34d399" fill-opacity="0.12" stroke="#34d399" stroke-opacity=".75" stroke-width="1.6"/>
+<text x="988" y="188" font-family="Space Grotesk, Inter, sans-serif" font-size="16" font-weight="600" fill="#fff" text-anchor="start" >New SCP</text>
+<text x="988" y="212" font-family="Space Grotesk, Inter, sans-serif" font-size="13.5" font-weight="400" fill="#b7c0e6" text-anchor="start" >make the evasion</text>
+<text x="988" y="233" font-family="Space Grotesk, Inter, sans-serif" font-size="13.5" font-weight="400" fill="#b7c0e6" text-anchor="start" >technique impossible</text>
+<rect x="972" y="300" width="176" height="110" rx="14" fill="#34d399" fill-opacity="0.12" stroke="#34d399" stroke-opacity=".75" stroke-width="1.6"/>
+<text x="988" y="328" font-family="Space Grotesk, Inter, sans-serif" font-size="16" font-weight="600" fill="#fff" text-anchor="start" >New detection</text>
+<text x="988" y="352" font-family="Space Grotesk, Inter, sans-serif" font-size="13.5" font-weight="400" fill="#b7c0e6" text-anchor="start" >for the earliest</text>
+<text x="988" y="373" font-family="Space Grotesk, Inter, sans-serif" font-size="13.5" font-weight="400" fill="#b7c0e6" text-anchor="start" >signal you missed</text>
+<path d="M1060 270 L1060 298" fill="none" stroke="#b7c0e6" stroke-width="2"  marker-end="url(#ar)"/>
+<rect x="972" y="440" width="176" height="110" rx="14" fill="#34d399" fill-opacity="0.12" stroke="#34d399" stroke-opacity=".75" stroke-width="1.6"/>
+<text x="988" y="468" font-family="Space Grotesk, Inter, sans-serif" font-size="16" font-weight="600" fill="#fff" text-anchor="start" >Blameless retro</text>
+<text x="988" y="492" font-family="Space Grotesk, Inter, sans-serif" font-size="13.5" font-weight="400" fill="#b7c0e6" text-anchor="start" >within 5 days;</text>
+<text x="988" y="513" font-family="Space Grotesk, Inter, sans-serif" font-size="13.5" font-weight="400" fill="#b7c0e6" text-anchor="start" >track MTTD/MTTR</text>
+<path d="M1060 410 L1060 438" fill="none" stroke="#b7c0e6" stroke-width="2"  marker-end="url(#ar)"/>
+<rect x="972" y="580" width="176" height="110" rx="14" fill="#34d399" fill-opacity="0.12" stroke="#34d399" stroke-opacity=".75" stroke-width="1.6"/>
+<text x="988" y="608" font-family="Space Grotesk, Inter, sans-serif" font-size="16" font-weight="600" fill="#fff" text-anchor="start" >GameDay it</text>
+<text x="988" y="632" font-family="Space Grotesk, Inter, sans-serif" font-size="13.5" font-weight="400" fill="#b7c0e6" text-anchor="start" >re-run this</text>
+<text x="988" y="653" font-family="Space Grotesk, Inter, sans-serif" font-size="13.5" font-weight="400" fill="#b7c0e6" text-anchor="start" >playbook quarterly</text>
+<path d="M1060 550 L1060 578" fill="none" stroke="#b7c0e6" stroke-width="2"  marker-end="url(#ar)"/>
+<path d="M918 635 Q946 215 970 215" fill="none" stroke="#34d399" stroke-width="2"  marker-end="url(#arG)"/>
+</svg>

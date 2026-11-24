@@ -1,0 +1,13 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Deny",
+      "Action": ["*"],
+      "Resource": ["*"],
+      "Condition": {
+        "DateLessThan": { "aws:TokenIssueTime": "REPLACE_WITH_UTC_NOW_e.g._2026-12-04T15:30:00Z" }
+      }
+    }
+  ]
+}

@@ -1,0 +1,48 @@
+# Operation Skyfortress - Day 3 / Lab 3.3 "Kubernetes Citadel" (also used by Lab 3.4)
+# eksctl create cluster -f lab33-cluster.yaml        (~15-20 min - start it at 09:00!)
+#
+# COST: EKS control plane ~$0.10/hr + 2x t3.medium ~$0.083/hr + NAT GW ~$0.045/hr  => ~$0.35/hr
+# VERSION: choose the newest version in STANDARD support - extended support costs 6x more:
+#   aws eks describe-cluster-versions --query 'clusterVersions[?status==`STANDARD_SUPPORT`].clusterVersion'
+#
+# This cluster is DELIBERATELY WEAK in two ways you will fix in the lab:
+#   1. Pods can reach the node's IMDS (hop limit 2) and inherit the node role.
+#   2. The node role has AmazonS3ReadOnlyAccess "because the logging agent needed it once".
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+metadata:
+  name: citadel
+  region: us-east-1
+  version: "1.35"   # 1.34 leaves standard support ~Dec 2 2026 - re-check each cohort
+  tags: { project: skyfortress, day: "3" }
+
+accessConfig:
+  authenticationMode: API          # EKS access entries only - no aws-auth ConfigMap
+
+vpc:
+  clusterEndpoints: { publicAccess: true, privateAccess: true }
+  nat: { gateway: Single }
+
+addons:
+  - name: vpc-cni
+    configurationValues: '{"enableNetworkPolicy": "true"}'   # Kubernetes NetworkPolicy enforcement via eBPF
+  - name: eks-pod-identity-agent
+  - name: coredns
+  - name: kube-proxy
+
+managedNodeGroups:
+  - name: citadel-ng
+    instanceType: t3.medium
+    desiredCapacity: 2
+    minSize: 2
+    maxSize: 2
+    privateNetworking: true
+    disableIMDSv1: true
+    disablePodIMDS: false        # WEAKNESS #1 (hop limit 2) - fixed in step 7
+    iam:
+      attachPolicyARNs:
+        - arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy
+        - arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
+        - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+        - arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess   # WEAKNESS #2 - removed in step 6

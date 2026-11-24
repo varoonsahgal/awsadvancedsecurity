@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 620" font-family="Space Grotesk, Inter, sans-serif">
+  <title>Least-privilege robot pipeline: pull request triggers GitHub Actions, which assumes an AWS role via OIDC and runs Access Analyzer custom policy checks</title>
+  <defs>
+    <linearGradient id="rbg" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#0d0b2a"/><stop offset="1" stop-color="#070b1c"/></linearGradient>
+    <linearGradient id="track" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#a78bfa"/><stop offset=".5" stop-color="#f472b6"/><stop offset="1" stop-color="#ff9900"/></linearGradient>
+    <filter id="rg" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <marker id="ra" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#f472b6"/></marker>
+  </defs>
+  <rect width="1400" height="620" fill="url(#rbg)"/>
+  <text x="50" y="58" font-size="28" font-weight="700" fill="#fff">The Least-Privilege Robot 🤖</text>
+  <text x="50" y="88" font-size="16" fill="#8a95c2">Every PR that touches a policy gets machine-reasoned before a human ever reviews it.</text>
+
+  <path d="M120 250 H1290" stroke="url(#track)" stroke-width="6" stroke-linecap="round" opacity=".5"/>
+
+  <g>
+    <circle cx="160" cy="250" r="62" fill="#17123d" stroke="#a78bfa" stroke-width="3"/>
+    <text x="160" y="244" font-size="30" text-anchor="middle">🔀</text>
+    <text x="160" y="276" font-size="15" fill="#fff" text-anchor="middle" font-weight="700">Pull request</text>
+    <text x="160" y="350" font-size="14" fill="#b7c0e6" text-anchor="middle">policies/*.json</text>
+    <text x="160" y="370" font-size="14" fill="#b7c0e6" text-anchor="middle">changed</text>
+
+    <circle cx="440" cy="250" r="62" fill="#17123d" stroke="#c084fc" stroke-width="3"/>
+    <text x="440" y="244" font-size="30" text-anchor="middle">🎟️</text>
+    <text x="440" y="276" font-size="15" fill="#fff" text-anchor="middle" font-weight="700">OIDC token</text>
+    <text x="440" y="350" font-size="13" fill="#b7c0e6" text-anchor="middle" font-family="JetBrains Mono, monospace">sub = repo:org/repo:</text>
+    <text x="440" y="370" font-size="13" fill="#b7c0e6" text-anchor="middle" font-family="JetBrains Mono, monospace">pull_request</text>
+
+    <circle cx="720" cy="250" r="62" fill="#17123d" stroke="#f472b6" stroke-width="3"/>
+    <text x="720" y="244" font-size="30" text-anchor="middle">🛡️</text>
+    <text x="720" y="276" font-size="15" fill="#fff" text-anchor="middle" font-weight="700">AssumeRole</text>
+    <text x="720" y="350" font-size="13" fill="#b7c0e6" text-anchor="middle" font-family="JetBrains Mono, monospace">SkyfortressPolicyRobot</text>
+    <text x="720" y="370" font-size="13" fill="#b7c0e6" text-anchor="middle">checks-only permissions</text>
+
+    <circle cx="1000" cy="250" r="72" fill="#2a1708" stroke="#ff9900" stroke-width="3.5" filter="url(#rg)"/>
+    <text x="1000" y="244" font-size="30" text-anchor="middle">🧠</text>
+    <text x="1000" y="276" font-size="15" fill="#fff" text-anchor="middle" font-weight="700">Access Analyzer</text>
+    <text x="1000" y="350" font-size="14" fill="#ffd59a" text-anchor="middle">automated reasoning</text>
+    <text x="1000" y="370" font-size="14" fill="#ffd59a" text-anchor="middle">(Zelkova under the hood)</text>
+
+    <circle cx="1260" cy="210" r="44" fill="#08311f" stroke="#34d399" stroke-width="3"/>
+    <text x="1260" y="218" font-size="24" text-anchor="middle">✅</text>
+    <text x="1320" y="190" font-size="15" fill="#6ee7b7">merge</text>
+    <circle cx="1260" cy="310" r="44" fill="#3a0d22" stroke="#fb7185" stroke-width="3"/>
+    <text x="1260" y="318" font-size="24" text-anchor="middle">⛔</text>
+    <text x="1316" y="340" font-size="15" fill="#fda4af">block</text>
+  </g>
+  <g stroke="#f472b6" stroke-width="2.5" marker-end="url(#ra)" fill="none">
+    <path d="M222 250 H372"/><path d="M502 250 H652"/><path d="M782 250 H922"/><path d="M1072 236 L1214 214"/><path d="M1072 264 L1214 302"/>
+  </g>
+
+  <!-- checks -->
+  <g font-family="JetBrains Mono, monospace" font-size="14">
+    <rect x="60" y="430" width="410" height="150" rx="16" fill="#10153a" stroke="#a78bfa" stroke-opacity=".5"/>
+    <text x="80" y="462" fill="#a78bfa">check-no-new-access</text>
+    <text x="80" y="492" fill="#e8ecff" font-family="Space Grotesk, Inter, sans-serif" font-size="15">Is the new policy a subset of the</text>
+    <text x="80" y="514" fill="#e8ecff" font-family="Space Grotesk, Inter, sans-serif" font-size="15">approved baseline? Catches s3:*.</text>
+    <text x="80" y="552" fill="#8a95c2">--policy-type IDENTITY_POLICY</text>
+
+    <rect x="495" y="430" width="410" height="150" rx="16" fill="#10153a" stroke="#f472b6" stroke-opacity=".5"/>
+    <text x="515" y="462" fill="#f472b6">check-access-not-granted</text>
+    <text x="515" y="492" fill="#e8ecff" font-family="Space Grotesk, Inter, sans-serif" font-size="15">Does it grant any action on the</text>
+    <text x="515" y="514" fill="#e8ecff" font-family="Space Grotesk, Inter, sans-serif" font-size="15">critical list? Catches iam:PassRole.</text>
+    <text x="515" y="552" fill="#8a95c2">--access actions=[…critical…]</text>
+
+    <rect x="930" y="430" width="410" height="150" rx="16" fill="#10153a" stroke="#ff9900" stroke-opacity=".5"/>
+    <text x="950" y="462" fill="#ff9900">check-no-public-access</text>
+    <text x="950" y="492" fill="#e8ecff" font-family="Space Grotesk, Inter, sans-serif" font-size="15">Would this resource policy allow</text>
+    <text x="950" y="514" fill="#e8ecff" font-family="Space Grotesk, Inter, sans-serif" font-size="15">public access? Catches Principal:*.</text>
+    <text x="950" y="552" fill="#8a95c2">--resource-type AWS::S3::Bucket</text>
+  </g>
+</svg>

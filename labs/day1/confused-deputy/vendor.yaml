@@ -1,0 +1,71 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  Operation Skyfortress - Boss Fight "The Confused Deputy" - VENDOR side.
+  "Orbital Insights" is a (fictional) SaaS that scans customer accounts. It behaves correctly:
+  it always sends the per-tenant ExternalId it assigned. Deploy in skyfortress-prod
+  (playing the vendor's account). Cost: ~$0.
+
+Resources:
+  ScannerRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: OrbitalInsightsScannerRole
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: { Service: lambda.amazonaws.com }
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: AssumeCustomerRoles
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: sts:AssumeRole
+                Resource: "arn:aws:iam::*:role/OrbitalInsights*"
+
+  Scanner:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: OrbitalInsightsScanner
+      Runtime: python3.12
+      Handler: index.handler
+      Timeout: 20
+      Role: !GetAtt ScannerRole.Arn
+      Environment:
+        Variables:
+          # The vendor's tenant registry. Tenants never choose their ExternalId - the vendor assigns it.
+          TENANTS: '{"nimbus":"oi-tenant-7f3c9a41-nimbus","kraken":"oi-tenant-91ab02de-kraken"}'
+      Code:
+        ZipFile: |
+          import json, os, boto3
+          TENANTS = json.loads(os.environ["TENANTS"])
+          def handler(event, context):
+              tenant = event["tenant"]            # authenticated tenant (from the SaaS login)
+              role_arn = event["role_arn"]        # role ARN the tenant typed into the SaaS UI
+              ext = TENANTS[tenant]
+              try:
+                  creds = boto3.client("sts").assume_role(
+                      RoleArn=role_arn,
+                      RoleSessionName=f"orbital-insights-{tenant}",
+                      ExternalId=ext,
+                  )["Credentials"]
+              except Exception as e:
+                  return {"tenant": tenant, "status": "ASSUME_FAILED", "error": str(e)}
+              sm = boto3.client(
+                  "secretsmanager",
+                  aws_access_key_id=creds["AccessKeyId"],
+                  aws_secret_access_key=creds["SecretAccessKey"],
+                  aws_session_token=creds["SessionToken"],
+              )
+              report = sm.get_secret_value(SecretId="skyfortress/boss/telemetry-report")["SecretString"]
+              return {"tenant": tenant, "status": "SCANNED", "report": json.loads(report)}
+
+Outputs:
+  ScannerRoleArn:
+    Value: !GetAtt ScannerRole.Arn
+  NimbusExternalId:
+    Value: oi-tenant-7f3c9a41-nimbus

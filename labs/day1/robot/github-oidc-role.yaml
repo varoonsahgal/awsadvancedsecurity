@@ -1,0 +1,66 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  Operation Skyfortress - Lab 1.4. GitHub Actions OIDC provider + a robot role that can ONLY
+  run Access Analyzer custom policy checks, and ONLY from pull requests in one repository.
+  Deploy in skyfortress-dev. Cost: $0.
+
+Parameters:
+  GitHubOrg:
+    Type: String
+    Description: GitHub user or org that owns the lab repo (e.g. octocat)
+  RepoName:
+    Type: String
+    Description: Repository name (e.g. skyfortress-policies)
+  CreateProvider:
+    Type: String
+    AllowedValues: ["true", "false"]
+    Default: "true"
+    Description: Set false if this account already has the token.actions.githubusercontent.com provider
+
+Conditions:
+  MakeProvider: !Equals [!Ref CreateProvider, "true"]
+
+Resources:
+  GitHubOidc:
+    Type: AWS::IAM::OIDCProvider
+    Condition: MakeProvider
+    Properties:
+      Url: https://token.actions.githubusercontent.com
+      ClientIdList: [sts.amazonaws.com]
+      ThumbprintList:
+        - 6938fd4d98bab03faadb97b34396831e3780aea1
+        - 1c58a3a8518e8759bf075b76b750d4f2df264fcd
+
+  RobotRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: SkyfortressPolicyRobot
+      MaxSessionDuration: 3600
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Federated: !Sub "arn:aws:iam::${AWS::AccountId}:oidc-provider/token.actions.githubusercontent.com"
+            Action: sts:AssumeRoleWithWebIdentity
+            Condition:
+              StringEquals:
+                "token.actions.githubusercontent.com:aud": sts.amazonaws.com
+                # PIN THE SUB CLAIM. Without this, ANY repo on GitHub could assume this role.
+                "token.actions.githubusercontent.com:sub": !Sub "repo:${GitHubOrg}/${RepoName}:pull_request"
+      Policies:
+        - PolicyName: CustomPolicyChecksOnly
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - access-analyzer:CheckNoNewAccess
+                  - access-analyzer:CheckAccessNotGranted
+                  - access-analyzer:CheckNoPublicAccess
+                  - access-analyzer:ValidatePolicy
+                Resource: "*"
+
+Outputs:
+  RobotRoleArn:
+    Value: !GetAtt RobotRole.Arn

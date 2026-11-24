@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 760" width="1600" height="760">
+<title>Lab 2.2 attack-and-detect architecture</title>
+<defs>
+<filter id="g" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+<radialGradient id="bgg" cx=".5" cy="0" r="1"><stop offset="0" stop-color="#0f1d48"/><stop offset="1" stop-color="#060a1a"/></radialGradient>
+<pattern id="dots" width="26" height="26" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1.2" fill="#8aa0ff" opacity=".12"/></pattern>
+<marker id="a-cyan" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#22d3ee"/></marker>
+<linearGradient id="f-cyan" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#22d3ee" stop-opacity=".22"/><stop offset="1" stop-color="#22d3ee" stop-opacity=".06"/></linearGradient>
+<marker id="a-blue" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#60a5fa"/></marker>
+<linearGradient id="f-blue" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#60a5fa" stop-opacity=".22"/><stop offset="1" stop-color="#60a5fa" stop-opacity=".06"/></linearGradient>
+<marker id="a-orange" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#ff9900"/></marker>
+<linearGradient id="f-orange" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff9900" stop-opacity=".22"/><stop offset="1" stop-color="#ff9900" stop-opacity=".06"/></linearGradient>
+<marker id="a-violet" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#a78bfa"/></marker>
+<linearGradient id="f-violet" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a78bfa" stop-opacity=".22"/><stop offset="1" stop-color="#a78bfa" stop-opacity=".06"/></linearGradient>
+<marker id="a-pink" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#fb7185"/></marker>
+<linearGradient id="f-pink" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fb7185" stop-opacity=".22"/><stop offset="1" stop-color="#fb7185" stop-opacity=".06"/></linearGradient>
+<marker id="a-green" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#34d399"/></marker>
+<linearGradient id="f-green" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#34d399" stop-opacity=".22"/><stop offset="1" stop-color="#34d399" stop-opacity=".06"/></linearGradient>
+<marker id="a-gold" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#fbbf24"/></marker>
+<linearGradient id="f-gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fbbf24" stop-opacity=".22"/><stop offset="1" stop-color="#fbbf24" stop-opacity=".06"/></linearGradient>
+<marker id="a-text" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#e8ecff"/></marker>
+<linearGradient id="f-text" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e8ecff" stop-opacity=".22"/><stop offset="1" stop-color="#e8ecff" stop-opacity=".06"/></linearGradient>
+<marker id="a-dim" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#b7c0e6"/></marker>
+<linearGradient id="f-dim" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b7c0e6" stop-opacity=".22"/><stop offset="1" stop-color="#b7c0e6" stop-opacity=".06"/></linearGradient>
+<marker id="a-muted" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#8a95c2"/></marker>
+<linearGradient id="f-muted" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8a95c2" stop-opacity=".22"/><stop offset="1" stop-color="#8a95c2" stop-opacity=".06"/></linearGradient>
+</defs>
+<rect width="1600" height="760" fill="url(#bgg)"/><rect width="1600" height="760" fill="url(#dots)"/>
+<text x="48" y="62" font-family="Space Grotesk, Inter, sans-serif" font-size="30" font-weight="700" fill="#e8ecff" text-anchor="start" letter-spacing="0" opacity="1">Lab 2.2 · Summon the Kraken</text>
+<text x="48" y="94" font-family="Space Grotesk, Inter, sans-serif" font-size="16" font-weight="500" fill="#8a95c2" text-anchor="start" letter-spacing="0" opacity="1">You play both sides: detonate real techniques in skyfortress-prod, then investigate from the delegated-admin account</text>
+<rect x="40" y="130" width="560" height="600" rx="22" fill="#fb7185" fill-opacity=".035" stroke="#fb7185" stroke-opacity=".45" stroke-dasharray="7 7"/>
+<text x="60" y="160" font-family="JetBrains Mono, monospace" font-size="14" font-weight="500" fill="#fb7185" text-anchor="start" letter-spacing="2.5" opacity="1">RED SIDE · YOUR CLOUDSHELL</text>
+<rect x="70" y="180" width="500" height="90" rx="14" fill="url(#f-pink)" stroke="#fb7185" stroke-width="1.6"/>
+<rect x="70" y="180" width="5" height="90" rx="2.5" fill="#fb7185"/>
+<text x="90" y="211.0" font-family="Space Grotesk, Inter, sans-serif" font-size="18" font-weight="600" fill="#e8ecff" text-anchor="start" letter-spacing="0" opacity="1">Stratus Red Team</text>
+<text x="90" y="233.0" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="500" fill="#b7c0e6" text-anchor="start" letter-spacing="0" opacity="1">warmup → detonate → cleanup</text>
+<text x="90" y="253.0" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="500" fill="#b7c0e6" text-anchor="start" letter-spacing="0" opacity="1">real ATT&amp;CK techniques, self-contained</text>
+<rect x="70" y="300" width="500" height="90" rx="14" fill="url(#f-pink)" stroke="#fb7185" stroke-width="1.6"/>
+<rect x="70" y="300" width="5" height="90" rx="2.5" fill="#fb7185"/>
+<text x="90" y="331.0" font-family="Space Grotesk, Inter, sans-serif" font-size="18" font-weight="600" fill="#e8ecff" text-anchor="start" letter-spacing="0" opacity="1">kraken-chain.py</text>
+<text x="90" y="353.0" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="500" fill="#b7c0e6" text-anchor="start" letter-spacing="0" opacity="1">boto3 · user agent “KrakenCollective”</text>
+<text x="90" y="373.0" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="500" fill="#b7c0e6" text-anchor="start" letter-spacing="0" opacity="1">S3 smash-and-grab + ransom note</text>
+<rect x="70" y="420" width="240" height="120" rx="14" fill="url(#f-orange)" stroke="#ff9900" stroke-width="1.6"/>
+<rect x="70" y="420" width="5" height="120" rx="2.5" fill="#ff9900"/>
+<text x="90" y="466.0" font-family="Space Grotesk, Inter, sans-serif" font-size="18" font-weight="600" fill="#e8ecff" text-anchor="start" letter-spacing="0" opacity="1">EC2 victim</text>
+<text x="90" y="488.0" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="500" fill="#b7c0e6" text-anchor="start" letter-spacing="0" opacity="1">IMDS creds</text>
+<text x="90" y="508.0" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="500" fill="#b7c0e6" text-anchor="start" letter-spacing="0" opacity="1">stolen via SSM</text>
+<rect x="330" y="420" width="240" height="120" rx="14" fill="url(#f-orange)" stroke="#ff9900" stroke-width="1.6"/>
+<rect x="330" y="420" width="5" height="120" rx="2.5" fill="#ff9900"/>
+<text x="350" y="466.0" font-family="Space Grotesk, Inter, sans-serif" font-size="18" font-weight="600" fill="#e8ecff" text-anchor="start" letter-spacing="0" opacity="1">S3 victim bucket</text>
+<text x="350" y="488.0" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="500" fill="#b7c0e6" text-anchor="start" letter-spacing="0" opacity="1">nimbus-cargo-</text>
+<text x="350" y="508.0" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="500" fill="#b7c0e6" text-anchor="start" letter-spacing="0" opacity="1">manifests-&lt;acct&gt;</text>
+<rect x="70" y="570" width="500" height="120" rx="14" fill="url(#f-violet)" stroke="#a78bfa" stroke-width="1.6"/>
+<rect x="70" y="570" width="5" height="120" rx="2.5" fill="#a78bfa"/>
+<text x="90" y="616.0" font-family="Space Grotesk, Inter, sans-serif" font-size="18" font-weight="600" fill="#e8ecff" text-anchor="start" letter-spacing="0" opacity="1">IAM + CloudTrail</text>
+<text x="90" y="638.0" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="500" fill="#b7c0e6" text-anchor="start" letter-spacing="0" opacity="1">backdoor admin user (Stratus)</text>
+<text x="90" y="658.0" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="500" fill="#b7c0e6" text-anchor="start" letter-spacing="0" opacity="1">trail stopped (Stratus)</text>
+<path d="M70 225 L54 225 L54 480 L66 480" fill="none" stroke="#fb7185" stroke-width="2.2" stroke-linejoin="round" stroke-dasharray="6 6" marker-end="url(#a-pink)"/>
+<path d="M450 390 L450 416" fill="none" stroke="#fb7185" stroke-width="2.2" stroke-linejoin="round" stroke-dasharray="6 6" marker-end="url(#a-pink)"/>
+<rect x="640" y="130" width="920" height="600" rx="22" fill="#22d3ee" fill-opacity=".035" stroke="#22d3ee" stroke-opacity=".45" stroke-dasharray="7 7"/>
+<text x="660" y="160" font-family="JetBrains Mono, monospace" font-size="14" font-weight="500" fill="#22d3ee" text-anchor="start" letter-spacing="2.5" opacity="1">BLUE SIDE · SKYFORTRESS-DEV (DELEGATED ADMIN)</text>
+<rect x="680" y="190" width="400" height="110" rx="14" fill="url(#f-cyan)" stroke="#22d3ee" stroke-width="1.6" filter="url(#g)"/>
+<rect x="680" y="190" width="5" height="110" rx="2.5" fill="#22d3ee"/>
+<text x="700" y="231.0" font-family="Space Grotesk, Inter, sans-serif" font-size="18" font-weight="600" fill="#e8ecff" text-anchor="start" letter-spacing="0" opacity="1">GuardDuty (prod member)</text>
+<text x="700" y="253.0" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="500" fill="#b7c0e6" text-anchor="start" letter-spacing="0" opacity="1">CloudTrail · VPC flow · DNS</text>
+<text x="700" y="273.0" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="500" fill="#b7c0e6" text-anchor="start" letter-spacing="0" opacity="1">S3 Protection · Runtime</text>
+<rect x="1120" y="190" width="400" height="110" rx="14" fill="url(#f-cyan)" stroke="#22d3ee" stroke-width="1.6"/>
+<rect x="1120" y="190" width="5" height="110" rx="2.5" fill="#22d3ee"/>
+<text x="1140" y="231.0" font-family="Space Grotesk, Inter, sans-serif" font-size="18" font-weight="600" fill="#e8ecff" text-anchor="start" letter-spacing="0" opacity="1">GuardDuty admin view</text>
+<text x="1140" y="253.0" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="500" fill="#b7c0e6" text-anchor="start" letter-spacing="0" opacity="1">findings from all members</text>
+<text x="1140" y="273.0" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="500" fill="#b7c0e6" text-anchor="start" letter-spacing="0" opacity="1">attack sequences</text>
+<rect x="680" y="350" width="400" height="110" rx="14" fill="url(#f-blue)" stroke="#60a5fa" stroke-width="1.6"/>
+<rect x="680" y="350" width="5" height="110" rx="2.5" fill="#60a5fa"/>
+<text x="700" y="391.0" font-family="Space Grotesk, Inter, sans-serif" font-size="18" font-weight="600" fill="#e8ecff" text-anchor="start" letter-spacing="0" opacity="1">Security Hub (unified)</text>
+<text x="700" y="413.0" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="500" fill="#b7c0e6" text-anchor="start" letter-spacing="0" opacity="1">correlated exposure + threats</text>
+<text x="700" y="433.0" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="500" fill="#b7c0e6" text-anchor="start" letter-spacing="0" opacity="1">risk-ranked</text>
+<rect x="1120" y="350" width="400" height="110" rx="14" fill="url(#f-violet)" stroke="#a78bfa" stroke-width="1.6"/>
+<rect x="1120" y="350" width="5" height="110" rx="2.5" fill="#a78bfa"/>
+<text x="1140" y="391.0" font-family="Space Grotesk, Inter, sans-serif" font-size="18" font-weight="600" fill="#e8ecff" text-anchor="start" letter-spacing="0" opacity="1">Detective / AI investigation</text>
+<text x="1140" y="413.0" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="500" fill="#b7c0e6" text-anchor="start" letter-spacing="0" opacity="1">behavior graph pivots</text>
+<text x="1140" y="433.0" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="500" fill="#b7c0e6" text-anchor="start" letter-spacing="0" opacity="1">(AI triage: preview)</text>
+<rect x="680" y="510" width="840" height="170" rx="14" fill="url(#f-green)" stroke="#34d399" stroke-width="1.6"/>
+<rect x="680" y="510" width="5" height="170" rx="2.5" fill="#34d399"/>
+<text x="700" y="581.0" font-family="Space Grotesk, Inter, sans-serif" font-size="18" font-weight="600" fill="#e8ecff" text-anchor="start" letter-spacing="0" opacity="1">Your investigation notebook</text>
+<text x="700" y="603.0" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="500" fill="#b7c0e6" text-anchor="start" letter-spacing="0" opacity="1">1 · Which principal? 2 · Which technique (ATT&amp;CK)? 3 · Which data? 4 · Blast radius?</text>
+<text x="700" y="623.0" font-family="Space Grotesk, Inter, sans-serif" font-size="14" font-weight="500" fill="#b7c0e6" text-anchor="start" letter-spacing="0" opacity="1">5 · What would have prevented it? (Day 1 guardrails!)  6 · What will detect it faster? (Lab 2.4)</text>
+<path d="M600 245 L676 245" fill="none" stroke="#22d3ee" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#a-cyan)"/>
+<text x="638.0" y="237.0" font-family="JetBrains Mono, monospace" font-size="14" font-weight="500" fill="#22d3ee" text-anchor="middle" letter-spacing="0" opacity="1">signals</text>
+<path d="M1080 245 L1116 245" fill="none" stroke="#22d3ee" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#a-cyan)"/>
+<path d="M880 300 L880 346" fill="none" stroke="#60a5fa" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#a-blue)"/>
+<path d="M1320 300 L1320 346" fill="none" stroke="#a78bfa" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#a-violet)"/>
+<path d="M1100 460 L1100 506" fill="none" stroke="#34d399" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#a-green)"/>
+</svg>

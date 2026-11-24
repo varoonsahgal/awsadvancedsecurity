@@ -1,0 +1,150 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 900">
+  <title>Intel map of the skyfortress-prod account with the suspected Kraken kill chain marked</title>
+  <defs>
+    <radialGradient id="mbg" cx=".5" cy=".45" r=".75">
+      <stop offset="0" stop-color="#1a1236"/><stop offset=".7" stop-color="#0b0a1f"/><stop offset="1" stop-color="#060612"/>
+    </radialGradient>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M40 0H0V40" fill="none" stroke="#2b2a52" stroke-width="1"/>
+    </pattern>
+    <linearGradient id="isle" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2f2a5e"/><stop offset="1" stop-color="#17143a"/>
+    </linearGradient>
+    <linearGradient id="isleHot" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#5a1a3e"/><stop offset="1" stop-color="#2a0b22"/>
+    </linearGradient>
+    <filter id="mg" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#fb7185"/>
+    </marker>
+  </defs>
+  <rect width="1400" height="900" fill="url(#mbg)"/>
+  <rect width="1400" height="900" fill="url(#grid)" opacity=".55"/>
+
+  <g font-family="Space Grotesk, Inter, sans-serif">
+    <!-- title -->
+    <text x="40" y="58" font-size="30" font-weight="700" fill="#ffe3c2">INTEL MAP · skyfortress-prod (us-east-1)</text>
+    <text x="40" y="88" font-size="16" fill="#b7c0e6" letter-spacing="2">Owlsley's best guess at the kill chain. Confirm every hop with evidence before you act on it.</text>
+
+    <!-- compass -->
+    <g transform="translate(1300 90)" opacity=".85">
+      <circle r="44" fill="none" stroke="#ff9900" stroke-width="2"/>
+      <path d="M0 -40 L8 0 L0 40 L-8 0 Z" fill="#ff9900"/><path d="M-40 0 L0 -8 L40 0 L0 8 Z" fill="#fb7185" opacity=".7"/>
+      <text y="-52" text-anchor="middle" font-size="16" fill="#ffe3c2">N</text>
+    </g>
+
+    <!-- ===== attack path ===== -->
+    <g fill="none" stroke="#fb7185" stroke-width="4" stroke-dasharray="12 10" marker-end="url(#arr)" filter="url(#mg)">
+      <path d="M250 300 C320 300 340 300 400 300"/>
+      <path d="M560 300 C610 300 630 300 680 300"/>
+      <path d="M860 280 C930 220 980 190 1040 190"/>
+      <path d="M860 300 C940 300 980 320 1040 330"/>
+      <path d="M840 340 C900 430 960 460 1040 470"/>
+      <path d="M800 360 C780 470 720 540 640 580"/>
+      <path d="M760 360 C680 460 520 520 400 560"/>
+    </g>
+    <!-- beacon path -->
+    <g fill="none" stroke="#ff9900" stroke-width="3" stroke-dasharray="4 8">
+      <path d="M1200 530 C1240 560 1262 580 1280 600"/>
+    </g>
+
+    <!-- ===== islands ===== -->
+    <!-- 1 build log -->
+    <g transform="translate(150 300)">
+      <ellipse rx="110" ry="62" fill="url(#isleHot)" stroke="#fb7185" stroke-width="2"/>
+      <rect x="-26" y="-34" width="52" height="40" rx="6" fill="#0b0a1f" stroke="#ffb3c1" stroke-width="2"/>
+      <path d="M-16 -22 h32 M-16 -14 h24 M-16 -6 h28" stroke="#ffb3c1" stroke-width="3"/>
+      <text y="30" text-anchor="middle" font-size="17" font-weight="700" fill="#fff">CI build log</text>
+      <text y="50" text-anchor="middle" font-size="14" fill="#ffc2d1">artifacts bucket · ci/</text>
+    </g>
+    <!-- 2 ci-deployer -->
+    <g transform="translate(480 300)">
+      <ellipse rx="100" ry="60" fill="url(#isleHot)" stroke="#fb7185" stroke-width="2"/>
+      <circle cy="-22" r="14" fill="#ffb3c1"/><path d="M-22 4 a22 18 0 0 1 44 0 z" fill="#ffb3c1"/>
+      <text y="32" text-anchor="middle" font-size="17" font-weight="700" fill="#fff">ci-deployer</text>
+      <text y="52" text-anchor="middle" font-size="14" fill="#ffc2d1">IAM user · long-term key</text>
+    </g>
+    <!-- 3 ci role -->
+    <g transform="translate(775 310)">
+      <ellipse rx="115" ry="66" fill="url(#isleHot)" stroke="#fb7185" stroke-width="2.5"/>
+      <path d="M-20 -40 h40 l8 22 h-56 z" fill="#ff9900"/><rect x="-24" y="-18" width="48" height="22" rx="4" fill="#ffb347"/>
+      <text y="30" text-anchor="middle" font-size="17" font-weight="700" fill="#fff">nimbus-ci-deploy-role</text>
+      <text y="50" text-anchor="middle" font-size="14" fill="#ffc2d1">iam:* · s3:* · way too much</text>
+    </g>
+    <!-- 4a svc-telemetry -->
+    <g transform="translate(1140 180)">
+      <ellipse rx="105" ry="52" fill="url(#isle)" stroke="#a78bfa" stroke-width="2"/>
+      <path d="M-14 -24 a10 10 0 1 1 0 0.1 M-6 -24 h26 v6 h-6 v6 h-6 v-6 h-8" stroke="#c4b5fd" stroke-width="4" fill="none"/>
+      <text y="18" text-anchor="middle" font-size="17" font-weight="700" fill="#fff">svc-telemetry</text>
+      <text y="38" text-anchor="middle" font-size="14" fill="#c4b5fd">dormant user… or is it?</text>
+    </g>
+    <!-- 4b telemetry role -->
+    <g transform="translate(1150 330)">
+      <ellipse rx="115" ry="52" fill="url(#isle)" stroke="#a78bfa" stroke-width="2"/>
+      <path d="M-18 -30 h36 v20 h-36 z M-10 -30 v-8 a10 10 0 0 1 20 0" stroke="#c4b5fd" stroke-width="3.5" fill="none"/>
+      <text y="18" text-anchor="middle" font-size="17" font-weight="700" fill="#fff">nimbus-telemetry-reader</text>
+      <text y="38" text-anchor="middle" font-size="14" fill="#c4b5fd">who does it trust now?</text>
+    </g>
+    <!-- 4c dispatch ec2 -->
+    <g transform="translate(1140 480)">
+      <ellipse rx="115" ry="58" fill="url(#isle)" stroke="#34d399" stroke-width="2"/>
+      <rect x="-26" y="-38" width="52" height="34" rx="5" fill="#0b0a1f" stroke="#6ee7b7" stroke-width="2.5"/>
+      <circle cx="-14" cy="-21" r="4" fill="#6ee7b7"/><path d="M-4 -21 h22" stroke="#6ee7b7" stroke-width="3"/>
+      <text y="22" text-anchor="middle" font-size="17" font-weight="700" fill="#fff">nimbus-dispatch-01</text>
+      <text y="42" text-anchor="middle" font-size="14" fill="#a7f3d0">EC2 · SG · something ticking</text>
+    </g>
+    <!-- C2 -->
+    <g transform="translate(1300 650)">
+      <circle r="50" fill="#2a0b22" stroke="#ff9900" stroke-width="2" stroke-dasharray="6 6"/>
+      <text y="2" text-anchor="middle" font-size="26" fill="#ff9900">☠</text>
+      <text y="26" text-anchor="middle" font-size="14" fill="#ffd7a8">C2</text>
+      <text y="76" text-anchor="middle" font-size="14" fill="#ffd7a8">*.kraken.example.com</text>
+      <text y="96" text-anchor="middle" font-size="14" fill="#ffd7a8">reserved · never resolves</text>
+    </g>
+    <!-- 5 cargo -->
+    <g transform="translate(560 620)">
+      <ellipse rx="125" ry="64" fill="url(#isleHot)" stroke="#fb7185" stroke-width="2.5"/>
+      <path d="M-30 -42 h60 l-6 40 h-48 z" fill="#ffb347"/><path d="M-30 -42 a30 8 0 0 0 60 0" fill="#ffd28a"/>
+      <text y="26" text-anchor="middle" font-size="17" font-weight="700" fill="#fff">Cargo manifests</text>
+      <text y="46" text-anchor="middle" font-size="14" fill="#ffc2d1">crown jewels · versioned?</text>
+    </g>
+    <!-- 6 knowledge base -->
+    <g transform="translate(300 580)">
+      <ellipse rx="115" ry="60" fill="url(#isleHot)" stroke="#fb7185" stroke-width="2"/>
+      <path d="M-26 -40 h22 a6 6 0 0 1 6 6 v34 h-28 z M26 -40 h-22 a6 6 0 0 0 -6 6 v34 h28 z" fill="#fda4af"/>
+      <text y="24" text-anchor="middle" font-size="17" font-weight="700" fill="#fff">NimbusHelp KB</text>
+      <text y="44" text-anchor="middle" font-size="14" fill="#ffc2d1">chatbot reads these docs</text>
+    </g>
+
+    <!-- step numbers -->
+    <g font-size="16" font-weight="700" text-anchor="middle">
+      <g transform="translate(325 270)"><circle r="16" fill="#fb7185"/><text y="6" fill="#0b0a1f">1</text></g>
+      <g transform="translate(620 270)"><circle r="16" fill="#fb7185"/><text y="6" fill="#0b0a1f">2</text></g>
+      <g transform="translate(960 190)"><circle r="16" fill="#fb7185"/><text y="6" fill="#0b0a1f">3</text></g>
+      <g transform="translate(970 308)"><circle r="16" fill="#fb7185"/><text y="6" fill="#0b0a1f">3</text></g>
+      <g transform="translate(960 450)"><circle r="16" fill="#fb7185"/><text y="6" fill="#0b0a1f">3</text></g>
+      <g transform="translate(730 500)"><circle r="16" fill="#fb7185"/><text y="6" fill="#0b0a1f">4</text></g>
+      <g transform="translate(560 500)"><circle r="16" fill="#fb7185"/><text y="6" fill="#0b0a1f">5</text></g>
+    </g>
+
+    <!-- watchtowers (telemetry) -->
+    <g transform="translate(40 760)">
+      <rect width="740" height="110" rx="16" fill="#0e1430" stroke="#22d3ee" stroke-width="1.5" opacity=".95"/>
+      <text x="22" y="34" font-size="15" letter-spacing="3" fill="#22d3ee">WATCHTOWERS · YOUR EVIDENCE SOURCES</text>
+      <g font-size="15" fill="#e8ecff">
+        <circle cx="34" cy="68" r="7" fill="#22d3ee"/><text x="50" y="73">CloudTrail event history / Lake / Athena</text>
+        <circle cx="34" cy="94" r="7" fill="#34d399"/><text x="50" y="99">Route 53 Resolver query logs</text>
+        <circle cx="420" cy="68" r="7" fill="#a78bfa"/><text x="436" y="73">IAM Access Analyzer · credential report</text>
+        <circle cx="420" cy="94" r="7" fill="#ff9900"/><text x="436" y="99">S3 versions · SSM evidence bucket</text>
+      </g>
+    </g>
+
+    <!-- legend -->
+    <g transform="translate(830 760)">
+      <rect width="320" height="110" rx="16" fill="#0e1430" stroke="#fb7185" stroke-width="1.5"/>
+      <text x="20" y="34" font-size="15" letter-spacing="3" fill="#fb7185">LEGEND</text>
+      <path d="M20 62 h60" stroke="#fb7185" stroke-width="4" stroke-dasharray="12 10"/><text x="94" y="67" font-size="15" fill="#e8ecff">suspected attacker hop</text>
+      <path d="M20 92 h60" stroke="#ff9900" stroke-width="3" stroke-dasharray="4 8"/><text x="94" y="97" font-size="15" fill="#e8ecff">beacon / C2 traffic</text>
+    </g>
+  </g>
+</svg>

@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 780" font-family="Space Grotesk, Inter, sans-serif">
+  <title>Confused deputy: the Kraken tenant tricks a SaaS vendor into assuming the Nimbus role; ExternalId stops it</title>
+  <defs>
+    <linearGradient id="cbg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#170a24"/><stop offset="1" stop-color="#070b1c"/></linearGradient>
+    <filter id="cg" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <marker id="cr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#fb7185"/></marker>
+    <marker id="cv" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#a78bfa"/></marker>
+    <marker id="cgm" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#34d399"/></marker>
+  </defs>
+  <rect width="1400" height="780" fill="url(#cbg)"/>
+  <text x="50" y="58" font-size="28" font-weight="700" fill="#fff">Boss: The Confused Deputy</text>
+  <text x="50" y="88" font-size="16" fill="#8a95c2">The vendor has the authority. The attacker has the intent. The missing ExternalId lets one borrow the other.</text>
+
+  <!-- vendor -->
+  <rect x="520" y="140" width="360" height="200" rx="22" fill="#1a1745" stroke="#a78bfa" stroke-width="2.5" filter="url(#cg)"/>
+  <text x="545" y="172" font-size="13" fill="#a78bfa" font-family="JetBrains Mono, monospace">VENDOR ACCOUNT (skyfortress-prod)</text>
+  <text x="545" y="206" font-size="22" font-weight="700" fill="#fff">🛰️ Orbital Insights SaaS</text>
+  <text x="545" y="236" font-size="14" fill="#b7c0e6" font-family="JetBrains Mono, monospace">tenant registry:</text>
+  <text x="545" y="258" font-size="14" fill="#c4b5fd" font-family="JetBrains Mono, monospace">nimbus → oi-tenant-7f3c…</text>
+  <text x="545" y="280" font-size="14" fill="#f9a8d4" font-family="JetBrains Mono, monospace">kraken → oi-tenant-91ab…</text>
+  <text x="545" y="314" font-size="14" fill="#b7c0e6">AssumeRole(role_arn, ExternalId=tenant's)</text>
+
+  <!-- kraken tenant -->
+  <rect x="60" y="160" width="330" height="160" rx="20" fill="#2a0d1d" stroke="#fb7185" stroke-width="2.5"/>
+  <text x="82" y="192" font-size="13" fill="#fb7185" font-family="JetBrains Mono, monospace">TENANT: kraken</text>
+  <text x="82" y="226" font-size="20" font-weight="700" fill="#fff">🐙 The Kraken</text>
+  <text x="82" y="254" font-size="15" fill="#fda4af">"Please scan this role:"</text>
+  <text x="82" y="280" font-size="13" fill="#fecdd3" font-family="JetBrains Mono, monospace">arn:aws:iam::DEV:role/</text>
+  <text x="82" y="300" font-size="13" fill="#fecdd3" font-family="JetBrains Mono, monospace">  OrbitalInsightsReadRole</text>
+  <path d="M390 240 H514" stroke="#fb7185" stroke-width="3" marker-end="url(#cr)"/>
+  <text x="404" y="228" font-size="14" fill="#fda4af" font-family="JetBrains Mono, monospace">① submit</text>
+
+  <!-- nimbus account -->
+  <rect x="980" y="140" width="370" height="250" rx="22" fill="#0e1c33" stroke="#22d3ee" stroke-width="2.5"/>
+  <text x="1002" y="172" font-size="13" fill="#22d3ee" font-family="JetBrains Mono, monospace">CUSTOMER ACCOUNT (skyfortress-dev)</text>
+  <text x="1002" y="206" font-size="20" font-weight="700" fill="#fff">OrbitalInsightsReadRole</text>
+  <text x="1002" y="236" font-size="14" fill="#b7c0e6" font-family="JetBrains Mono, monospace">trust: vendor scanner role</text>
+  <text x="1002" y="258" font-size="14" fill="#fda4af" font-family="JetBrains Mono, monospace" font-weight="700">condition: (none!)</text>
+  <rect x="1002" y="282" width="326" height="86" rx="14" fill="#2a1030" stroke="#f472b6"/>
+  <text x="1022" y="314" font-size="15" fill="#fff">🔐 telemetry-report secret</text>
+  <text x="1022" y="342" font-size="13" fill="#f9a8d4" font-family="JetBrains Mono, monospace">SKY{…}</text>
+  <path d="M880 230 H974" stroke="#fb7185" stroke-width="3" marker-end="url(#cr)"/>
+  <text x="888" y="216" font-size="13" fill="#fda4af" font-family="JetBrains Mono, monospace">② assume</text>
+  <path d="M980 330 C 880 400, 640 400, 400 320" stroke="#fb7185" stroke-width="3" stroke-dasharray="9 7" fill="none" marker-end="url(#cr)"/>
+  <text x="560" y="410" font-size="14" fill="#fda4af" font-family="JetBrains Mono, monospace">③ report (and flag) returned to the WRONG tenant</text>
+
+  <!-- fix panel -->
+  <rect x="60" y="460" width="1290" height="280" rx="22" fill="#0b1f1a" stroke="#34d399" stroke-opacity=".6" stroke-width="2"/>
+  <text x="86" y="496" font-size="14" fill="#34d399" font-family="JetBrains Mono, monospace">THE FIX</text>
+  <text x="86" y="532" font-size="18" fill="#fff">Customer trust policy requires <tspan font-weight="700" fill="#6ee7b7">sts:ExternalId = oi-tenant-7f3c…</tspan> (Nimbus's id, assigned by the vendor).</text>
+  <text x="86" y="562" font-size="16" fill="#b7c0e6">Kraken can name any role ARN, but the vendor will always send <tspan font-family="JetBrains Mono, monospace" fill="#f9a8d4">kraken's</tspan> ExternalId → AccessDenied.</text>
+  <rect x="86" y="590" width="590" height="124" rx="14" fill="#08150f" stroke="#34d399" stroke-opacity=".4"/>
+  <text x="106" y="620" font-size="14" fill="#6ee7b7" font-family="JetBrains Mono, monospace">"Condition": {</text>
+  <text x="106" y="644" font-size="14" fill="#6ee7b7" font-family="JetBrains Mono, monospace">  "StringEquals": {</text>
+  <text x="106" y="668" font-size="14" fill="#6ee7b7" font-family="JetBrains Mono, monospace">    "sts:ExternalId": "oi-tenant-7f3c9a41-nimbus" }}</text>
+  <text x="106" y="696" font-size="13" fill="#8a95c2" font-family="JetBrains Mono, monospace">// cross-account humans → ExternalId; AWS services → aws:SourceArn</text>
+  <rect x="700" y="590" width="625" height="124" rx="14" fill="#08150f" stroke="#34d399" stroke-opacity=".4"/>
+  <text x="720" y="620" font-size="15" fill="#fff" font-weight="700">Same disease, service flavour</text>
+  <text x="720" y="646" font-size="14" fill="#b7c0e6">When an AWS service (SNS, S3, Config…) calls your resource,</text>
+  <text x="720" y="668" font-size="14" fill="#b7c0e6">pin <tspan font-family="JetBrains Mono, monospace" fill="#6ee7b7">aws:SourceAccount</tspan> / <tspan font-family="JetBrains Mono, monospace" fill="#6ee7b7">aws:SourceArn</tspan> — or enforce</text>
+  <text x="720" y="690" font-size="14" fill="#b7c0e6"><tspan font-family="JetBrains Mono, monospace" fill="#6ee7b7">aws:SourceOrgID</tspan> for the whole org with an RCP.</text>
+</svg>

@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 400" font-family="Space Grotesk, Inter, sans-serif">
+  <title>ACT I · 13:45: Detect</title>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#070a1c"/><stop offset=".55" stop-color="#0d1033"/><stop offset="1" stop-color="#1a0d24"/></linearGradient>
+    <radialGradient id="glow" cx=".72" cy=".55" r=".5"><stop offset="0" stop-color="#22d3ee" stop-opacity=".45"/><stop offset="1" stop-color="#22d3ee" stop-opacity="0"/></radialGradient>
+    <radialGradient id="glow2" cx=".12" cy=".2" r=".4"><stop offset="0" stop-color="#60a5fa" stop-opacity=".22"/><stop offset="1" stop-color="#60a5fa" stop-opacity="0"/></radialGradient>
+    <linearGradient id="acc" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#22d3ee"/><stop offset="1" stop-color="#60a5fa"/></linearGradient>
+    <linearGradient id="cloud" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2b2f6b"/><stop offset="1" stop-color="#121433"/></linearGradient>
+    <linearGradient id="tent" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#4a0b2c"/><stop offset="1" stop-color="#d63370"/></linearGradient>
+    <filter id="gl" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <filter id="soft"><feGaussianBlur stdDeviation="22"/></filter>
+  </defs>
+  <rect width="1600" height="400" fill="url(#bg)"/>
+  <rect width="1600" height="400" fill="url(#glow)"/>
+  <rect width="1600" height="400" fill="url(#glow2)"/>
+  <g fill="#dfe6ff"><circle cx="663" cy="77" r="1.6" opacity="0.4"/><circle cx="148" cy="274" r="0.8" opacity="0.8"/><circle cx="1193" cy="29" r="2" opacity="0.6"/><circle cx="76" cy="44" r="1.6" opacity="1"/><circle cx="143" cy="123" r="0.8" opacity="1"/><circle cx="121" cy="289" r="0.8" opacity="0.6"/><circle cx="1291" cy="298" r="0.8" opacity="1"/><circle cx="101" cy="113" r="0.8" opacity="0.6"/><circle cx="593" cy="214" r="1" opacity="0.4"/><circle cx="1169" cy="157" r="2" opacity="0.6"/><circle cx="211" cy="297" r="2" opacity="0.6"/><circle cx="762" cy="49" r="2" opacity="0.4"/><circle cx="1155" cy="30" r="2" opacity="0.6"/><circle cx="1016" cy="272" r="1.6" opacity="0.8"/><circle cx="953" cy="299" r="1.6" opacity="0.8"/><circle cx="613" cy="127" r="1" opacity="0.6"/><circle cx="167" cy="294" r="1.2" opacity="1"/><circle cx="703" cy="229" r="1.2" opacity="0.4"/><circle cx="241" cy="262" r="1.6" opacity="0.6"/><circle cx="1550" cy="175" r="1" opacity="1"/><circle cx="863" cy="20" r="0.8" opacity="0.8"/><circle cx="696" cy="179" r="2" opacity="1"/><circle cx="1187" cy="233" r="0.8" opacity="0.4"/><circle cx="552" cy="242" r="0.8" opacity="0.4"/><circle cx="1497" cy="158" r="2" opacity="1"/><circle cx="582" cy="197" r="1.2" opacity="0.4"/><circle cx="945" cy="181" r="1" opacity="0.4"/><circle cx="1011" cy="30" r="1" opacity="0.8"/><circle cx="264" cy="126" r="1.6" opacity="1"/><circle cx="1016" cy="41" r="1" opacity="1"/><circle cx="822" cy="281" r="1.2" opacity="0.6"/><circle cx="881" cy="281" r="1.2" opacity="1"/><circle cx="734" cy="194" r="1" opacity="0.6"/><circle cx="169" cy="90" r="1" opacity="0.6"/><circle cx="1348" cy="119" r="0.8" opacity="1"/><circle cx="1206" cy="93" r="1.2" opacity="0.8"/><circle cx="8" cy="74" r="1.6" opacity="0.8"/><circle cx="1248" cy="289" r="1.2" opacity="0.6"/><circle cx="1414" cy="263" r="2" opacity="0.4"/><circle cx="935" cy="286" r="1.6" opacity="1"/><circle cx="817" cy="201" r="0.8" opacity="1"/><circle cx="1299" cy="205" r="0.8" opacity="0.6"/><circle cx="137" cy="106" r="1.6" opacity="0.6"/><circle cx="225" cy="174" r="2" opacity="0.4"/><circle cx="209" cy="0" r="2" opacity="0.6"/><circle cx="1098" cy="51" r="1.2" opacity="0.4"/><circle cx="144" cy="106" r="2" opacity="1"/><circle cx="304" cy="129" r="1.2" opacity="0.8"/><circle cx="971" cy="62" r="0.8" opacity="1"/><circle cx="954" cy="245" r="1.6" opacity="0.8"/><circle cx="175" cy="73" r="0.8" opacity="0.8"/><circle cx="1516" cy="135" r="1.6" opacity="0.6"/><circle cx="1057" cy="11" r="1" opacity="0.8"/><circle cx="300" cy="278" r="0.8" opacity="0.8"/><circle cx="1316" cy="46" r="1.2" opacity="0.8"/><circle cx="342" cy="182" r="1" opacity="0.8"/><circle cx="1303" cy="114" r="2" opacity="0.6"/><circle cx="490" cy="205" r="1" opacity="0.6"/><circle cx="1060" cy="252" r="1.2" opacity="0.4"/><circle cx="57" cy="143" r="1.6" opacity="0.8"/><circle cx="396" cy="176" r="1.6" opacity="0.8"/><circle cx="746" cy="41" r="1" opacity="0.4"/><circle cx="464" cy="240" r="1" opacity="0.8"/><circle cx="418" cy="247" r="2" opacity="0.4"/><circle cx="981" cy="176" r="0.8" opacity="0.4"/><circle cx="795" cy="102" r="1.6" opacity="0.6"/><circle cx="888" cy="170" r="0.8" opacity="1"/><circle cx="948" cy="205" r="0.8" opacity="0.6"/><circle cx="348" cy="65" r="0.8" opacity="0.6"/><circle cx="1209" cy="238" r="1" opacity="1"/></g>
+  <!-- grid floor -->
+  <g stroke="#22d3ee" stroke-opacity=".10" stroke-width="1">
+    <path d="M0 330 H1600 M0 355 H1600 M0 380 H1600"/>
+    <path d="M400 310 L-800 400"/><path d="M440 310 L-640 400"/><path d="M480 310 L-480 400"/><path d="M520 310 L-320 400"/><path d="M560 310 L-160 400"/><path d="M600 310 L0 400"/><path d="M640 310 L160 400"/><path d="M680 310 L320 400"/><path d="M720 310 L480 400"/><path d="M760 310 L640 400"/><path d="M800 310 L800 400"/><path d="M840 310 L960 400"/><path d="M880 310 L1120 400"/><path d="M920 310 L1280 400"/><path d="M960 310 L1440 400"/><path d="M1000 310 L1600 400"/><path d="M1040 310 L1760 400"/><path d="M1080 310 L1920 400"/><path d="M1120 310 L2080 400"/><path d="M1160 310 L2240 400"/><path d="M1200 310 L2400 400"/>
+  </g>
+  
+  <g transform="translate(1080 60)">
+    <path d="M60 230 L20 300 H140 L100 230 Z" fill="#1b2150" stroke="#2fd3ee" stroke-opacity=".5"/>
+    <rect x="52" y="120" width="56" height="112" fill="#18204a" stroke="#2fd3ee" stroke-opacity=".5"/>
+    <rect x="66" y="150" width="10" height="16" rx="4" fill="#ffcf6b" filter="url(#gl)"/><rect x="84" y="150" width="10" height="16" rx="4" fill="#ffcf6b" filter="url(#gl)"/>
+    <path d="M30 120 Q80 60 130 120 Z" fill="#22d3ee" opacity=".9"/>
+    <circle cx="80" cy="100" r="8" fill="#e0fbff" filter="url(#gl)"/>
+    <path d="M80 100 L-420 -10 L-430 140 Z" fill="#22d3ee" opacity=".14"/>
+    <path d="M80 100 L-420 -10" stroke="#a5f3fc" stroke-width="2" opacity=".7"/>
+  </g>
+  <g fill="none" stroke="#22d3ee" stroke-opacity=".35" stroke-width="2">
+    <circle cx="880" cy="190" r="40"/><circle cx="880" cy="190" r="80"/><circle cx="880" cy="190" r="120"/>
+  </g>
+  <g filter="url(#gl)">
+    <circle cx="760" cy="170" r="7" fill="#fb7185"/><circle cx="820" cy="230" r="6" fill="#fb7185"/><circle cx="905" cy="150" r="7" fill="#fb7185"/><circle cx="960" cy="220" r="5" fill="#fbbf24"/>
+  </g>
+  <path d="M640 320 C700 280 720 250 760 170 C790 120 830 250 820 230 C860 200 880 160 905 150 C930 150 950 200 960 220" fill="none" stroke="#fb7185" stroke-width="2.5" stroke-dasharray="6 8" opacity=".85"/>
+  <g font-family="JetBrains Mono, monospace" font-size="14" fill="#fda4af">
+    <text x="772" y="164">AssumeRole</text><text x="830" y="246">CreateAccessKey</text><text x="916" y="144">UpdateAssumeRolePolicy</text>
+  </g>
+  <path d="M640 400 C640 352 672 330 656 298 C644 276 616 282 620 302" fill="none" stroke="url(#tent)" stroke-width="20" stroke-linecap="round" opacity=".9"/>
+  <path d="M1500 400 C1500 350 1530 330 1515 300 C1505 282 1480 288 1484 304" fill="none" stroke="url(#tent)" stroke-width="16" stroke-linecap="round" opacity=".8"/>
+  <g transform="translate(1330 230)"><circle r="34" fill="rgba(34,211,238,.12)" stroke="#22d3ee" stroke-width="7"/><rect x="22" y="22" width="14" height="46" rx="6" transform="rotate(-45 22 22)" fill="#22d3ee"/></g>
+
+  <!-- clouds -->
+  <g opacity=".95">
+    <path d="M0 372 C60 336 150 340 190 360 C240 326 330 330 360 362 C400 344 460 348 480 372 L480 400 L0 400 Z" fill="url(#cloud)"/>
+    <path d="M1180 378 C1230 344 1310 346 1340 366 C1390 334 1480 338 1510 366 C1550 352 1590 358 1600 372 L1600 400 L1180 400 Z" fill="url(#cloud)"/>
+  </g>
+  <!-- label -->
+  <g>
+    <text x="70" y="150" font-size="132" font-weight="700" fill="none" stroke="url(#acc)" stroke-width="2.5" opacity=".9">I</text>
+    <rect x="72" y="182" width="64" height="4" rx="2" fill="#22d3ee"/>
+    <text x="150" y="190" font-size="20" letter-spacing="5" fill="#22d3ee" font-family="JetBrains Mono, monospace">ACT I · 13:45</text>
+    <text x="72" y="248" font-size="46" font-weight="700" fill="#ffffff">Detect</text>
+    <text x="72" y="286" font-size="20" fill="#b7c0e6">CloudTrail · DNS logs · S3 · the knowledge base</text>
+  </g>
+</svg>

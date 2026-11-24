@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 990" font-family="Space Grotesk, Inter, sans-serif">
+  <title>Data perimeter: trusted identities, trusted resources, expected networks, enforced by SCP, RCP and VPC endpoint policy</title>
+  <defs>
+    <linearGradient id="dbg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0b0e2c"/><stop offset="1" stop-color="#070b1c"/></linearGradient>
+    <radialGradient id="dome" cx=".5" cy=".55" r=".55"><stop offset="0" stop-color="#a78bfa" stop-opacity=".16"/><stop offset=".85" stop-color="#a78bfa" stop-opacity=".06"/><stop offset="1" stop-color="#f472b6" stop-opacity=".0"/></radialGradient>
+    <filter id="dg" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <marker id="dok" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#34d399"/></marker>
+    <marker id="dno" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#fb7185"/></marker>
+  </defs>
+  <rect width="1400" height="990" fill="url(#dbg)"/>
+  <text x="50" y="58" font-size="28" font-weight="700" fill="#fff">The data perimeter — three walls, three policy types</text>
+  <text x="50" y="88" font-size="16" fill="#8a95c2">Only trusted identities · accessing trusted resources · from expected networks.</text>
+
+  <!-- perimeter dome -->
+  <ellipse cx="640" cy="470" rx="470" ry="320" fill="url(#dome)" stroke="#a78bfa" stroke-width="3" stroke-dasharray="14 10" filter="url(#dg)"/>
+  <text x="640" y="182" font-size="16" fill="#c4b5fd" text-anchor="middle" font-family="JetBrains Mono, monospace">ORGANIZATION o-nimbus</text>
+
+  <!-- VPC -->
+  <rect x="250" y="300" width="380" height="300" rx="20" fill="#0e1b36" stroke="#22d3ee" stroke-width="2"/>
+  <text x="272" y="332" font-size="14" fill="#22d3ee" font-family="JetBrains Mono, monospace">VPC 10.42.0.0/16 · private subnet</text>
+  <rect x="280" y="360" width="200" height="88" rx="14" fill="#13244a" stroke="#22d3ee" stroke-opacity=".6"/>
+  <text x="300" y="392" font-size="17" font-weight="700" fill="#fff">CloudShell (VPC)</text>
+  <text x="300" y="416" font-size="13" fill="#67e8f9" font-family="JetBrains Mono, monospace">org principal ✓</text>
+  <text x="300" y="434" font-size="13" fill="#67e8f9" font-family="JetBrains Mono, monospace">no internet route</text>
+
+  <!-- endpoint -->
+  <rect x="520" y="430" width="150" height="110" rx="16" fill="#1b1a4a" stroke="#ff9900" stroke-width="2.5" filter="url(#dg)"/>
+  <text x="595" y="462" font-size="15" font-weight="700" fill="#ffc46b" text-anchor="middle">S3 gateway</text>
+  <text x="595" y="482" font-size="15" font-weight="700" fill="#ffc46b" text-anchor="middle">endpoint</text>
+  <text x="595" y="508" font-size="12" fill="#ffd59a" text-anchor="middle" font-family="JetBrains Mono, monospace">PrincipalOrgID ✓</text>
+  <text x="595" y="526" font-size="12" fill="#ffd59a" text-anchor="middle" font-family="JetBrains Mono, monospace">ResourceOrgID ✓</text>
+
+  <!-- vault bucket -->
+  <rect x="790" y="400" width="250" height="170" rx="20" fill="#2a1030" stroke="#f472b6" stroke-width="2.5"/>
+  <text x="815" y="434" font-size="14" fill="#f472b6" font-family="JetBrains Mono, monospace">skyfortress-vault-…</text>
+  <text x="815" y="466" font-size="20" font-weight="700" fill="#fff">🪣 vault/flag.txt</text>
+  <text x="815" y="494" font-size="13" fill="#f9a8d4" font-family="JetBrains Mono, monospace">Deny GetObject if</text>
+  <text x="815" y="514" font-size="13" fill="#f9a8d4" font-family="JetBrains Mono, monospace">aws:SourceVpce ≠ vpce-…</text>
+  <text x="815" y="544" font-size="13" fill="#c4b5fd" font-family="JetBrains Mono, monospace">+ RCP: org identities only</text>
+
+  <!-- allowed path -->
+  <path d="M480 404 C 520 404, 540 420, 560 430" stroke="#34d399" stroke-width="3" fill="none" marker-end="url(#dok)"/>
+  <path d="M670 485 C 720 485, 750 485, 786 485" stroke="#34d399" stroke-width="3.5" fill="none" marker-end="url(#dok)"/>
+  <text x="700" y="474" font-size="14" fill="#6ee7b7" font-family="JetBrains Mono, monospace">200 OK</text>
+
+  <!-- outside actors -->
+  <rect x="1150" y="210" width="210" height="96" rx="16" fill="#2a0d1d" stroke="#fb7185" stroke-width="2"/>
+  <text x="1170" y="240" font-size="13" fill="#fb7185" font-family="JetBrains Mono, monospace">KRAKEN ACCOUNT</text>
+  <text x="1170" y="266" font-size="15" fill="#fff">stolen bucket name +</text>
+  <text x="1170" y="288" font-size="15" fill="#fff">permissive bucket policy</text>
+  <path d="M1150 290 C 1100 340, 1080 370, 1044 420" stroke="#fb7185" stroke-width="3" fill="none" stroke-dasharray="8 6" marker-end="url(#dno)"/>
+  <text x="1060" y="350" font-size="14" fill="#fda4af" font-family="JetBrains Mono, monospace">✗ RCP</text>
+
+  <rect x="1150" y="640" width="210" height="96" rx="16" fill="#2a0d1d" stroke="#fb7185" stroke-width="2"/>
+  <text x="1170" y="670" font-size="13" fill="#fb7185" font-family="JetBrains Mono, monospace">ADMIN ON THE INTERNET</text>
+  <text x="1170" y="696" font-size="15" fill="#fff">valid org creds, but</text>
+  <text x="1170" y="718" font-size="15" fill="#fff">public CloudShell</text>
+  <path d="M1150 660 C 1100 620, 1080 600, 1020 574" stroke="#fb7185" stroke-width="3" fill="none" stroke-dasharray="8 6" marker-end="url(#dno)"/>
+  <text x="1040" y="630" font-size="14" fill="#fda4af" font-family="JetBrains Mono, monospace">✗ SourceVpce</text>
+
+  <rect x="40" y="660" width="250" height="96" rx="16" fill="#2a0d1d" stroke="#fb7185" stroke-width="2"/>
+  <text x="60" y="690" font-size="13" fill="#fb7185" font-family="JetBrains Mono, monospace">INSIDER EXFIL</text>
+  <text x="60" y="716" font-size="15" fill="#fff">org creds copying to an</text>
+  <text x="60" y="738" font-size="15" fill="#fff">attacker-owned bucket</text>
+  <path d="M290 700 C 330 660, 340 640, 360 604" stroke="#fb7185" stroke-width="3" fill="none" stroke-dasharray="8 6" marker-end="url(#dno)"/>
+  <text x="310" y="640" font-size="14" fill="#fda4af" font-family="JetBrains Mono, monospace">✗ SCP + VPCE</text>
+
+  <!-- matrix -->
+  <g font-size="13.5" font-family="JetBrains Mono, monospace" transform="translate(340 690)">
+    <rect x="40" y="120" width="640" height="150" rx="14" fill="#10153a" stroke="#a78bfa" stroke-opacity=".45"/>
+    <text y="148" fill="#a78bfa"><tspan x="60">WALL</tspan><tspan x="260">ENFORCED BY</tspan><tspan x="460">KEY</tspan></text>
+    <text y="176" fill="#e8ecff"><tspan x="60">Trusted identities</tspan><tspan x="260">RCP / bucket policy</tspan><tspan x="460">aws:PrincipalOrgID</tspan></text>
+    <text y="202" fill="#e8ecff"><tspan x="60">Trusted resources</tspan><tspan x="260">SCP / VPCE policy</tspan><tspan x="460">aws:ResourceOrgID</tspan></text>
+    <text y="228" fill="#e8ecff"><tspan x="60">Expected networks</tspan><tspan x="260">RCP / bucket policy</tspan><tspan x="460">aws:SourceVpce</tspan></text>
+    <text x="60" y="254" fill="#8a95c2">AWS services acting for you: aws:PrincipalIsAWSService, aws:ViaAWSService</text>
+  </g>
+</svg>

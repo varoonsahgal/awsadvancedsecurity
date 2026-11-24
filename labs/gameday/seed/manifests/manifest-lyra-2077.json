@@ -1,0 +1,13 @@
+{
+  "manifest_id": "LYRA-2077",
+  "vessel": "NIS Quiet Comet",
+  "origin": "Mars Orbital Yard 3",
+  "destination": "Titan Outpost Kerrigan",
+  "status": "SCHEDULED",
+  "eta_utc": "2027-01-20T04:15:00Z",
+  "cargo": [
+    { "sku": "REACTOR-ROD-7", "description": "Micro-reactor fuel rods (inert, sealed)", "units": 24 },
+    { "sku": "HAB-PANEL-X", "description": "Radiation-shielded hab panels", "units": 160 }
+  ],
+  "handling": "Two-person integrity rule on load and unload."
+}

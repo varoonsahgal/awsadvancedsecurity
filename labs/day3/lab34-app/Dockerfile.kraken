@@ -1,0 +1,5 @@
+# The Kraken's "hotfix": same app, plus a little something extra. Never signed by Nimbus.
+FROM manifest-api:local
+USER 0
+RUN echo '#!/bin/sh\necho "tentacle online"' > /usr/local/bin/kraken-helper && chmod +x /usr/local/bin/kraken-helper
+USER 65534:65534

@@ -1,0 +1,358 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  Skyfortress Lab 5.3 "Autopilot Defense" — EventBridge -> Step Functions playbook that
+  tags, protects, isolates and snapshots a compromised EC2 instance, notifies the SOC,
+  then WAITS for a human approval (task token) before terminating.
+  Approx cost: < $0.05 for the lab (t3.micro decoy + a handful of executions).
+
+Parameters:
+  LatestAmi:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64
+  AlertEmail:
+    Type: String
+    Default: ""
+    Description: Optional - email address to subscribe to SOC alerts (confirm the subscription email)
+
+Conditions:
+  HasEmail: !Not [!Equals [!Ref AlertEmail, ""]]
+
+Resources:
+  # ---------------------------------------------------------------- decoy workload
+  Vpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.60.0.0/16
+      Tags: [{ Key: Name, Value: skyfortress-d5-autopilot }]
+  Subnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc
+      CidrBlock: 10.60.1.0/24
+      AvailabilityZone: !Select [0, !GetAZs ""]
+  AppSg:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: decoy app SG
+      VpcId: !Ref Vpc
+      SecurityGroupIngress:
+        - { IpProtocol: tcp, FromPort: 443, ToPort: 443, CidrIp: 10.60.0.0/16 }
+  QuarantineSg:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Quarantine - no ingress, no egress
+      VpcId: !Ref Vpc
+      SecurityGroupEgress:
+        # CloudFormation adds allow-all egress if you specify none. This rule
+        # replaces it with something that matches nothing useful.
+        - { IpProtocol: icmp, FromPort: 252, ToPort: 86, CidrIp: 127.0.0.1/32, Description: deny-all placeholder }
+      Tags: [{ Key: Name, Value: ir-quarantine }]
+  DecoyInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref LatestAmi
+      InstanceType: t3.micro
+      SubnetId: !Ref Subnet
+      SecurityGroupIds: [!Ref AppSg]
+      MetadataOptions: { HttpTokens: required }
+      Tags:
+        - { Key: Name, Value: nimbus-cargo-worker-13 }
+        - { Key: env, Value: prod }
+
+  # ---------------------------------------------------------------- notifications
+  SocTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: skyfortress-soc-alerts
+      KmsMasterKeyId: alias/aws/sns
+  SocEmail:
+    Type: AWS::SNS::Subscription
+    Condition: HasEmail
+    Properties: { TopicArn: !Ref SocTopic, Protocol: email, Endpoint: !Ref AlertEmail }
+
+  # ---------------------------------------------------------------- lambdas
+  LambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement: [{ Effect: Allow, Principal: { Service: lambda.amazonaws.com }, Action: sts:AssumeRole }]
+      ManagedPolicyArns: [arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole]
+      Policies:
+        - PolicyName: approval
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: [ssm:PutParameter]
+                Resource: !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/skyfortress/d5/*
+              - Effect: Allow
+                Action: [sns:Publish]
+                Resource: !Ref SocTopic
+
+  RequestApprovalFn:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: skyfortress-d5-request-approval
+      Runtime: python3.13
+      Handler: index.handler
+      Role: !GetAtt LambdaRole.Arn
+      Timeout: 15
+      Environment:
+        Variables: { TOPIC_ARN: !Ref SocTopic }
+      Code:
+        ZipFile: |
+          import json, os, boto3
+          ssm, sns = boto3.client("ssm"), boto3.client("sns")
+          def handler(event, ctx):
+              # The task token is the ONLY thing that can resume the paused execution.
+              # Treat it like a credential: short TTL, least-privilege callers.
+              token, case = event["taskToken"], event["caseId"]
+              ssm.put_parameter(Name="/skyfortress/d5/pending-approval", Type="String",
+                                Value=json.dumps({"caseId": case, "taskToken": token}), Overwrite=True)
+              sns.publish(TopicArn=os.environ["TOPIC_ARN"],
+                          Subject=f"[APPROVAL NEEDED] terminate {event['instanceId']}?"[:99],
+                          Message=(f"Finding {event['type']} on {event['instanceId']}.\n"
+                                   f"Instance is isolated and snapshotted.\n"
+                                   f"Approve:  ./approve.sh yes   |   Deny: ./approve.sh no"))
+              return {"status": "approval-requested", "caseId": case}
+
+  ReceiptFn:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: skyfortress-d5-receipt
+      Runtime: python3.13
+      Handler: index.handler
+      Role: !GetAtt LambdaRole.Arn
+      Timeout: 10
+      Environment:
+        Variables: { RECEIPT_B64: U0tZe2h1bWFuc19hcHByb3ZlX3JvYm90c19leGVjdXRlfQ== }
+      Code:
+        ZipFile: |
+          import base64, os
+          def handler(event, ctx):
+              decision = event.get("decision") or {}
+              snaps = (event.get("evidence") or {}).get("snapshotIds") or []
+              approved = decision.get("approved") is True
+              receipt = {
+                  "caseId": event.get("caseId"),
+                  "instanceId": event.get("instanceId"),
+                  "evidence": snaps,
+                  "approver": decision.get("approver", "n/a"),
+                  "outcome": "terminated-after-approval" if approved else "kept-isolated-for-forensics",
+              }
+              if approved and snaps:
+                  receipt["flag"] = base64.b64decode(os.environ["RECEIPT_B64"]).decode()
+              else:
+                  receipt["flag"] = "none - evidence preserved. (Run an approved termination to earn it.)"
+              return receipt
+
+  # ---------------------------------------------------------------- state machine
+  PlaybookRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement: [{ Effect: Allow, Principal: { Service: states.amazonaws.com }, Action: sts:AssumeRole }]
+      Policies:
+        - PolicyName: playbook
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: [ec2:CreateTags, ec2:ModifyInstanceAttribute, ec2:CreateSnapshots, ec2:CreateSnapshot,
+                         ec2:DescribeInstances, ec2:TerminateInstances]
+                Resource: "*"
+              - Effect: Allow
+                Action: sns:Publish
+                Resource: !Ref SocTopic
+              - Effect: Allow
+                Action: lambda:InvokeFunction
+                Resource: [!GetAtt RequestApprovalFn.Arn, !GetAtt ReceiptFn.Arn]
+
+  Playbook:
+    Type: AWS::StepFunctions::StateMachine
+    Properties:
+      StateMachineName: skyfortress-ec2-compromise-playbook
+      RoleArn: !GetAtt PlaybookRole.Arn
+      DefinitionSubstitutions:
+        QuarantineSg: !Ref QuarantineSg
+        TopicArn: !Ref SocTopic
+        ApprovalFn: !GetAtt RequestApprovalFn.Arn
+        ReceiptFn: !GetAtt ReceiptFn.Arn
+      Definition:
+        Comment: Skyfortress EC2 compromise playbook (contain -> preserve -> notify -> human decision)
+        StartAt: ParseFinding
+        States:
+          ParseFinding:
+            Type: Pass
+            Parameters:
+              findingId.$: $.detail.id
+              type.$: $.detail.type
+              severity.$: $.detail.severity
+              instanceId.$: $.detail.resource.instanceDetails.instanceId
+              account.$: $.account
+              caseId.$: $$.Execution.Name
+            Next: IsHighSeverity
+          IsHighSeverity:
+            Type: Choice
+            Choices:
+              - Variable: $.severity
+                NumericGreaterThanEquals: 7
+                Next: TagForIR
+            Default: LowSeverityNotify
+          TagForIR:
+            Type: Task
+            Resource: arn:aws:states:::aws-sdk:ec2:createTags
+            Parameters:
+              Resources.$: States.Array($.instanceId)
+              Tags:
+                - { Key: ir-status, Value: contained }
+                - { Key: ir-case, Value.$: $.caseId }
+                - { Key: ir-finding, Value.$: $.type }
+            ResultPath: null
+            Catch: [{ ErrorEquals: [States.ALL], ResultPath: $.error, Next: PlaybookFailed }]
+            Next: ProtectFromTermination
+          ProtectFromTermination:
+            Type: Task
+            Resource: arn:aws:states:::aws-sdk:ec2:modifyInstanceAttribute
+            Parameters:
+              InstanceId.$: $.instanceId
+              DisableApiTermination: { Value: true }
+            ResultPath: null
+            Catch: [{ ErrorEquals: [States.ALL], ResultPath: $.error, Next: PlaybookFailed }]
+            Next: Isolate
+          Isolate:
+            Type: Task
+            Resource: arn:aws:states:::aws-sdk:ec2:modifyInstanceAttribute
+            Parameters:
+              InstanceId.$: $.instanceId
+              Groups: ["${QuarantineSg}"]
+            ResultPath: null
+            Catch: [{ ErrorEquals: [States.ALL], ResultPath: $.error, Next: PlaybookFailed }]
+            Next: PreserveEvidence
+          PreserveEvidence:
+            Type: Task
+            Resource: arn:aws:states:::aws-sdk:ec2:createSnapshots
+            Parameters:
+              InstanceSpecification: { InstanceId.$: $.instanceId }
+              Description: Skyfortress IR evidence (crash-consistent, all volumes)
+              CopyTagsFromSource: volume
+              TagSpecifications:
+                - ResourceType: snapshot
+                  Tags:
+                    - { Key: ir-case, Value.$: $.caseId }
+                    - { Key: ir-evidence, Value: "true" }
+            ResultSelector:
+              snapshotIds.$: $.Snapshots[*].SnapshotId
+            ResultPath: $.evidence
+            Catch: [{ ErrorEquals: [States.ALL], ResultPath: $.error, Next: PlaybookFailed }]
+            Next: NotifySOC
+          NotifySOC:
+            Type: Task
+            Resource: arn:aws:states:::sns:publish
+            Parameters:
+              TopicArn: ${TopicArn}
+              Subject: "[CONTAINED] Skyfortress playbook isolated an instance"
+              Message.$: States.Format('Case {} | {} | instance {} quarantined, snapshots {}', $.caseId, $.type, $.instanceId, States.JsonToString($.evidence.snapshotIds))
+            ResultPath: null
+            Next: AwaitHumanApproval
+          AwaitHumanApproval:
+            Type: Task
+            Resource: arn:aws:states:::lambda:invoke.waitForTaskToken
+            Parameters:
+              FunctionName: ${ApprovalFn}
+              Payload:
+                taskToken.$: $$.Task.Token
+                instanceId.$: $.instanceId
+                caseId.$: $.caseId
+                type.$: $.type
+            TimeoutSeconds: 3600
+            ResultPath: $.decision
+            Catch: [{ ErrorEquals: [States.Timeout], ResultPath: $.error, Next: IssueReceipt }]
+            Next: Approved
+          Approved:
+            Type: Choice
+            Choices:
+              - Variable: $.decision.approved
+                BooleanEquals: true
+                Next: RemoveTerminationProtection
+            Default: IssueReceipt
+          RemoveTerminationProtection:
+            Type: Task
+            Resource: arn:aws:states:::aws-sdk:ec2:modifyInstanceAttribute
+            Parameters:
+              InstanceId.$: $.instanceId
+              DisableApiTermination: { Value: false }
+            ResultPath: null
+            Next: Terminate
+          Terminate:
+            Type: Task
+            Resource: arn:aws:states:::aws-sdk:ec2:terminateInstances
+            Parameters:
+              InstanceIds.$: States.Array($.instanceId)
+            ResultPath: null
+            Next: IssueReceipt
+          IssueReceipt:
+            Type: Task
+            Resource: arn:aws:states:::lambda:invoke
+            Parameters:
+              FunctionName: ${ReceiptFn}
+              Payload.$: $
+            OutputPath: $.Payload
+            End: true
+          LowSeverityNotify:
+            Type: Task
+            Resource: arn:aws:states:::sns:publish
+            Parameters:
+              TopicArn: ${TopicArn}
+              Subject: "[FYI] Low-severity GuardDuty finding - no automated action"
+              Message.$: States.JsonToString($)
+            End: true
+          PlaybookFailed:
+            Type: Task
+            Resource: arn:aws:states:::sns:publish
+            Parameters:
+              TopicArn: ${TopicArn}
+              Subject: "[PLAYBOOK FAILED] human needed"
+              Message.$: States.JsonToString($)
+            Next: Failed
+          Failed:
+            Type: Fail
+            Error: PlaybookFailed
+            Cause: Automated containment failed - see SNS alert and execution history
+
+  # ---------------------------------------------------------------- trigger
+  EventsRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement: [{ Effect: Allow, Principal: { Service: events.amazonaws.com }, Action: sts:AssumeRole }]
+      Policies:
+        - PolicyName: start-playbook
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement: [{ Effect: Allow, Action: states:StartExecution, Resource: !Ref Playbook }]
+  FindingRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: skyfortress-guardduty-ec2-high
+      Description: High-severity GuardDuty EC2 findings (and lab test events) start the playbook
+      EventPattern:
+        source: [aws.guardduty, skyfortress.test]
+        detail-type: [GuardDuty Finding]
+        detail:
+          severity: [{ numeric: [">=", 7] }]
+          resource:
+            resourceType: [Instance]
+      Targets:
+        - Arn: !Ref Playbook
+          Id: playbook
+          RoleArn: !GetAtt EventsRole.Arn
+
+Outputs:
+  DecoyInstanceId: { Value: !Ref DecoyInstance }
+  StateMachineArn: { Value: !Ref Playbook }
+  QuarantineSgId: { Value: !Ref QuarantineSg }
+  TopicArn: { Value: !Ref SocTopic }

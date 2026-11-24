@@ -1,0 +1,246 @@
+{
+  "Comment": "Skyfortress EC2 compromise playbook (contain -> preserve -> notify -> human decision)",
+  "StartAt": "ParseFinding",
+  "States": {
+    "ParseFinding": {
+      "Type": "Pass",
+      "Parameters": {
+        "findingId.$": "$.detail.id",
+        "type.$": "$.detail.type",
+        "severity.$": "$.detail.severity",
+        "instanceId.$": "$.detail.resource.instanceDetails.instanceId",
+        "account.$": "$.account",
+        "caseId.$": "$$.Execution.Name"
+      },
+      "Next": "IsHighSeverity"
+    },
+    "IsHighSeverity": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.severity",
+          "NumericGreaterThanEquals": 7,
+          "Next": "TagForIR"
+        }
+      ],
+      "Default": "LowSeverityNotify"
+    },
+    "TagForIR": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::aws-sdk:ec2:createTags",
+      "Parameters": {
+        "Resources.$": "States.Array($.instanceId)",
+        "Tags": [
+          {
+            "Key": "ir-status",
+            "Value": "contained"
+          },
+          {
+            "Key": "ir-case",
+            "Value.$": "$.caseId"
+          },
+          {
+            "Key": "ir-finding",
+            "Value.$": "$.type"
+          }
+        ]
+      },
+      "ResultPath": null,
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.error",
+          "Next": "PlaybookFailed"
+        }
+      ],
+      "Next": "ProtectFromTermination"
+    },
+    "ProtectFromTermination": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::aws-sdk:ec2:modifyInstanceAttribute",
+      "Parameters": {
+        "InstanceId.$": "$.instanceId",
+        "DisableApiTermination": {
+          "Value": true
+        }
+      },
+      "ResultPath": null,
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.error",
+          "Next": "PlaybookFailed"
+        }
+      ],
+      "Next": "Isolate"
+    },
+    "Isolate": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::aws-sdk:ec2:modifyInstanceAttribute",
+      "Parameters": {
+        "InstanceId.$": "$.instanceId",
+        "Groups": [
+          "${QuarantineSg}"
+        ]
+      },
+      "ResultPath": null,
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.error",
+          "Next": "PlaybookFailed"
+        }
+      ],
+      "Next": "PreserveEvidence"
+    },
+    "PreserveEvidence": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::aws-sdk:ec2:createSnapshots",
+      "Parameters": {
+        "InstanceSpecification": {
+          "InstanceId.$": "$.instanceId"
+        },
+        "Description": "Skyfortress IR evidence (crash-consistent, all volumes)",
+        "CopyTagsFromSource": "volume",
+        "TagSpecifications": [
+          {
+            "ResourceType": "snapshot",
+            "Tags": [
+              {
+                "Key": "ir-case",
+                "Value.$": "$.caseId"
+              },
+              {
+                "Key": "ir-evidence",
+                "Value": "true"
+              }
+            ]
+          }
+        ]
+      },
+      "ResultSelector": {
+        "snapshotIds.$": "$.Snapshots[*].SnapshotId"
+      },
+      "ResultPath": "$.evidence",
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.error",
+          "Next": "PlaybookFailed"
+        }
+      ],
+      "Next": "NotifySOC"
+    },
+    "NotifySOC": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::sns:publish",
+      "Parameters": {
+        "TopicArn": "${TopicArn}",
+        "Subject": "[CONTAINED] Skyfortress playbook isolated an instance",
+        "Message.$": "States.Format('Case {} | {} | instance {} quarantined, snapshots {}', $.caseId, $.type, $.instanceId, States.JsonToString($.evidence.snapshotIds))"
+      },
+      "ResultPath": null,
+      "Next": "AwaitHumanApproval"
+    },
+    "AwaitHumanApproval": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke.waitForTaskToken",
+      "Parameters": {
+        "FunctionName": "${ApprovalFn}",
+        "Payload": {
+          "taskToken.$": "$$.Task.Token",
+          "instanceId.$": "$.instanceId",
+          "caseId.$": "$.caseId",
+          "type.$": "$.type"
+        }
+      },
+      "TimeoutSeconds": 3600,
+      "ResultPath": "$.decision",
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.Timeout"
+          ],
+          "ResultPath": "$.error",
+          "Next": "IssueReceipt"
+        }
+      ],
+      "Next": "Approved"
+    },
+    "Approved": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.decision.approved",
+          "BooleanEquals": true,
+          "Next": "RemoveTerminationProtection"
+        }
+      ],
+      "Default": "IssueReceipt"
+    },
+    "RemoveTerminationProtection": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::aws-sdk:ec2:modifyInstanceAttribute",
+      "Parameters": {
+        "InstanceId.$": "$.instanceId",
+        "DisableApiTermination": {
+          "Value": false
+        }
+      },
+      "ResultPath": null,
+      "Next": "Terminate"
+    },
+    "Terminate": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::aws-sdk:ec2:terminateInstances",
+      "Parameters": {
+        "InstanceIds.$": "States.Array($.instanceId)"
+      },
+      "ResultPath": null,
+      "Next": "IssueReceipt"
+    },
+    "IssueReceipt": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "${ReceiptFn}",
+        "Payload.$": "$"
+      },
+      "OutputPath": "$.Payload",
+      "End": true
+    },
+    "LowSeverityNotify": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::sns:publish",
+      "Parameters": {
+        "TopicArn": "${TopicArn}",
+        "Subject": "[FYI] Low-severity GuardDuty finding - no automated action",
+        "Message.$": "States.JsonToString($)"
+      },
+      "End": true
+    },
+    "PlaybookFailed": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::sns:publish",
+      "Parameters": {
+        "TopicArn": "${TopicArn}",
+        "Subject": "[PLAYBOOK FAILED] human needed",
+        "Message.$": "States.JsonToString($)"
+      },
+      "Next": "Failed"
+    },
+    "Failed": {
+      "Type": "Fail",
+      "Error": "PlaybookFailed",
+      "Cause": "Automated containment failed - see SNS alert and execution history"
+    }
+  }
+}

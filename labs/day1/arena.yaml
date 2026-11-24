@@ -1,0 +1,109 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  Operation Skyfortress - Lab 1.1 "Policy Evaluation Arena".
+  Creates a contestant role whose effective permissions are shaped by an identity policy,
+  a permissions boundary, a bucket policy with an explicit deny, and an ABAC condition.
+  Deploy in skyfortress-dev, us-east-1. Cost: ~$0 (S3 + SSM standard parameter).
+
+Resources:
+  ArenaBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "skyfortress-arena-${AWS::AccountId}"
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      OwnershipControls:
+        Rules: [{ ObjectOwnership: BucketOwnerEnforced }]
+      Tags: [{ Key: skyfortress, Value: lab-1-1 }]
+
+  ArenaBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref ArenaBucket
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          # Explicit deny: nobody (not even admins) may delete arena objects.
+          - Sid: NoDeletesEver
+            Effect: Deny
+            Principal: "*"
+            Action: ["s3:DeleteObject", "s3:DeleteObjectVersion"]
+            Resource: !Sub "${ArenaBucket.Arn}/*"
+          # Deny anything not over TLS.
+          - Sid: TlsOnly
+            Effect: Deny
+            Principal: "*"
+            Action: "s3:*"
+            Resource: [!GetAtt ArenaBucket.Arn, !Sub "${ArenaBucket.Arn}/*"]
+            Condition: { Bool: { "aws:SecureTransport": "false" } }
+
+  # The permissions boundary is the MAXIMUM the role can ever do.
+  ArenaBoundary:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      ManagedPolicyName: SkyfortressArenaBoundary
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: ReadOnlyS3
+            Effect: Allow
+            Action: ["s3:Get*", "s3:List*", "s3:DeleteObject"]
+            Resource: "*"
+          - Sid: ReadParams
+            Effect: Allow
+            Action: ["ssm:GetParameter", "ssm:GetParameters"]
+            Resource: "*"
+          - Sid: WhoAmI
+            Effect: Allow
+            Action: ["sts:GetCallerIdentity"]
+            Resource: "*"
+
+  ArenaContestantRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: SkyfortressArenaContestant
+      PermissionsBoundary: !Ref ArenaBoundary
+      MaxSessionDuration: 3600
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: { AWS: !Sub "arn:aws:iam::${AWS::AccountId}:root" }
+            # sts:TagSession is REQUIRED to pass session tags (Round 5).
+            Action: ["sts:AssumeRole", "sts:TagSession"]
+      Policies:
+        - PolicyName: ArenaIdentityPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: GenerousS3
+                Effect: Allow
+                Action: "s3:*"
+                Resource: [!GetAtt ArenaBucket.Arn, !Sub "${ArenaBucket.Arn}/*"]
+              - Sid: AbacParams
+                Effect: Allow
+                Action: "ssm:GetParameter"
+                Resource: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/skyfortress/arena/*"
+                Condition:
+                  StringEquals:
+                    "aws:PrincipalTag/clearance": "orbital"
+      Tags: [{ Key: skyfortress, Value: lab-1-1 }]
+
+  ArenaFlag:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /skyfortress/arena/flag
+      Type: String
+      Value: "U0tZe3Nlc3Npb25fdGFnc19vcGVuX2Rvb3JzfQ=="  # base64 - decode with: base64 -d
+      Description: Readable only with clearance=orbital
+
+Outputs:
+  BucketName:
+    Value: !Ref ArenaBucket
+  RoleArn:
+    Value: !GetAtt ArenaContestantRole.Arn
+  BoundaryArn:
+    Value: !Ref ArenaBoundary
